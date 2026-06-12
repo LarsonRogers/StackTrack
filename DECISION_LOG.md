@@ -418,3 +418,12 @@
   gh CLI installed).
 - Watch: DoD "CI green" is now enforceable — verify the first run before
   calling item 11 done. README still describes the starter pack.
+
+## [2026-06-12] Backlog item 11 verified and closed — Claude Code
+- Did: Verified the CI→deploy pipeline objectively via `wrangler pages
+  deployment list`: two new Production deployments created by the GitHub
+  Action (matching the two pushes), on top of the original manual deploy.
+  Item 11 done.
+- State: Next: item 12 (interim cloud-drive file sync) — task brief
+  pending confirmation. Brief will split foundations (device-independent
+  record identity) from the merge-import flow.
