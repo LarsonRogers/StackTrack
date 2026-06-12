@@ -280,3 +280,9 @@
 - State: Full backup/restore loop complete. Items 8 (sorting) and 9
   (date navigation) remain.
 - Watch: Demo gate OPEN for item 10 — full demo required.
+
+## [2026-06-12] Backlog item 10 demo confirmed — Claude Code
+- Did: User confirmed the full export→import round-trip worked ("worked
+  perfectly"). Item 10 marked done.
+- State: Next: backlog item 8 (stack view sorting), task brief pending
+  confirmation. Item 9 (date navigation) after.

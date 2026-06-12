@@ -3,12 +3,11 @@
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **As of update:** 2026-06-12
-**Last completed:** Backlog item 10 — import/restore (code done, validations green; demo gate awaiting user confirmation)
-**Confirmed next task:** Close item 10 demo gate, then backlog item 8 — stack view sorting (needs task brief)
-**Backlog position:** item 10 awaiting demo; items 8 (sorting) + 9 (date navigation) remain (see BACKLOG.md)
+**Last completed:** Backlog item 10 — import/restore (demo confirmed by user)
+**Confirmed next task:** Backlog item 8 — stack view sorting (task brief presented, awaiting confirmation)
+**Backlog position:** item 8 next; item 9 (date navigation) last remaining (see BACKLOG.md)
 
-**Open watch items:**
-- Demo gate OPEN for item 10: user must confirm the import round-trip (dev server at http://localhost:5173).
+**Open watch items:** (none)
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders — wiring it needs user confirmation (CI-change policy).
 - Root README.md still describes the starter pack, not StackTrack.
 
