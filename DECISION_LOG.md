@@ -360,3 +360,24 @@
   Cloudflare account + wrangler login, then agent builds and deploys.
 - Watch: Item 9 demo gate still open (phone install will demonstrate date
   navigation alongside the live-URL demo).
+
+## [2026-06-12] Deployed to Cloudflare Pages — Claude Code
+- Did: User created Cloudflare account, verified email, ran `npx wrangler
+  login` themselves (credentials never touched the agent). Pre-deploy:
+  clean tree, lint green, 70/70 tests, fresh `npm run build`. Created
+  Pages project `stacktrack` (production branch main) and deployed `dist/`
+  of commit 8a48f34 via `npx wrangler pages deploy dist
+  --project-name=stacktrack --branch main`. Live at
+  https://stacktrack-ea9.pages.dev — verified: app HTML, PWA manifest,
+  and sw.js all return 200 over HTTPS. RUNBOOK.md gained "Deployed
+  version", "Install on a phone", and "Take it down" sections (teardown:
+  `npx wrangler pages project delete stacktrack` + URL-must-404
+  verification step).
+- Decisions: Direct upload, no git remote — per gate entry above. First
+  attempt failed with Cloudflare error 8000077 (email unverified); user
+  verified and retry succeeded — no code/config cause.
+- State: App publicly served (code only). Demo gate for the live URL +
+  phone install OPEN — user must confirm seeing it run on the phone.
+- Watch: wrangler is invoked via npx (not a package.json dependency) —
+  fine for occasional deploys; add as devDependency + `deploy` script if
+  deploys become routine (needs confirmation).

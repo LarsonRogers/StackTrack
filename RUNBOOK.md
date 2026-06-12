@@ -25,3 +25,31 @@ Press `Ctrl+C` in the terminal where it's running.
 - `Port 5173 is in use` — another copy is already running; check other
   terminal windows, or tell the agent.
 - Anything else — copy the error text and tell the agent.
+
+## Deployed version
+- Live at: https://stacktrack-ea9.pages.dev
+- What's on the server: the app's CODE ONLY — all health data stays in each
+  device's own browser storage (see DECISION_LOG.md 2026-06-12 gate entry).
+- Redeploy after changes (run from the project folder):
+  1. `npm run build`
+  2. `npx wrangler pages deploy dist --project-name=stacktrack --branch main`
+  Installed phones pick the new version up automatically on next open
+  (open the app, then close and reopen once if it looks stale).
+
+## Install on a phone
+- Android (Chrome): open https://stacktrack-ea9.pages.dev → tap the
+  "Install app" banner, or menu (⋮) → "Add to Home screen" → Install.
+- iPhone (must use Safari): open the URL → Share button → "Add to Home
+  Screen" → Add.
+- The phone copy starts EMPTY. To move data: Stack tab → Export JSON on the
+  old device, then Stack tab → Import backup on the phone.
+
+## Take it down
+1. `npx wrangler pages project delete stacktrack` (run from the project
+   folder; it asks once to confirm — type the project name)
+2. Verify it is actually gone: open https://stacktrack-ea9.pages.dev —
+   you should get a "nothing is here" / 404 page. If the app still loads,
+   the teardown FAILED — tell the agent.
+3. Note: phones that already installed the app keep working offline from
+   their cache; remove the app from the phone like any other app (its
+   local data is deleted with it — export first if you want it).
