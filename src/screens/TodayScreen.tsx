@@ -11,6 +11,7 @@ import { setItemNote } from '../db/itemNoteRepository'
 import { formatTime, formatTodayHeading, toIsoDate } from '../lib/dates'
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
 import MetricLogger from '../components/MetricLogger'
+import JournalSection from '../components/JournalSection'
 
 export default function TodayScreen() {
   const today = toIsoDate(new Date())
@@ -225,6 +226,8 @@ export default function TodayScreen() {
           </ul>
         </section>
       )}
+
+      <JournalSection date={today} />
     </main>
   )
 }

@@ -183,3 +183,18 @@
   change itself is visible in the next demo.
 - State: Metrics unlimited. Next: backlog item 5 (daily journal note),
   task brief pending confirmation.
+
+## [2026-06-11] Backlog item 5: daily journal note — Claude Code
+- Did: Schema v4 (additive) in `src/db/db.ts`: `dayNotes` (date, text).
+  `src/db/dayNoteRepository.ts` (setDayNote — one per date, replace on
+  re-save, empty clears). `src/components/JournalSection.tsx` (textarea +
+  save with "Saved" flash, draft state separate from saved state), appended
+  to TodayScreen below metrics. 4 new tests (3 repository, 1 flow), 39
+  total.
+- Decisions: JournalSection maps "no row" to null in useLiveQuery
+  (`?? null`) — WHY: first() returns undefined for both "loading" and
+  "absent"; without the sentinel the section never rendered on an empty
+  day (caught by the flow test before commit).
+- State: Full daily check-in now: checklist + per-item notes + metrics +
+  journal. Item 6 (graphs with stack-change markers) is next.
+- Watch: Demo gate OPEN for item 5 — full demo required.

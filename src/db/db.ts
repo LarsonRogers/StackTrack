@@ -76,6 +76,14 @@ export interface MetricEntry {
   value: number // rating metrics: integer 1–10; number metrics: any finite number
 }
 
+// The day-level journal: one free-text note per calendar date, about the
+// day as a whole (per-item context belongs in ItemNote instead).
+export interface DayNote {
+  id: number
+  date: string // local calendar date 'YYYY-MM-DD'
+  text: string
+}
+
 // EntityTable marks `id` as auto-incrementing — inserts omit it.
 export const db = new Dexie('stacktrack') as Dexie & {
   items: EntityTable<StackItem, 'id'>
@@ -84,6 +92,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   itemNotes: EntityTable<ItemNote, 'id'>
   metrics: EntityTable<Metric, 'id'>
   metricEntries: EntityTable<MetricEntry, 'id'>
+  dayNotes: EntityTable<DayNote, 'id'>
 }
 
 // Schema v1. Only indexed fields are listed; other fields are stored as-is.
@@ -102,4 +111,10 @@ db.version(2).stores({
 db.version(3).stores({
   metrics: '++id, status',
   metricEntries: '++id, date, [metricId+date]',
+})
+
+// Schema v4 (additive): day-level journal notes. date is unique per row
+// by construction (dayNoteRepository upserts on it).
+db.version(4).stores({
+  dayNotes: '++id, date',
 })

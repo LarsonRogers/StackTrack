@@ -671,6 +671,7 @@ src/db/itemNoteRepository.ts  per-item daily notes (one per item+date)
 src/db/metricRepository.ts metric definitions (kind immutable after creation)
 src/db/metricEntryRepository.ts  daily metric values (one per metric+date;
                            validates rating range at the boundary)
+src/db/dayNoteRepository.ts  day-level journal (one note per date)
 src/lib/                   pure helpers (dates, view shaping) — no state, no I/O
 tests/                     Vitest + RTL; fake-indexeddb simulates IndexedDB
 scripts/                   dev utilities (PWA icon generation)
