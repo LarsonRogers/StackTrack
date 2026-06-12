@@ -381,3 +381,14 @@
 - Watch: wrangler is invoked via npx (not a package.json dependency) —
   fine for occasional deploys; add as devDependency + `deploy` script if
   deploys become routine (needs confirmation).
+
+## [2026-06-12] MVP complete — all demo gates closed; items 11+12 queued — Claude Code
+- Did: User confirmed the live deployment and phone install ("Looks good!
+  MVP is complete") — closes the deployment demo gate AND item 9's gate.
+  All backlog items 1–10 done. Queued item 11 (GitHub remote + CI +
+  auto-publish to the existing Pages project, per user request) and item
+  12 (device sync, approach to be decided — user asked for a security
+  assessment of cloud-drive sync vs. alternatives).
+- State: MVP shipped and installed. Next: item 11 brief presented;
+  item 12 needs an approach decision (E2E-encrypted backend vs. managed
+  sync vs. cloud-drive files) before any brief.

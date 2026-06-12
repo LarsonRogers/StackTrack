@@ -12,5 +12,7 @@
 | 6 | Metric graphs — any metric over time, with color-coded vertical markers at every stack change (added / changed / removed) | See trends and exactly when the stack changed | done (2026-06-11) |
 | 7 | Data export — download all data as JSON (full backup) or CSV (spreadsheets) | Back up data before anything risky; safety net for local-first storage | done (2026-06-12) |
 | 8 | Stack view sorting — user-selectable sort options on the Stack screen (e.g. by name, group, time, recently changed) | Order the stack list the way that suits how you scan it | done (2026-06-12) |
-| 9 | Date navigation — pick a date (calendar) and view/edit that day's entries (checklist, metrics, notes, journal) | Review or correct any past day, not just today | awaiting demo |
+| 9 | Date navigation — pick a date (calendar) and view/edit that day's entries (checklist, metrics, notes, journal) | Review or correct any past day, not just today | done (2026-06-12) |
 | 10 | Import / restore — load a JSON export back in, replacing current data, with safety snapshot | Move to a new device or recover from data loss using a backup file | done (2026-06-12) |
+| 11 | GitHub repo + auto-publish — push code to GitHub; every push runs lint/tests and auto-deploys to the existing Cloudflare Pages URL | Update the live app by committing, with CI guarding every deploy | pending |
+| 12 | Device sync — keep data in sync across the user's devices (approach to be decided: E2E-encrypted sync backend vs. managed sync vs. cloud-drive file) | Enter data on the phone, see it on the PC and vice versa | pending |
