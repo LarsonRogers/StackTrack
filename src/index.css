@@ -1,0 +1,67 @@
+/* src/index.css — global styles. Mobile-first; one column centered on larger
+   screens. Component-specific styles stay close to these class names until a
+   styling approach is settled in a later backlog item. */
+
+:root {
+  /* Brand palette — teal primary, light neutral background */
+  --color-primary: #0f766e;
+  --color-bg: #f8fafc;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.today {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100dvh;
+}
+
+.today-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-primary);
+}
+
+.today-date {
+  margin: 0.25rem 0 1.5rem;
+  color: var(--color-text-muted);
+}
+
+.today-empty {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.today-empty h2 {
+  margin-top: 0;
+  font-size: 1.125rem;
+}
+
+.today-hint {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}

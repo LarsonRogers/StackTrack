@@ -1,0 +1,15 @@
+# Prettier formats app code only. Pack documentation and harness configs
+# keep their own formatting.
+*.md
+protocols/
+.github/
+.claude/
+.codex/
+opencode.json
+
+# Generated output
+dist/
+dev-dist/
+coverage/
+package-lock.json
+public/pwa-*.png

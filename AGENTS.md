@@ -505,8 +505,8 @@ tool: no dosage guidance, no interaction checking — ever.
 
 - **Language/runtime** — TypeScript on Node 20+ (browser app; React + Vite)
 - **Files not to edit** — package-lock.json, dist/**, pack files (see Safe-Edit Boundaries)
-- **Lint command** — `npm run lint` (live once the walking skeleton lands)
-- **Test command** — `npm test` (Vitest; live once the walking skeleton lands)
+- **Lint command** — `npm run lint`
+- **Test command** — `npm test` (Vitest)
 
 ## Tech Stack & Constraints
 <!-- ⚠️ REQUIRED PLACEHOLDER — filled by Placeholder Inference. -->
@@ -527,20 +527,19 @@ tool: no dosage guidance, no interaction checking — ever.
      If genuinely unavailable, mark: # NOT CONFIGURED -->
 
 ```bash
-# Commands become live when the walking skeleton (backlog item 1) lands.
 # Lint
 npm run lint
 
 # Format check
-npx prettier --check .
+npm run format:check
 
 # Type check
-npx tsc --noEmit
+npm run typecheck
 
 # Test
 npm test
 
-# Build
+# Build (also generates the PWA service worker + manifest)
 npm run build
 ```
 
