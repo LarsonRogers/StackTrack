@@ -1,0 +1,46 @@
+# .gitignore — starter pack baseline.
+# Covers the categories the first-session check verifies: dependency folders,
+# build output, env/secret files, caches, and OS/editor noise.
+# Extend with stack-specific entries when the project's stack is known.
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+vendor/
+
+# Python bytecode / packaging
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Build output
+dist/
+build/
+out/
+
+# Test / coverage artifacts
+coverage/
+.cache/
+
+# Environment & secrets — never committed (hard guardrail)
+.env
+.env.*
+!.env.example
+!.env.template
+secrets/
+
+# Logs
+*.log
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Editor state
+*.swp
+.idea/
+.vscode/
+
+# Inherited starter-pack git history (kept as local backup; safe to delete)
+.git_starter_pack_backup/

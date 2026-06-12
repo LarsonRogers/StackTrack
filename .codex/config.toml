@@ -1,0 +1,32 @@
+# .codex/config.toml — [PROJECT_NAME] project config
+#
+# Codex reads this automatically when you run `codex` from the repo root.
+# See: https://developers.openai.com/codex/config-basic/
+#
+# NOTE: If Codex doesn't pick up this file, copy these settings to
+# your user-level config at ~/.codex/config.toml instead.
+
+# Auto-approve edits and commands. Only prompts on failure.
+approval_policy = "on-failure"
+
+# Allow file writes within the workspace.
+sandbox_mode = "workspace-write"
+
+# Enable network access for git operations and web research.
+# NOTE: network_access = true enables outbound network from the sandbox,
+# but Codex web search/browsing capability is controlled separately in your
+# OpenAI account settings — enable it there if you want the agent to research
+# SDKs, docs, and external APIs (recommended — see AGENTS.md →
+# External Research Protocol).
+# Other agents (Cursor, Windsurf, Aider) manage web access through their own
+# UI settings — this file does not control them.
+[sandbox_workspace_write]
+network_access = true
+
+# Fallback instruction filenames — checked ONLY in directories where
+# AGENTS.md is absent. This pack ships AGENTS.md at the repo root, so the
+# fallback never fires there: Codex reads AGENTS.md alone, NOT CLAUDE.md
+# "in addition". This entry only lets subdirectories without their own
+# AGENTS.md pick up a CLAUDE.md instead. Do not rely on it to feed CLAUDE.md
+# content to Codex — anything both tools need belongs in AGENTS.md.
+project_doc_fallback_filenames = ["CLAUDE.md"]
