@@ -53,7 +53,18 @@ Press `Ctrl+C` in the terminal where it's running.
   "Import backup" REPLACES. One quirk to know: a check you removed on one
   device can reappear after a sync if the other device's file still has it.
 
+## Sync server (item 13)
+- Live at: https://stacktrack-sync.el-m-rogers.workers.dev (health check:
+  open /health — should show {"ok":true})
+- What it stores: ONLY encrypted blobs + timestamps — no readable health
+  data, ever (E2E encryption happens on your devices).
+- Redeploy after changes: `npx wrangler deploy -c workers/sync/wrangler.toml`
+- Local dev: `npx wrangler dev -c workers/sync/wrangler.toml --local`
+- Schema changes: `npx wrangler d1 execute stacktrack-sync --remote
+  --file=workers/sync/schema.sql -c workers/sync/wrangler.toml`
+
 ## Take it down
+App hosting:
 1. `npx wrangler pages project delete stacktrack` (run from the project
    folder; it asks once to confirm — type the project name)
 2. Verify it is actually gone: open https://stacktrack-ea9.pages.dev —
@@ -62,3 +73,10 @@ Press `Ctrl+C` in the terminal where it's running.
 3. Note: phones that already installed the app keep working offline from
    their cache; remove the app from the phone like any other app (its
    local data is deleted with it — export first if you want it).
+
+Sync server:
+1. `npx wrangler delete -c workers/sync/wrangler.toml` (removes the Worker)
+2. `npx wrangler d1 delete stacktrack-sync` (removes the database and ALL
+   encrypted sync data — devices keep their local copies)
+3. Verify: open https://stacktrack-sync.el-m-rogers.workers.dev/health —
+   it must FAIL to load. If it answers, teardown FAILED — tell the agent.

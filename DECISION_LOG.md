@@ -488,3 +488,56 @@
   long-standing stale-README watch item.
 - State: Item 13 (E2E-encrypted sync backend) is the only substantive
   backlog item left — the ship-to-users precondition.
+
+## [2026-06-12] Item 13 phase confirmed: E2E-encrypted sync — Claude Code
+- Did: External research (current Cloudflare docs): Workers free plan
+  100k req/day, 10ms CPU/invocation; D1 free 5M reads + 100k writes/day,
+  5 GB — ample for device sync at $0. Phase brief presented and user
+  confirmed.
+- Decisions:
+  - Architecture: own Worker + D1 on the user's existing Cloudflare
+    account; server stores only ciphertext blobs + timestamps (E2E —
+    server can never read data). WHY: more secure than any cloud-drive
+    or managed-sync option; multi-user foundation.
+  - Crypto: WebCrypto only (no new deps). Passphrase → PBKDF2 stretch →
+    HKDF split into independent keys: group id + auth token (server-
+    facing) and encryption key (never leaves device). PBKDF2 iteration
+    count to be re-verified against OWASP guidance at 13b implementation
+    (currently ~600k for SHA-256 per training data — flag, verify then).
+  - No passphrase recovery, by design; JSON backups + local copies are
+    the recovery story (user re-confirmed).
+  - Tombstones (schema v6, additive) make deletions propagate — also
+    retroactively fixes the file-sync resurrection quirk.
+  - Tasks: 13a server, 13b crypto, 13c tombstones, 13d sync engine +
+    settings UI, 13e live two-device demo.
+- State: 13a (sync server) starting. Item 12 demo gate still open in
+  parallel (user to run a real file merge when convenient).
+
+## [2026-06-12] Item 13a: sync server live — Claude Code
+- Did: Created D1 database `stacktrack-sync` (id ae39ad39-…) and
+  `workers/sync/`: wrangler.toml, schema.sql (groups: group_id +
+  SHA-256(auth token); records: seq autoincrement cursor, group_id, uid,
+  cipher, updated_at, deleted; unique(group_id,uid)), src/logic.ts (pure
+  validation: hex groupId, cursor, change shape, 2000-change/64KB caps;
+  last-write-wins rule; bearer extraction — 8 unit tests in main suite),
+  src/index.ts (POST /v1/sync: first-sync group registration, token-hash
+  auth, LWW upsert via delete+insert to bump seq, delta pull by seq with
+  1000 limit + more flag; /health; CORS allowlist = Pages URL +
+  localhost). Worker tsconfig wired into root references;
+  @cloudflare/workers-types + wrangler as devDeps; .wrangler/ gitignored.
+  Integration-tested locally via wrangler dev + curl (push, cross-device
+  pull, 403 wrong token, stale update ignored), then deployed — user
+  registered workers.dev subdomain el-m-rogers — and re-verified live at
+  https://stacktrack-sync.el-m-rogers.workers.dev (same four checks);
+  live test rows deleted after. RUNBOOK gained sync-server deploy +
+  teardown-with-verification sections.
+- Decisions: Update = delete+insert (not UPDATE) — WHY: bumps the
+  autoincrement seq so other devices' delta pulls see the change. Server
+  knows only uid/cipher/timestamps; table names live inside the
+  ciphertext — WHY: minimize metadata leakage. Worker deploys from local
+  wrangler session, not CI — WHY: the CI token is Pages-scoped; widening
+  it is a user step, deferred until the server stabilizes.
+- State: 13a done (server live, all checks green). Next: 13b client
+  crypto (re-verify PBKDF2 params against OWASP at build time).
+- Watch: Item 12 demo gate still open. CI does not yet deploy the worker
+  (manual redeploy via RUNBOOK command until token is widened).

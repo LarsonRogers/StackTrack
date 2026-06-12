@@ -1,0 +1,11 @@
+# workers/sync/wrangler.toml — the StackTrack sync Worker.
+# Deploy:   npx wrangler deploy -c workers/sync/wrangler.toml
+# Local dev: npx wrangler dev -c workers/sync/wrangler.toml --local
+name = "stacktrack-sync"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stacktrack-sync"
+database_id = "ae39ad39-bf66-462b-8120-608a51f297eb"
