@@ -332,3 +332,31 @@
 - State: ALL backlog items (1–10) complete pending this demo. MVP feature
   set fully built.
 - Watch: Demo gate OPEN for item 9 — full demo required.
+
+## [2026-06-12] Deployment gate cleared; Cloudflare Pages confirmed — Claude Code
+- Did: User asked how to install the app on their phone (deployment
+  protocol triggered, opt-in). Ran Step 0 data-sensitivity gate BEFORE any
+  deploy step.
+- Decisions:
+  - Gate Signal 1 (user declaration): "Currently it will only be my own
+    [data], but I may share it with others. My hope was that they would
+    only see their own data, hosted on their own device, no access to my
+    own." Signal 2 (agent assessment): FLAGGED — health data (medications,
+    doses, schedules, metrics, notes in IndexedDB). → HALT per protocol.
+  - HALT statement presented with the local-first clarification: only app
+    CODE is hosted; health data never leaves the user's devices; anyone
+    with the URL loads an empty copy; Cloudflare sees standard request
+    logs; app contains no analytics/telemetry. User explicitly signed off
+    on all three points ("Confirmed — acceptable").
+  - Sharing model confirmed to user: each device = isolated data store;
+    no cross-user access possible without a future backend (separate
+    phase + gate if ever wanted).
+  - Target: Cloudflare Pages via direct upload (`wrangler pages deploy`)
+    — WHY: free, static, no server admin, easy deletion, and requires NO
+    git remote (avoids the separately-gated remote-creation step). User's
+    hosting choice doubles as the external-service confirmation
+    (default-policy item).
+- State: Gate recorded; deploy not yet executed. Next: user creates
+  Cloudflare account + wrangler login, then agent builds and deploys.
+- Watch: Item 9 demo gate still open (phone install will demonstrate date
+  navigation alongside the live-URL demo).
