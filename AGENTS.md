@@ -486,7 +486,7 @@ human-facing documentation.
 
 StackTrack is a local-first web app (PWA) for tracking a personal
 medication & supplement stack: items with dose, schedule times, and groups;
-a daily taken-checklist; up to 10 custom daily metrics (1–10 rating or free
+a daily taken-checklist; unlimited custom daily metrics (1–10 rating or free
 number); daily notes; and metric graphs over time annotated with color-coded
 markers wherever the stack changed (item added / changed / removed — every
 stack change is recorded with its date). Single-user and on-device for now,
@@ -668,7 +668,7 @@ src/db/db.ts               Dexie schema + record types (items, stackEvents,
 src/db/stackRepository.ts  the ONLY write path to the stack tables
 src/db/intakeRepository.ts daily taken/untaken writes (Today checklist)
 src/db/itemNoteRepository.ts  per-item daily notes (one per item+date)
-src/db/metricRepository.ts metric definitions (10-active cap; kind immutable)
+src/db/metricRepository.ts metric definitions (kind immutable after creation)
 src/db/metricEntryRepository.ts  daily metric values (one per metric+date;
                            validates rating range at the boundary)
 src/lib/                   pure helpers (dates, view shaping) — no state, no I/O

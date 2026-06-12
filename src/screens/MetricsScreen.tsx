@@ -7,7 +7,6 @@ import { db, type Metric } from '../db/db'
 import {
   addMetric,
   archiveMetric,
-  MAX_ACTIVE_METRICS,
   unarchiveMetric,
   updateMetric,
   type MetricInput,
@@ -36,11 +35,8 @@ export default function MetricsScreen() {
   )
   const [form, setForm] = useState<FormState>({ mode: 'closed' })
   const [showArchived, setShowArchived] = useState(false)
-  const [capMessage, setCapMessage] = useState<string | null>(null)
 
   if (activeMetrics === undefined || archivedMetrics === undefined) return null
-
-  const atCap = activeMetrics.length >= MAX_ACTIVE_METRICS
 
   async function handleSubmit(input: MetricInput) {
     if (form.mode === 'edit') {
@@ -49,17 +45,6 @@ export default function MetricsScreen() {
       await addMetric(input)
     }
     setForm({ mode: 'closed' })
-  }
-
-  async function handleRestore(metric: Metric) {
-    if (atCap) {
-      setCapMessage(
-        `You're already tracking ${MAX_ACTIVE_METRICS} metrics — archive one to restore "${metric.name}".`,
-      )
-      return
-    }
-    setCapMessage(null)
-    await unarchiveMetric(metric.id)
   }
 
   if (form.mode !== 'closed') {
@@ -81,30 +66,17 @@ export default function MetricsScreen() {
         <p className="screen-subtitle">
           {activeMetrics.length === 0
             ? 'Define what to track each day.'
-            : `Tracking ${activeMetrics.length} of ${MAX_ACTIVE_METRICS}`}
+            : `Tracking ${activeMetrics.length} metric${activeMetrics.length === 1 ? '' : 's'}`}
         </p>
       </header>
 
-      {atCap ? (
-        <p className="screen-note">
-          You've reached the {MAX_ACTIVE_METRICS}-metric limit. Archive one to
-          add another.
-        </p>
-      ) : (
-        <button
-          type="button"
-          className="button-primary"
-          onClick={() => setForm({ mode: 'add' })}
-        >
-          + Add metric
-        </button>
-      )}
-
-      {capMessage && (
-        <p className="item-form-error" role="alert">
-          {capMessage}
-        </p>
-      )}
+      <button
+        type="button"
+        className="button-primary"
+        onClick={() => setForm({ mode: 'add' })}
+      >
+        + Add metric
+      </button>
 
       <ul className="stack-list metric-list">
         {activeMetrics
@@ -159,7 +131,7 @@ export default function MetricsScreen() {
                   <button
                     type="button"
                     className="button-subtle"
-                    onClick={() => handleRestore(metric)}
+                    onClick={() => unarchiveMetric(metric.id)}
                   >
                     Restore
                   </button>

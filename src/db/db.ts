@@ -56,7 +56,7 @@ export interface ItemNote {
 export type MetricKind = 'rating' | 'number'
 
 // A user-defined daily metric, e.g. "Energy" (1–10 rating) or "Weight"
-// (free number with unit). Max 10 active — enforced by metricRepository.
+// (free number with unit). No cap on count (user decision 2026-06-11).
 // kind is fixed after creation: changing it would corrupt logged history.
 export interface Metric {
   id: number

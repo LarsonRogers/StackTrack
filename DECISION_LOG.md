@@ -170,3 +170,16 @@
 - State: Define-and-log loop complete; values per local day, replace on
   re-log. Items 5 (daily journal note) and 6 (graphs) remain.
 - Watch: Demo gate OPEN for item 4 — full demo required.
+
+## [2026-06-11] Remove 10-metric cap; item 4 closed — Claude Code
+- Did: Removed MAX_ACTIVE_METRICS and all cap enforcement/UI per user
+  instruction ("user should not be limited to 10 metrics"):
+  `metricRepository.ts` (no cap check on add/unarchive),
+  `MetricsScreen.tsx` (no cap messaging; subtitle now "Tracking N metrics"),
+  cap test removed (35 tests passing). Updated AGENTS.md Part 2 summary,
+  BACKLOG item 4 wording, db.ts comment.
+- Decisions: Item 4 demo gate closed on the user's "continue to item 5"
+  instruction — treated as user-initiated acceptance; the cap-removal
+  change itself is visible in the next demo.
+- State: Metrics unlimited. Next: backlog item 5 (daily journal note),
+  task brief pending confirmation.

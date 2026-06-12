@@ -1,12 +1,11 @@
 // tests/metricRepository.test.ts — behavior tests for metric definitions
-// (10-active cap, archive/restore) and daily values (one per metric+date,
-// replace on re-log, rating validation at the boundary).
+// (archive/restore, kind immutability) and daily values (one per
+// metric+date, replace on re-log, rating validation at the boundary).
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../src/db/db'
 import {
   addMetric,
   archiveMetric,
-  MAX_ACTIVE_METRICS,
   unarchiveMetric,
   updateMetric,
 } from '../src/db/metricRepository'
@@ -33,15 +32,6 @@ describe('metric definitions', () => {
     })
   })
 
-  it('rejects an 11th active metric', async () => {
-    for (let i = 0; i < MAX_ACTIVE_METRICS; i++) {
-      await addMetric({ name: `Metric ${i}`, kind: 'rating' })
-    }
-    await expect(
-      addMetric({ name: 'One too many', kind: 'rating' }),
-    ).rejects.toThrow(/archive one first/)
-  })
-
   it('updates name and unit but not kind', async () => {
     const id = await addMetric({ name: 'Weight', kind: 'number', unit: 'lb' })
     await updateMetric(id, { name: 'Body weight', unit: 'kg' })
@@ -53,7 +43,7 @@ describe('metric definitions', () => {
     })
   })
 
-  it('archive keeps logged entries; restore re-checks the cap', async () => {
+  it('archive keeps logged entries; restore reactivates', async () => {
     const id = await addMetric({ name: 'Energy', kind: 'rating' })
     await setMetricEntry(id, TODAY, 7)
     await archiveMetric(id)
@@ -61,10 +51,8 @@ describe('metric definitions', () => {
     expect((await db.metrics.get(id))?.status).toBe('archived')
     expect(await db.metricEntries.count()).toBe(1) // history survives
 
-    for (let i = 0; i < MAX_ACTIVE_METRICS; i++) {
-      await addMetric({ name: `Metric ${i}`, kind: 'rating' })
-    }
-    await expect(unarchiveMetric(id)).rejects.toThrow(/archive one first/)
+    await unarchiveMetric(id)
+    expect((await db.metrics.get(id))?.status).toBe('active')
   })
 })
 
