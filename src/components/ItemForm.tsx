@@ -1,0 +1,175 @@
+// src/components/ItemForm.tsx — add/edit form for one stack item. Owns only
+// form state and validation; persistence happens in the onSubmit handler the
+// parent passes in (which calls the repository).
+import { useState } from 'react'
+import type { StackItemInput } from '../db/stackRepository'
+
+const DEFAULT_TIME = '08:00'
+
+const EMPTY_FORM: StackItemInput = {
+  name: '',
+  kind: 'supplement',
+  dose: '',
+  times: [DEFAULT_TIME],
+}
+
+interface ItemFormProps {
+  initial?: StackItemInput // present = edit mode
+  groupSuggestions: string[]
+  onSubmit: (input: StackItemInput) => Promise<void>
+  onCancel: () => void
+}
+
+export default function ItemForm({
+  initial,
+  groupSuggestions,
+  onSubmit,
+  onCancel,
+}: ItemFormProps) {
+  const [form, setForm] = useState<StackItemInput>(initial ?? EMPTY_FORM)
+  const [error, setError] = useState<string | null>(null)
+  const isEdit = initial !== undefined
+
+  function setField<Key extends keyof StackItemInput>(
+    key: Key,
+    value: StackItemInput[Key],
+  ) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  function setTime(index: number, value: string) {
+    setField(
+      'times',
+      form.times.map((time, i) => (i === index ? value : time)),
+    )
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    if (form.name.trim() === '') {
+      setError('Please enter a name.')
+      return
+    }
+    if (form.times.every((time) => time === '')) {
+      setError('Please set at least one time of day.')
+      return
+    }
+    setError(null)
+    await onSubmit({ ...form, times: form.times.filter((time) => time !== '') })
+  }
+
+  return (
+    <form className="item-form" onSubmit={handleSubmit}>
+      <h2>{isEdit ? `Edit ${initial.name}` : 'Add to your stack'}</h2>
+
+      <label htmlFor="item-name">Name</label>
+      <input
+        id="item-name"
+        type="text"
+        value={form.name}
+        onChange={(e) => setField('name', e.target.value)}
+        placeholder="e.g. Zinc"
+      />
+
+      <fieldset className="item-form-kind">
+        <legend>Type</legend>
+        <label>
+          <input
+            type="radio"
+            name="kind"
+            checked={form.kind === 'supplement'}
+            onChange={() => setField('kind', 'supplement')}
+          />
+          Supplement
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="kind"
+            checked={form.kind === 'med'}
+            onChange={() => setField('kind', 'med')}
+          />
+          Medication
+        </label>
+      </fieldset>
+
+      <label htmlFor="item-dose">Dose</label>
+      <input
+        id="item-dose"
+        type="text"
+        value={form.dose}
+        onChange={(e) => setField('dose', e.target.value)}
+        placeholder="e.g. 25 mg"
+      />
+
+      <fieldset className="item-form-times">
+        <legend>Times of day</legend>
+        {form.times.map((time, index) => (
+          <div className="item-form-time-row" key={index}>
+            <label className="visually-hidden" htmlFor={`item-time-${index}`}>
+              Time {index + 1}
+            </label>
+            <input
+              id={`item-time-${index}`}
+              type="time"
+              value={time}
+              onChange={(e) => setTime(index, e.target.value)}
+            />
+            {form.times.length > 1 && (
+              <button
+                type="button"
+                className="button-subtle"
+                aria-label={`Remove time ${index + 1}`}
+                onClick={() =>
+                  setField(
+                    'times',
+                    form.times.filter((_, i) => i !== index),
+                  )
+                }
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          className="button-subtle"
+          onClick={() => setField('times', [...form.times, DEFAULT_TIME])}
+        >
+          + Add another time
+        </button>
+      </fieldset>
+
+      <label htmlFor="item-group">Group (optional)</label>
+      <input
+        id="item-group"
+        type="text"
+        list="group-suggestions"
+        value={form.group ?? ''}
+        onChange={(e) => setField('group', e.target.value || undefined)}
+        placeholder="e.g. Testosterone Support"
+      />
+      <datalist id="group-suggestions">
+        {groupSuggestions.map((group) => (
+          <option key={group} value={group} />
+        ))}
+      </datalist>
+
+      {error && (
+        <p className="item-form-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="item-form-actions">
+        <button type="submit" className="button-primary">
+          {isEdit ? 'Save changes' : 'Add to stack'}
+        </button>
+        <button type="button" className="button-subtle" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}

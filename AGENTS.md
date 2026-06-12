@@ -607,7 +607,8 @@ schema or config change.
 
 - Default: stack-standard conventions — record only deviations below
 - No TODO/FIXME in committed code without a linked issue
-- [naming/formatting/language rule, only if it deviates from stack default]
+- Prettier: no semicolons, single quotes (`.prettierrc.json` — matches the
+  Vite template idiom the codebase started from)
 
 ## Git Workflow
 
@@ -657,15 +658,33 @@ Anti-pattern: [What NOT to do instead]
 
 ### Directory Structure & Ownership
 ```
-[actual structure]
+src/main.tsx               entry — mount only
+src/App.tsx                view switching (Today | Stack) — no logic
+src/screens/               one file per view; read db via useLiveQuery,
+                           write only through the repository
+src/components/            reusable presentation (NavBar, ItemForm) — no db access
+src/db/db.ts               Dexie schema + record types (items, stackEvents)
+src/db/stackRepository.ts  the ONLY write path to the stack tables
+src/lib/                   pure helpers (dates, view shaping) — no state, no I/O
+tests/                     Vitest + RTL; fake-indexeddb simulates IndexedDB
+scripts/                   dev utilities (PWA icon generation)
 ```
 
 ### Data Flow
 ```
-[how data moves through the system]
+UI event → stackRepository function → one Dexie transaction
+         (item write + StackEvent record together)
+         → useLiveQuery observers re-render screens automatically
+Reads: screens query db directly (read-only) via useLiveQuery
 ```
 
 ### Key Invariants
 ```
-- [rules that, if broken, cause system-level failures]
+- Every stack mutation goes through stackRepository and records a StackEvent
+  in the SAME transaction — graph markers (item 6) are built from this history
+- Items are archived, never deleted — history must survive
+- StackEvent.itemName/group are snapshots at event time; never retro-fix them
+  after a rename/regroup
+- StackEvent.date is the LOCAL calendar date (lib/dates.toIsoDate), not UTC
+- No dosage advice or interaction-checking logic anywhere — permanently out of scope
 ```

@@ -83,3 +83,30 @@
   "demo gate OPEN" watch item from the previous entry.
 - State: Walking skeleton complete and demonstrated. Next: backlog item 2
   (stack management), task brief pending confirmation.
+
+## [2026-06-11] Backlog item 2: stack management — Claude Code
+- Did: Data layer: `src/db/db.ts` (Dexie 4.4.3 schema v1 — `items`,
+  `stackEvents` with itemName/group snapshots), `src/db/stackRepository.ts`
+  (only write path: addItem/updateItem/archiveItem/unarchiveItem, each
+  recording its StackEvent in the same transaction; `buildChangeSummary`
+  builds human-readable diffs; no-op edits record nothing). `toIsoDate`
+  added to `src/lib/dates.ts` (local date, not UTC). UI:
+  `src/components/NavBar.tsx` (Today/Stack tabs), `ItemForm.tsx` (add/edit,
+  validation, group datalist suggestions), `src/screens/StackScreen.tsx`
+  (grouped list via `src/lib/stackView.ts`, archive/restore, archived
+  toggle), `App.tsx` view switch. Tests: 11 new (8 repository behavior,
+  3 UI flow), 14 total passing. Deps: dexie, dexie-react-hooks; dev:
+  fake-indexeddb, @testing-library/user-event.
+- Decisions: Events stored per-item with name/group snapshots; group-level
+  display is a render-time collapse (item 6) — WHY: per-item is ground
+  truth, survives renames/regroups (user confirmed this design 2026-06-11).
+  One purpose-group per item; time-of-day grouping comes from schedule
+  times, not groups — WHY: avoids redundant "Morning" groups; upgradable
+  to tags later. `put` instead of Dexie `update` in updateItem — WHY:
+  UpdateSpec typing rejects plain array properties (`times`).
+  @testing-library/user-event added beyond the brief's named deps — WHY:
+  standard RTL companion needed for form-flow tests; test-only.
+- State: Full stack CRUD working with automatic change history. Today
+  screen still skeleton (item 3 next). Validations all green.
+- Watch: Demo gate OPEN for item 2 — full demo required. Restore
+  (unarchive) has no window.confirm — intentional, it's non-destructive.
