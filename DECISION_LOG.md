@@ -304,3 +304,9 @@
   already the authoritative record of change.
 - State: Item 9 (date navigation) is the last remaining backlog item.
 - Watch: Demo gate OPEN for item 8 — full demo required.
+
+## [2026-06-12] Backlog item 8 demo confirmed — Claude Code
+- Did: User confirmed all four sort modes and persistence (FULL demo).
+  Item 8 marked done.
+- State: Item 9 (date navigation) is the final backlog item; task brief
+  pending confirmation.
