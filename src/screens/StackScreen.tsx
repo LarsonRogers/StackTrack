@@ -2,7 +2,7 @@
 // supplements. Reads live from the db (useLiveQuery re-renders on writes);
 // all writes go through stackRepository. Change history is recorded there
 // automatically — this screen never touches stackEvents.
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type StackItem } from '../db/db'
 import {
@@ -14,6 +14,7 @@ import {
 } from '../db/stackRepository'
 import { distinctGroups, groupByPurpose } from '../lib/stackView'
 import { exportAsCsv, exportAsJson } from '../lib/exportData'
+import { applyBundle, parseBundle } from '../lib/importData'
 import ItemForm from '../components/ItemForm'
 
 // Form state: closed, adding new, or editing a specific item.
@@ -33,9 +34,50 @@ export default function StackScreen() {
   )
   const [form, setForm] = useState<FormState>({ mode: 'closed' })
   const [showArchived, setShowArchived] = useState(false)
+  const [importStatus, setImportStatus] = useState<{
+    kind: 'success' | 'error'
+    text: string
+  } | null>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   // First render before IndexedDB answers — avoid an "empty stack" flash
   if (activeItems === undefined || archivedItems === undefined) return null
+
+  // Restore flow: validate file → confirm with counts → download a safety
+  // snapshot of current data → replace atomically (lib/importData).
+  async function handleImportFile(file: File) {
+    try {
+      const bundle = parseBundle(await file.text())
+      const [currentItems, currentValues] = await Promise.all([
+        db.items.count(),
+        db.metricEntries.count(),
+      ])
+      const backupDate = bundle.exportedAt
+        ? new Date(bundle.exportedAt).toLocaleDateString()
+        : 'an unknown date'
+      const confirmed = window.confirm(
+        `Restore the backup from ${backupDate}?\n\n` +
+          `Backup contains: ${bundle.data.items.length} stack items, ` +
+          `${bundle.data.metrics.length} metrics, ` +
+          `${bundle.data.metricEntries.length} logged values.\n\n` +
+          `This REPLACES everything currently in the app ` +
+          `(${currentItems} items, ${currentValues} logged values). ` +
+          `A backup of your current data will download first, just in case.`,
+      )
+      if (!confirmed) return
+      await exportAsJson() // safety snapshot — the user's undo path
+      await applyBundle(bundle)
+      setImportStatus({ kind: 'success', text: 'Backup restored.' })
+    } catch (error) {
+      setImportStatus({
+        kind: 'error',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Import failed — your data was not changed.',
+      })
+    }
+  }
 
   async function handleSubmit(input: StackItemInput) {
     if (form.mode === 'edit') {
@@ -179,7 +221,38 @@ export default function StackScreen() {
           >
             Export CSV
           </button>
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => importInputRef.current?.click()}
+          >
+            Import backup
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="visually-hidden"
+            aria-label="Import backup file"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = '' // allow re-picking the same file
+              if (file) handleImportFile(file)
+            }}
+          />
         </div>
+        {importStatus && (
+          <p
+            className={
+              importStatus.kind === 'error'
+                ? 'item-form-error'
+                : 'metric-number-saved'
+            }
+            role={importStatus.kind === 'error' ? 'alert' : 'status'}
+          >
+            {importStatus.text}
+          </p>
+        )}
       </section>
     </main>
   )

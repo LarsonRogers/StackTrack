@@ -260,3 +260,23 @@
   ordered ahead of items 8–9 per "before we continue, we also need to be
   able to import data". Resolves the import watch item.
 - State: Next: item 10 (import/restore), task brief pending confirmation.
+
+## [2026-06-12] Backlog item 10: import/restore — Claude Code
+- Did: `src/lib/importData.ts`: parseBundle (validation only, touches
+  nothing — rejects non-JSON / non-StackTrack / newer-schema / damaged
+  tables with plain-English messages; tables missing from older exports
+  default empty) and applyBundle (clear + bulkAdd all 7 tables in ONE
+  transaction; row ids preserved so itemId/metricId references survive;
+  any failure aborts the whole transaction). StackScreen Backup section:
+  "Import backup" button + hidden JSON file input → confirm dialog with
+  backup-vs-current counts → exportAsJson() safety snapshot → applyBundle
+  → status message. 8 new tests written BEFORE the UI (validation
+  rejections, full round-trip, replace-not-merge, mid-import failure
+  leaves data untouched), 62 total.
+- Decisions: Restore = replace, never merge — WHY: merging two histories
+  is ambiguous (per brief, user confirmed). Safety snapshot downloads
+  automatically before every restore — WHY: makes the one destructive
+  action in the app user-reversible.
+- State: Full backup/restore loop complete. Items 8 (sorting) and 9
+  (date navigation) remain.
+- Watch: Demo gate OPEN for item 10 — full demo required.
