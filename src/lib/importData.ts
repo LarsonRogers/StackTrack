@@ -15,6 +15,7 @@ const TABLE_NAMES = [
   'metrics',
   'metricEntries',
   'dayNotes',
+  'tombstones',
 ] as const
 
 // Parses and validates export-file text. Throws plain-English errors
@@ -74,6 +75,7 @@ export async function applyBundle(bundle: ExportBundle): Promise<void> {
       db.metrics,
       db.metricEntries,
       db.dayNotes,
+      db.tombstones,
     ],
     async () => {
       for (const table of TABLE_NAMES) {

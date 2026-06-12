@@ -108,6 +108,16 @@ export interface DayNote {
   updatedAt: string
 }
 
+// A deletion marker: "the record with this uid was removed at this time."
+// Lets deletions propagate through sync/merge instead of silently
+// resurrecting (items/metrics archive rather than delete, so tombstones
+// come from intakes, notes, values, and journal entries).
+export interface Tombstone {
+  id: number
+  uid: string // uid of the deleted record
+  deletedAt: string // ISO datetime — compared against updatedAt (newer wins)
+}
+
 // EntityTable marks `id` as auto-incrementing — inserts omit it.
 export const db = new Dexie('stacktrack') as Dexie & {
   items: EntityTable<StackItem, 'id'>
@@ -117,6 +127,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   metrics: EntityTable<Metric, 'id'>
   metricEntries: EntityTable<MetricEntry, 'id'>
   dayNotes: EntityTable<DayNote, 'id'>
+  tombstones: EntityTable<Tombstone, 'id'>
 }
 
 // Schema v1. Only indexed fields are listed; other fields are stored as-is.
@@ -158,6 +169,12 @@ db.version(5)
     dayNotes: '++id, &uid, date',
   })
   .upgrade((tx) => backfillIdentity(tx))
+
+// Schema v6 (additive): deletion tombstones — an empty new table; no
+// data migration.
+db.version(6).stores({
+  tombstones: '++id, &uid',
+})
 
 // Minimal table access shared by the live db, a transaction zone, and the
 // v5 upgrade transaction — lets one backfill serve all callers.

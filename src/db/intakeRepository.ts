@@ -2,6 +2,7 @@
 // (the Today checklist's taken/not-taken state). Reads may query db directly.
 import { db } from './db'
 import { newUid, nowIso } from '../lib/identity'
+import { recordTombstone } from './tombstoneRepository'
 
 // Marks one scheduled slot taken. Already marked = no-op (no duplicates).
 export async function markTaken(
@@ -26,15 +27,18 @@ export async function markTaken(
   })
 }
 
-// Undoes a mark (mistap recovery). Not marked = no-op.
+// Undoes a mark (mistap recovery). Not marked = no-op. The tombstone makes
+// the un-check propagate through sync instead of resurrecting.
 export async function unmarkTaken(
   itemId: number,
   date: string,
   time: string,
 ): Promise<void> {
-  await db.transaction('rw', db.intakes, async () => {
+  await db.transaction('rw', db.intakes, db.tombstones, async () => {
     const existing = await findIntake(itemId, date, time)
-    if (existing) await db.intakes.delete(existing.id)
+    if (!existing) return
+    await db.intakes.delete(existing.id)
+    await recordTombstone(existing.uid)
   })
 }
 

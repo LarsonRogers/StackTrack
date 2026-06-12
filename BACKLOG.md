@@ -17,4 +17,4 @@
 | 11 | GitHub repo + auto-publish — push code to GitHub; every push runs lint/tests and auto-deploys to the existing Cloudflare Pages URL | Update the live app by committing, with CI guarding every deploy | done (2026-06-12) |
 | 12 | Interim device sync — 12a foundations (uid + updatedAt, schema v5) + 12b "Sync from file" merge import | Carry data between own devices today without a backend | awaiting demo |
 | 14 | Rewrite repo README to describe StackTrack (currently describes the starter pack) | Repo visitors see what the app actually is | done (2026-06-12) |
-| 13 | E2E-encrypted sync backend — 13a server (done, live); 13b client crypto (done 2026-06-12); 13c tombstones; 13d sync engine + settings UI; 13e live demo. REQUIRED before shipping to other users | Automatic cross-device sync where the server can never read the data | 13a+13b done |
+| 13 | E2E-encrypted sync backend — 13a server (done, live); 13b client crypto (done); 13c tombstones (done 2026-06-12); 13d sync engine + settings UI; 13e live demo. REQUIRED before shipping to other users | Automatic cross-device sync where the server can never read the data | 13a–13c done |

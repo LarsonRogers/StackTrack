@@ -19,6 +19,7 @@ export interface ExportBundle {
     metrics: unknown[]
     metricEntries: unknown[]
     dayNotes: unknown[]
+    tombstones: unknown[]
   }
 }
 
@@ -31,6 +32,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
     metrics,
     metricEntries,
     dayNotes,
+    tombstones,
   ] = await Promise.all([
     db.items.toArray(),
     db.stackEvents.toArray(),
@@ -39,6 +41,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
     db.metrics.toArray(),
     db.metricEntries.toArray(),
     db.dayNotes.toArray(),
+    db.tombstones.toArray(),
   ])
   return {
     app: 'StackTrack',
@@ -52,6 +55,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       metrics,
       metricEntries,
       dayNotes,
+      tombstones,
     },
   }
 }

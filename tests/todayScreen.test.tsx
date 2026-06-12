@@ -16,6 +16,7 @@ beforeEach(async () => {
   await db.stackEvents.clear()
   await db.intakes.clear()
   await db.itemNotes.clear()
+  await db.tombstones.clear()
 })
 
 afterEach(cleanup)
@@ -68,7 +69,11 @@ describe('Today checklist', () => {
     await user.type(screen.getByLabelText('Note for Zinc'), 'ran out of pills')
     await user.click(screen.getByRole('button', { name: 'Save note' }))
 
-    expect(await screen.findByText('ran out of pills')).toBeInTheDocument()
+    // generous timeout: this write crosses three tables and the full suite
+    // runs many files in parallel — 1s default flakes under load
+    expect(
+      await screen.findByText('ran out of pills', undefined, { timeout: 5000 }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Edit note' }),
     ).toBeInTheDocument()

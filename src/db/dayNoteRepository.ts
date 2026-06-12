@@ -3,14 +3,18 @@
 // offers no separate delete action — same convention as item notes).
 import { db } from './db'
 import { newUid, nowIso } from '../lib/identity'
+import { recordTombstone } from './tombstoneRepository'
 
 export async function setDayNote(date: string, text: string): Promise<void> {
   const trimmed = text.trim()
-  await db.transaction('rw', db.dayNotes, async () => {
+  await db.transaction('rw', db.dayNotes, db.tombstones, async () => {
     const existing = await db.dayNotes.where('date').equals(date).first()
 
     if (trimmed === '') {
-      if (existing) await db.dayNotes.delete(existing.id)
+      if (existing) {
+        await db.dayNotes.delete(existing.id)
+        await recordTombstone(existing.uid)
+      }
       return
     }
 

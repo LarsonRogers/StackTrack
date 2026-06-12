@@ -4,6 +4,7 @@
 // so bad values can never reach the graphs.
 import { db } from './db'
 import { newUid, nowIso } from '../lib/identity'
+import { recordTombstone } from './tombstoneRepository'
 
 // Logs (or replaces) the value for a metric on a date.
 // Rating metrics accept integers 1–10 only; number metrics any finite number.
@@ -54,11 +55,13 @@ export async function clearMetricEntry(
   metricId: number,
   date: string,
 ): Promise<void> {
-  await db.transaction('rw', db.metricEntries, async () => {
+  await db.transaction('rw', db.metricEntries, db.tombstones, async () => {
     const existing = await db.metricEntries
       .where('[metricId+date]')
       .equals([metricId, date])
       .first()
-    if (existing) await db.metricEntries.delete(existing.id)
+    if (!existing) return
+    await db.metricEntries.delete(existing.id)
+    await recordTombstone(existing.uid)
   })
 }

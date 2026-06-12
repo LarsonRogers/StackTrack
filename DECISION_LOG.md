@@ -563,3 +563,36 @@
   Tests run at 1000 iterations (speed); algorithm identical, work
   factor pinned by its own assertion.
 - State: 13a+13b done. Next: 13c (tombstones, schema v6).
+
+## [2026-06-12] Item 13c: deletion tombstones (schema v6) — Claude Code
+- Did: Schema v6 (additive, empty new table): `tombstones` (&uid,
+  deletedAt). `src/db/tombstoneRepository.ts` recordTombstone (upsert).
+  All four deleting repositories (unmarkTaken, setItemNote(''),
+  clearMetricEntry, setDayNote('')) record the marker IN THE SAME
+  TRANSACTION as the delete. Export/import/replace include tombstones
+  (older bundles default empty). Merge engine: incoming tombstones
+  delete matching local records when newer than the record's updatedAt
+  (counted in new summary.deleted, shown in sync status); union of
+  markers kept (newest per uid); local tombstones suppress incoming
+  resurrections; a record edited AFTER its tombstone wins and retires
+  the marker. 5 new tests (per-action markers; delete propagation;
+  resurrection suppression; edit-beats-tombstone incl. marker
+  retirement; pre-v6 bundle compatibility). 106 total.
+- Decisions: Tombstones are uid-scoped, so a NEW record at the same
+  natural key (re-checking a dose creates a fresh uid) is never killed
+  by the old marker — intended semantics.
+- Debugging note (honest record): one pre-existing UI test
+  (todayScreen "attaches a daily note") began failing intermittently
+  (~50-100%) in FULL-SUITE runs only. Systematic isolation: passes
+  alone, passes serialized (3/3), passes instrumented with identical
+  flow + DB/DOM probes (3/3), fails under parallel file workers. DB
+  writes proven correct in failing configuration. Conclusion:
+  parallel-worker CPU contention starving user-event/jsdom timing —
+  environment-level, not an app bug. Fix: vitest fileParallelism:false
+  (vite.config.ts) — suite now deterministic (multiple green runs),
+  costs ~25s wall clock, also derisks 2-core CI runners. Tombstone
+  clearing added to todayScreen beforeEach as hygiene (was a red
+  herring for the flake, kept anyway).
+- State: 13c committed, push HELD for the user backup ritual (v6
+  migration is empty-table-only, mildest possible; holding on
+  principle). Next: 13d (sync engine + settings UI).

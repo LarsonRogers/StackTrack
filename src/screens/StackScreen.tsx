@@ -122,7 +122,9 @@ export default function StackScreen() {
       setImportStatus({
         kind: 'success',
         text:
-          `Synced: ${result.added} added, ${result.updated} updated.` +
+          `Synced: ${result.added} added, ${result.updated} updated` +
+          (result.deleted > 0 ? `, ${result.deleted} removed` : '') +
+          '.' +
           (result.skipped > 0
             ? ` ${result.skipped} skipped (unknown parent).`
             : ''),

@@ -19,6 +19,7 @@ export interface MergeSummary {
   updated: number
   unchanged: number
   skipped: number // rows whose parent item/metric could not be resolved
+  deleted: number // local records removed by incoming tombstones
 }
 
 type AnyRow = Record<string, unknown>
@@ -61,7 +62,18 @@ export async function mergeBundle(
     updated: 0,
     unchanged: 0,
     skipped: 0,
+    deleted: 0,
   }
+
+  const DATA_TABLES = [
+    'items',
+    'stackEvents',
+    'intakes',
+    'itemNotes',
+    'metrics',
+    'metricEntries',
+    'dayNotes',
+  ] as const
 
   await db.transaction(
     'rw',
@@ -73,8 +85,72 @@ export async function mergeBundle(
       db.metrics,
       db.metricEntries,
       db.dayNotes,
+      db.tombstones,
     ],
     async () => {
+      // --- Tombstones first: union both sides (newest deletedAt per uid),
+      // apply incoming deletions to local records, and build the
+      // suppression map the record phases consult.
+      const localTombstones = await db.tombstones.toArray()
+      const deletedAtByUid = new Map<unknown, string>(
+        localTombstones.map((t) => [t.uid as unknown, t.deletedAt]),
+      )
+      for (const incoming of (bundle.data.tombstones ?? []) as AnyRow[]) {
+        const known = deletedAtByUid.get(incoming.uid)
+        const incomingAt = String(incoming.deletedAt ?? '')
+        if (known === undefined || incomingAt > known) {
+          deletedAtByUid.set(incoming.uid, incomingAt)
+          if (apply) {
+            const existing = await db.tombstones
+              .where('uid')
+              .equals(incoming.uid as string)
+              .first()
+            if (existing) {
+              await db.tombstones.update(existing.id, { deletedAt: incomingAt })
+            } else {
+              await db.tombstones.add({
+                uid: incoming.uid as string,
+                deletedAt: incomingAt,
+              })
+            }
+          }
+        }
+        // delete the matching local record if the tombstone is newer than
+        // our last edit to it
+        for (const tableName of DATA_TABLES) {
+          const row = (await db
+            .table(tableName)
+            .where('uid')
+            .equals(incoming.uid as string)
+            .first()) as AnyRow | undefined
+          if (row && incomingAt > String(row.updatedAt ?? '')) {
+            summary.deleted++
+            if (apply) await db.table(tableName).delete(row.id as number)
+          }
+        }
+      }
+
+      // A record edited AFTER its tombstone beats the deletion — the
+      // record phases below handle that; this helper tells them whether a
+      // tombstone still suppresses an incoming row.
+      const suppressedByTombstone = (incoming: AnyRow): boolean => {
+        const deletedAt = deletedAtByUid.get(incoming.uid)
+        return (
+          deletedAt !== undefined &&
+          deletedAt > String(incoming.updatedAt ?? '')
+        )
+      }
+      // ...and when a newer record wins, the stale tombstone must go so it
+      // cannot re-kill the record in a later merge.
+      const clearStaleTombstone = async (incoming: AnyRow) => {
+        if (!deletedAtByUid.has(incoming.uid)) return
+        deletedAtByUid.delete(incoming.uid)
+        if (apply)
+          await db.tombstones
+            .where('uid')
+            .equals(incoming.uid as string)
+            .delete()
+      }
       // --- Parents: items and metrics, matched by uid ---
       for (const tableName of ['items', 'metrics'] as const) {
         const table = db.table(tableName)
@@ -82,9 +158,14 @@ export async function mergeBundle(
           ((await table.toArray()) as AnyRow[]).map((row) => [row.uid, row]),
         )
         for (const incoming of bundle.data[tableName] as AnyRow[]) {
+          if (suppressedByTombstone(incoming)) {
+            summary.unchanged++ // deleted here more recently than that copy
+            continue
+          }
           const local = localByUid.get(incoming.uid)
           if (!local) {
             summary.added++
+            await clearStaleTombstone(incoming)
             if (apply) {
               const { id, ...withoutId } = incoming
               void id
@@ -169,6 +250,10 @@ export async function mergeBundle(
           : undefined
 
         for (const incoming of bundle.data[dep.tableName] as AnyRow[]) {
+          if (suppressedByTombstone(incoming)) {
+            summary.unchanged++ // deleted here more recently than that copy
+            continue
+          }
           const local =
             localByUid.get(incoming.uid) ??
             localByKey?.get(dep.naturalKey!(incoming))
@@ -194,6 +279,7 @@ export async function mergeBundle(
             }
           }
           summary.added++
+          await clearStaleTombstone(incoming)
           if (apply) {
             const { id, ...withoutId } = incoming
             void id

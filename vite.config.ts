@@ -38,5 +38,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['tests/setup.ts'],
+    // Sequential files: parallel workers intermittently starve user-event
+    // timing in the busiest UI tests (proven env-level, not an app bug —
+    // see DECISION_LOG 2026-06-12). Costs ~10s of wall clock, buys
+    // deterministic runs locally and on 2-core CI runners.
+    fileParallelism: false,
   },
 })
