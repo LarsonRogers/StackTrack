@@ -11,6 +11,6 @@
 | 5 | Daily notes — one free-text journal note per day | Record context alongside the day's data | done (2026-06-11) |
 | 6 | Metric graphs — any metric over time, with color-coded vertical markers at every stack change (added / changed / removed) | See trends and exactly when the stack changed | done (2026-06-11) |
 | 7 | Data export — download all data as JSON (full backup) or CSV (spreadsheets) | Back up data before anything risky; safety net for local-first storage | done (2026-06-12) |
-| 8 | Stack view sorting — user-selectable sort options on the Stack screen (e.g. by name, group, time, recently changed) | Order the stack list the way that suits how you scan it | pending |
+| 8 | Stack view sorting — user-selectable sort options on the Stack screen (e.g. by name, group, time, recently changed) | Order the stack list the way that suits how you scan it | awaiting demo |
 | 9 | Date navigation — pick a date (calendar) and view/edit that day's entries (checklist, metrics, notes, journal) | Review or correct any past day, not just today | pending |
 | 10 | Import / restore — load a JSON export back in, replacing current data, with safety snapshot | Move to a new device or recover from data loss using a backup file | done (2026-06-12) |

@@ -286,3 +286,21 @@
   perfectly"). Item 10 marked done.
 - State: Next: backlog item 8 (stack view sorting), task brief pending
   confirmation. Item 9 (date navigation) after.
+
+## [2026-06-12] Backlog item 8: stack view sorting — Claude Code
+- Did: `src/lib/stackView.ts`: StackSortMode (group|name|time|recent),
+  SORT_MODE_LABELS, sortByName, sortByEarliestTime (times[0] is earliest —
+  times stored sorted), latestEventDates + sortByRecentlyChanged (reads
+  stackEvents history). StackScreen: "Sort by" select (shown when 2+
+  items), group mode keeps sections, other modes render a flat list with
+  the group inline in the detail line; choice persisted to localStorage
+  key `stacktrack.stackSortMode` (UI preference, deliberately not in the
+  db or exports). Active-item row extracted to one renderActiveItem
+  helper (was duplicated). 5 new tests (4 helper units in new
+  tests/stackView.test.ts, 1 flow incl. persistence), 67 total.
+- Decisions: localStorage over db for sort preference — WHY: not health
+  data; keeps exports clean. "Recently changed" derives from stackEvents
+  (day-granular; same-day ties break by name) — WHY: the history table is
+  already the authoritative record of change.
+- State: Item 9 (date navigation) is the last remaining backlog item.
+- Watch: Demo gate OPEN for item 8 — full demo required.

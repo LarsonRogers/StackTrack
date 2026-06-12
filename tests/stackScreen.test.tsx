@@ -6,10 +6,12 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
+import { addItem } from '../src/db/stackRepository'
 
 beforeEach(async () => {
   await db.items.clear()
   await db.stackEvents.clear()
+  localStorage.clear()
 })
 
 afterEach(cleanup)
@@ -64,5 +66,35 @@ describe('Stack screen', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Please enter a name.',
     )
+  })
+
+  it('switches between grouped and flat sort modes and remembers the choice', async () => {
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['20:00'],
+      group: 'Testosterone Support',
+    })
+    await addItem({
+      name: 'Creatine',
+      kind: 'supplement',
+      dose: '5 g',
+      times: ['08:00'],
+      group: 'Performance',
+    })
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Stack' }))
+
+    // default: grouped sections
+    expect(await screen.findByText('Performance')).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Sort by'), 'time')
+
+    // flat list: section headers gone, group shown inline in the detail line
+    expect(screen.queryByRole('heading', { name: 'Performance' })).toBeNull()
+    expect(screen.getByText(/5 g · 08:00 · Performance/)).toBeInTheDocument()
+    expect(localStorage.getItem('stacktrack.stackSortMode')).toBe('time')
   })
 })

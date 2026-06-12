@@ -12,7 +12,16 @@ import {
   updateItem,
   type StackItemInput,
 } from '../db/stackRepository'
-import { distinctGroups, groupByPurpose } from '../lib/stackView'
+import {
+  distinctGroups,
+  groupByPurpose,
+  latestEventDates,
+  SORT_MODE_LABELS,
+  sortByEarliestTime,
+  sortByName,
+  sortByRecentlyChanged,
+  type StackSortMode,
+} from '../lib/stackView'
 import { exportAsCsv, exportAsJson } from '../lib/exportData'
 import { applyBundle, parseBundle } from '../lib/importData'
 import ItemForm from '../components/ItemForm'
@@ -23,6 +32,17 @@ type FormState =
   | { mode: 'add' }
   | { mode: 'edit'; item: StackItem }
 
+// Sort choice is a UI preference, not health data — localStorage, not the
+// db, and deliberately absent from exports.
+const SORT_STORAGE_KEY = 'stacktrack.stackSortMode'
+
+function readSavedSortMode(): StackSortMode {
+  const saved = localStorage.getItem(SORT_STORAGE_KEY)
+  return saved !== null && saved in SORT_MODE_LABELS
+    ? (saved as StackSortMode)
+    : 'group'
+}
+
 export default function StackScreen() {
   const activeItems = useLiveQuery(
     () => db.items.where('status').equals('active').toArray(),
@@ -32,8 +52,10 @@ export default function StackScreen() {
     () => db.items.where('status').equals('archived').toArray(),
     [],
   )
+  const stackEvents = useLiveQuery(() => db.stackEvents.toArray(), [])
   const [form, setForm] = useState<FormState>({ mode: 'closed' })
   const [showArchived, setShowArchived] = useState(false)
+  const [sortMode, setSortMode] = useState<StackSortMode>(readSavedSortMode)
   const [importStatus, setImportStatus] = useState<{
     kind: 'success' | 'error'
     text: string
@@ -95,6 +117,55 @@ export default function StackScreen() {
     if (confirmed) await archiveItem(item.id)
   }
 
+  // Flat ordering for the non-group sort modes.
+  function sortedFlatItems(): StackItem[] {
+    if (activeItems === undefined) return []
+    if (sortMode === 'name') return sortByName(activeItems)
+    if (sortMode === 'time') return sortByEarliestTime(activeItems)
+    return sortByRecentlyChanged(
+      activeItems,
+      latestEventDates(stackEvents ?? []),
+    )
+  }
+
+  // One active-item row. showGroup: flat sorts lose the section headers,
+  // so the group rides along in the detail line instead.
+  function renderActiveItem(item: StackItem, showGroup: boolean) {
+    return (
+      <li key={item.id} className="stack-item">
+        <div className="stack-item-info">
+          <span className="stack-item-name">
+            {item.name}
+            <span className={`kind-badge kind-badge-${item.kind}`}>
+              {item.kind === 'med' ? 'Med' : 'Supp'}
+            </span>
+          </span>
+          <span className="stack-item-detail">
+            {[item.dose, item.times.join(', '), showGroup ? item.group : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        </div>
+        <div className="stack-item-actions">
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => setForm({ mode: 'edit', item })}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => handleArchive(item)}
+          >
+            Archive
+          </button>
+        </div>
+      </li>
+    )
+  }
+
   if (form.mode !== 'closed') {
     return (
       <main className="screen">
@@ -127,45 +198,43 @@ export default function StackScreen() {
         + Add medication or supplement
       </button>
 
-      {groupByPurpose(activeItems).map((section) => (
-        <section key={section.group ?? '(ungrouped)'} className="stack-group">
-          <h2 className="stack-group-title">{section.group ?? 'No group'}</h2>
-          <ul className="stack-list">
-            {section.items.map((item) => (
-              <li key={item.id} className="stack-item">
-                <div className="stack-item-info">
-                  <span className="stack-item-name">
-                    {item.name}
-                    <span className={`kind-badge kind-badge-${item.kind}`}>
-                      {item.kind === 'med' ? 'Med' : 'Supp'}
-                    </span>
-                  </span>
-                  <span className="stack-item-detail">
-                    {item.dose && `${item.dose} · `}
-                    {item.times.join(', ')}
-                  </span>
-                </div>
-                <div className="stack-item-actions">
-                  <button
-                    type="button"
-                    className="button-subtle"
-                    onClick={() => setForm({ mode: 'edit', item })}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="button-subtle"
-                    onClick={() => handleArchive(item)}
-                  >
-                    Archive
-                  </button>
-                </div>
-              </li>
+      {activeItems.length > 1 && (
+        <div className="stack-sort">
+          <label htmlFor="stack-sort">Sort by</label>
+          <select
+            id="stack-sort"
+            value={sortMode}
+            onChange={(e) => {
+              const mode = e.target.value as StackSortMode
+              setSortMode(mode)
+              localStorage.setItem(SORT_STORAGE_KEY, mode)
+            }}
+          >
+            {(
+              Object.entries(SORT_MODE_LABELS) as [StackSortMode, string][]
+            ).map(([mode, label]) => (
+              <option key={mode} value={mode}>
+                {label}
+              </option>
             ))}
-          </ul>
-        </section>
-      ))}
+          </select>
+        </div>
+      )}
+
+      {sortMode === 'group' ? (
+        groupByPurpose(activeItems).map((section) => (
+          <section key={section.group ?? '(ungrouped)'} className="stack-group">
+            <h2 className="stack-group-title">{section.group ?? 'No group'}</h2>
+            <ul className="stack-list">
+              {section.items.map((item) => renderActiveItem(item, false))}
+            </ul>
+          </section>
+        ))
+      ) : (
+        <ul className="stack-list stack-list-flat">
+          {sortedFlatItems().map((item) => renderActiveItem(item, true))}
+        </ul>
+      )}
 
       {archivedItems.length > 0 && (
         <section className="stack-archived">
