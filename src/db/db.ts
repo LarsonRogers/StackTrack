@@ -34,14 +34,41 @@ export interface StackEvent {
   summary: string // human-readable, e.g. "dose: 25 mg → 50 mg"
 }
 
+// One item taken at one scheduled time on one date. Marking intake is NOT a
+// stack event — taking a pill is not a stack change and gets no graph marker.
+export interface IntakeRecord {
+  id: number
+  itemId: number
+  date: string // local calendar date 'YYYY-MM-DD'
+  time: string // the scheduled slot this checks off, 'HH:mm'
+  takenAt: string // ISO datetime of the actual tap
+}
+
+// A short note attached to one item for one day, e.g. "ran out of pills".
+// At most one per (itemId, date) — enforced by itemNoteRepository.
+export interface ItemNote {
+  id: number
+  itemId: number
+  date: string // local calendar date 'YYYY-MM-DD'
+  text: string
+}
+
 // EntityTable marks `id` as auto-incrementing — inserts omit it.
 export const db = new Dexie('stacktrack') as Dexie & {
   items: EntityTable<StackItem, 'id'>
   stackEvents: EntityTable<StackEvent, 'id'>
+  intakes: EntityTable<IntakeRecord, 'id'>
+  itemNotes: EntityTable<ItemNote, 'id'>
 }
 
 // Schema v1. Only indexed fields are listed; other fields are stored as-is.
 db.version(1).stores({
   items: '++id, status, group',
   stackEvents: '++id, itemId, date, type',
+})
+
+// Schema v2 (additive): daily tracking tables. Unchanged tables carry over.
+db.version(2).stores({
+  intakes: '++id, date, [itemId+date]',
+  itemNotes: '++id, date, [itemId+date]',
 })

@@ -117,3 +117,27 @@
   item from the previous entry.
 - State: Stack management live. Next: backlog item 3 (Today checklist),
   task brief pending confirmation.
+
+## [2026-06-11] Backlog item 3: Today checklist + per-item daily notes — Claude Code
+- Did: Schema v2 (additive) in `src/db/db.ts`: `intakes` (itemId, date,
+  time, takenAt) and `itemNotes` (itemId, date, text), both with
+  [itemId+date] compound index. New write paths:
+  `src/db/intakeRepository.ts` (markTaken/unmarkTaken — idempotent, slot-
+  scoped) and `src/db/itemNoteRepository.ts` (setItemNote — one per
+  item+date, empty text clears). `src/lib/todayView.ts` (buildTimeSections:
+  items → chronological time sections, item appears once per scheduled
+  time). `src/lib/dates.ts` + formatTime (locale-aware 'HH:mm' display).
+  Rewrote `src/screens/TodayScreen.tsx`: checklist with checkbox rows,
+  progress line, all-done state, inline per-item note editor (note shows on
+  all rows of the item; editor opens on the tapped row). Updated 2 skeleton
+  tests in `tests/app.test.tsx` (async render + new empty-state text).
+  10 new tests (7 repository, 3 UI flow), 24 total.
+- Decisions: Per-item daily note added to this task by user amendment
+  (2026-06-11) — distinct from the day-level journal note (item 5).
+  Marking intake records NO StackEvent — WHY: taking a pill is not a stack
+  change; graph markers must reflect stack changes only (recorded as a key
+  invariant in Part 2). Notes stored per (itemId, date), not per time slot
+  — WHY: "ran out of pills" describes the item's day, not one slot.
+- State: Daily check-in works end-to-end (mark/unmark, progress, notes,
+  per-day scoping). Items 4 (metrics) next.
+- Watch: Demo gate OPEN for item 3 — full demo required.

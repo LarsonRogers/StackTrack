@@ -663,8 +663,11 @@ src/App.tsx                view switching (Today | Stack) — no logic
 src/screens/               one file per view; read db via useLiveQuery,
                            write only through the repository
 src/components/            reusable presentation (NavBar, ItemForm) — no db access
-src/db/db.ts               Dexie schema + record types (items, stackEvents)
+src/db/db.ts               Dexie schema + record types (items, stackEvents,
+                           intakes, itemNotes)
 src/db/stackRepository.ts  the ONLY write path to the stack tables
+src/db/intakeRepository.ts daily taken/untaken writes (Today checklist)
+src/db/itemNoteRepository.ts  per-item daily notes (one per item+date)
 src/lib/                   pure helpers (dates, view shaping) — no state, no I/O
 tests/                     Vitest + RTL; fake-indexeddb simulates IndexedDB
 scripts/                   dev utilities (PWA icon generation)
@@ -685,6 +688,8 @@ Reads: screens query db directly (read-only) via useLiveQuery
 - Items are archived, never deleted — history must survive
 - StackEvent.itemName/group are snapshots at event time; never retro-fix them
   after a rename/regroup
-- StackEvent.date is the LOCAL calendar date (lib/dates.toIsoDate), not UTC
+- StackEvent.date is the LOCAL calendar date (lib/dates.toIsoDate), not UTC —
+  same rule for IntakeRecord.date and ItemNote.date
+- Taking/untaking an item (intakes) is NOT a stack event — no graph marker
 - No dosage advice or interaction-checking logic anywhere — permanently out of scope
 ```

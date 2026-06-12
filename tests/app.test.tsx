@@ -19,17 +19,18 @@ describe('formatTodayHeading', () => {
   })
 })
 
-describe('App walking skeleton', () => {
-  it('renders the StackTrack header', () => {
+describe('App shell', () => {
+  it('renders the StackTrack header', async () => {
     render(<App />)
     expect(
-      screen.getByRole('heading', { name: 'StackTrack' }),
+      // findBy: the Today screen renders only after its live queries resolve
+      await screen.findByRole('heading', { name: 'StackTrack' }),
     ).toBeInTheDocument()
   })
 
-  it('shows the empty Today checklist state', () => {
+  it('shows the empty Today checklist state when the stack is empty', async () => {
     render(<App />)
-    const checklist = screen.getByRole('region', {
+    const checklist = await screen.findByRole('region', {
       name: "Today's checklist",
     })
     expect(checklist).toHaveTextContent('your stack is empty')
