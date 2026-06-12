@@ -3,14 +3,14 @@
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **As of update:** 2026-06-12
-**Last completed:** Item 12a — sync foundations (uid + updatedAt on every record, schema v5, backfill migration). Committed locally, NOT pushed.
-**Confirmed next task:** HOLD: user must export JSON backups on PC + phone, then push (auto-deploys the v5 migration). Then item 12b — merge-import "Sync from file" flow (needs task brief)
-**Backlog position:** items 1–11 done; 12a done/12b next; 13 (E2E sync backend — required before shipping to users) queued (see BACKLOG.md)
+**Last completed:** Item 12b — "Sync from file" merge import (code done, validations green; demo gate awaiting user confirmation)
+**Confirmed next task:** Close item 12 demo gate (real two-device merge), then item 14 — README rewrite (confirmed by user, brief pending). Item 13 (E2E sync backend) remains the ship-to-users precondition.
+**Backlog position:** items 1–11 done; 12 awaiting demo; 14 (README) next; 13 queued (see BACKLOG.md)
 
 **Open watch items:**
-- DO NOT PUSH until user confirms JSON backups on both devices (v5 device DBs cannot downgrade; backups are the rollback path).
-- Root README.md still describes the starter pack, not StackTrack.
-- Live app: https://stacktrack-ea9.pages.dev (still serving pre-v5 build until push).
+- Demo gate OPEN for item 12: user must run a real cross-device merge.
+- Root README.md still describes the starter pack (item 14, confirmed).
+- Live app: https://stacktrack-ea9.pages.dev (v5 migration deployed and verified).
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders — wiring it needs user confirmation (CI-change policy).
 - Root README.md still describes the starter pack, not StackTrack.
 

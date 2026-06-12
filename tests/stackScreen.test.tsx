@@ -1,7 +1,7 @@
 // tests/stackScreen.test.tsx — UI flow tests for the Stack screen: the user
 // can navigate to it, add an item through the form, and see it listed under
 // its group. Persistence details are covered by stackRepository.test.ts.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
@@ -96,5 +96,50 @@ describe('Stack screen', () => {
     expect(screen.queryByRole('heading', { name: 'Performance' })).toBeNull()
     expect(screen.getByText(/5 g · 08:00 · Performance/)).toBeInTheDocument()
     expect(localStorage.getItem('stacktrack.stackSortMode')).toBe('time')
+  })
+
+  it('merges a sync file from another device', async () => {
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+      group: 'Testosterone Support',
+    })
+    const phoneBundle = {
+      app: 'StackTrack',
+      exportedAt: '2026-06-12T10:00:00.000Z',
+      schemaVersion: 5,
+      data: {
+        items: [
+          {
+            id: 1,
+            uid: 'phone-item-uid',
+            name: 'Magnesium',
+            kind: 'supplement',
+            dose: '400 mg',
+            times: ['20:00'],
+            status: 'active',
+            createdAt: '2026-06-10T08:00:00.000Z',
+            updatedAt: '2026-06-10T08:00:00.000Z',
+          },
+        ],
+      },
+    }
+    const file = new File([JSON.stringify(phoneBundle)], 'sync.json', {
+      type: 'application/json',
+    })
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Stack' }))
+    await user.upload(await screen.findByLabelText('Sync from file'), file)
+
+    expect(
+      await screen.findByText('Synced: 1 added, 0 updated.'),
+    ).toBeInTheDocument()
+    expect(await screen.findByText('Magnesium')).toBeInTheDocument()
+    expect(screen.getByText('Zinc')).toBeInTheDocument() // local data survives
   })
 })

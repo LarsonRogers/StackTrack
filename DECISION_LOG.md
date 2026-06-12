@@ -451,3 +451,29 @@
   user must export JSON backups on PC + phone first (v5 device DBs cannot
   downgrade; backup is the rollback path). 12b (merge import) next.
 - Watch: HOLD push until user confirms backups on both devices.
+
+## [2026-06-12] Item 12b: "Sync from file" merge import — Claude Code
+- Did: User confirmed backups; 12a pushed and CI-deployed (verified: 4th
+  production deployment). `src/lib/mergeData.ts`: mergeBundle(bundle,
+  apply) — dry-run preview + atomic apply; parents (items/metrics) match
+  by uid with newest-updatedAt-wins; stackEvents union by uid; singleton
+  tables (intakes/itemNotes/metricEntries/dayNotes) match by uid THEN
+  natural key (itemUid+date[+time], dayNotes by date) so independently-
+  created same-day records converge instead of duplicating (local id/uid
+  kept, newest payload taken); new records added with fresh local ids and
+  numeric refs rewired via uid maps; orphans (unknown parent uid) skipped
+  and counted, never invented; requires schemaVersion ≥ 5 (replace-import
+  still accepts older files). StackScreen: "Sync from file" button +
+  file input; flow = parse → dry-run → confirm with add/update counts →
+  apply → "Synced: X added, Y updated" status. Backup-section copy and
+  RUNBOOK phone section updated (incl. the deletion-resurrection quirk).
+  8 new tests (7 engine incl. id-collision rewiring, convergence, no-
+  delete, dry-run purity, self-merge no-op; 1 UI flow), 83 total.
+- Decisions: Merge never deletes; tombstones deferred to item 13 — WHY:
+  per confirmed brief; standard interim-file-sync trade-off, documented
+  to the user in RUNBOOK. Natural-key matches keep the LOCAL uid — WHY:
+  keeps later merges between the same device pair stable.
+- State: Full interim sync loop usable via the user's own cloud drive.
+  Queued item 14 (README rewrite, user request). Item 13 (E2E backend)
+  remains the ship-to-users precondition.
+- Watch: Demo gate OPEN for item 12 — full demo (real two-device merge).

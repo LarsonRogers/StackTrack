@@ -45,8 +45,13 @@ Press `Ctrl+C` in the terminal where it's running.
   "Install app" banner, or menu (⋮) → "Add to Home screen" → Install.
 - iPhone (must use Safari): open the URL → Share button → "Add to Home
   Screen" → Add.
-- The phone copy starts EMPTY. To move data: Stack tab → Export JSON on the
-  old device, then Stack tab → Import backup on the phone.
+- The phone copy starts EMPTY. To move data the first time: Stack tab →
+  Export JSON on the old device, then Stack tab → Import backup on the phone.
+- To carry changes between devices afterwards: Export JSON on one device
+  (drop it in your cloud-drive folder), then Stack tab → "Sync from file"
+  on the other. Sync MERGES (adds + newest-wins updates, never deletes);
+  "Import backup" REPLACES. One quirk to know: a check you removed on one
+  device can reappear after a sync if the other device's file still has it.
 
 ## Take it down
 1. `npx wrangler pages project delete stacktrack` (run from the project

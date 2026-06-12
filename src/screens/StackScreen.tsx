@@ -24,6 +24,7 @@ import {
 } from '../lib/stackView'
 import { exportAsCsv, exportAsJson } from '../lib/exportData'
 import { applyBundle, parseBundle } from '../lib/importData'
+import { mergeBundle } from '../lib/mergeData'
 import ItemForm from '../components/ItemForm'
 
 // Form state: closed, adding new, or editing a specific item.
@@ -61,6 +62,7 @@ export default function StackScreen() {
     text: string
   } | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
+  const syncInputRef = useRef<HTMLInputElement>(null)
 
   // First render before IndexedDB answers — avoid an "empty stack" flash
   if (activeItems === undefined || archivedItems === undefined) return null
@@ -97,6 +99,41 @@ export default function StackScreen() {
           error instanceof Error
             ? error.message
             : 'Import failed — your data was not changed.',
+      })
+    }
+  }
+
+  // Sync flow: validate file → dry-run merge for the preview numbers →
+  // confirm → apply atomically (lib/mergeData). Nothing is ever deleted.
+  async function handleSyncFile(file: File) {
+    try {
+      const bundle = parseBundle(await file.text())
+      const preview = await mergeBundle(bundle, false)
+      const backupDate = bundle.exportedAt
+        ? new Date(bundle.exportedAt).toLocaleDateString()
+        : 'an unknown date'
+      const confirmed = window.confirm(
+        `Merge the file from ${backupDate} into this device?\n\n` +
+          `This adds ${preview.added} and updates ${preview.updated} ` +
+          `record${preview.updated === 1 ? '' : 's'} — nothing is deleted.`,
+      )
+      if (!confirmed) return
+      const result = await mergeBundle(bundle, true)
+      setImportStatus({
+        kind: 'success',
+        text:
+          `Synced: ${result.added} added, ${result.updated} updated.` +
+          (result.skipped > 0
+            ? ` ${result.skipped} skipped (unknown parent).`
+            : ''),
+      })
+    } catch (error) {
+      setImportStatus({
+        kind: 'error',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Sync failed — your data was not changed.',
       })
     }
   }
@@ -273,7 +310,9 @@ export default function StackScreen() {
         <h2 className="today-section-title">Backup</h2>
         <p className="screen-note">
           Your data lives only on this device. Download a copy now and then —
-          JSON is the full backup; CSV opens in spreadsheets.
+          JSON is the full backup; CSV opens in spreadsheets. To carry changes
+          between your devices, export on one and "Sync from file" on the other
+          (merges, never deletes; "Import backup" fully replaces).
         </p>
         <div className="stack-export-actions">
           <button
@@ -290,6 +329,25 @@ export default function StackScreen() {
           >
             Export CSV
           </button>
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => syncInputRef.current?.click()}
+          >
+            Sync from file
+          </button>
+          <input
+            ref={syncInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="visually-hidden"
+            aria-label="Sync from file"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (file) handleSyncFile(file)
+            }}
+          />
           <button
             type="button"
             className="button-subtle"
