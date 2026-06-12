@@ -6,11 +6,13 @@ import NavBar, { type View } from './components/NavBar'
 import TodayScreen from './screens/TodayScreen'
 import StackScreen from './screens/StackScreen'
 import MetricsScreen from './screens/MetricsScreen'
+import GraphsScreen from './screens/GraphsScreen'
 
 const SCREENS: Record<View, React.ComponentType> = {
   today: TodayScreen,
   stack: StackScreen,
   metrics: MetricsScreen,
+  graphs: GraphsScreen,
 }
 
 export default function App() {

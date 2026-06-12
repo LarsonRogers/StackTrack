@@ -672,7 +672,10 @@ src/db/metricRepository.ts metric definitions (kind immutable after creation)
 src/db/metricEntryRepository.ts  daily metric values (one per metric+date;
                            validates rating range at the boundary)
 src/db/dayNoteRepository.ts  day-level journal (one note per date)
-src/lib/                   pure helpers (dates, view shaping) — no state, no I/O
+src/lib/                   pure helpers (dates, view shaping, graph series/
+                           marker collapsing) — no state, no I/O
+src/screens/GraphsScreen.tsx  read-only consumer of metricEntries +
+                           stackEvents (Recharts; markers = stack changes)
 tests/                     Vitest + RTL; fake-indexeddb simulates IndexedDB
 scripts/                   dev utilities (PWA icon generation)
 ```

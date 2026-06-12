@@ -205,3 +205,26 @@
   view/edit past days' entries.
 - State: Next: backlog item 6 (metric graphs with stack-change markers),
   task brief pending confirmation.
+
+## [2026-06-11] Backlog item 6: metric graphs with stack-change markers — Claude Code
+- Did: Installed recharts 3.8.1 (approved with original stack).
+  `src/lib/graphView.ts`: rangeStartDate (30d/90d/all), buildSeries
+  (filter+sort to SeriesPoints with local-noon timestamps), collapseEvents
+  (same-day+same-type+same-group merge → "Started <group> (N items)";
+  ungrouped/solo events keep per-item labels: Started/Stopped <item>,
+  "<item>: <summary>" for changes), EVENT_COLORS (added green #16a34a,
+  changed amber #d97706, removed red #dc2626).
+  `src/screens/GraphsScreen.tsx`: metric selector (archived included,
+  labeled), range buttons, Recharts LineChart on a numeric time axis
+  (markers render on dates with no logged value), ReferenceLine per marker,
+  rating metrics fixed 1–10 Y domain, legend list of changes below the
+  chart. 4th NavBar tab + App route. 11 new tests (8 pure helpers, 3
+  screen flow), 50 total.
+- Decisions: Numeric time axis instead of category axis — WHY: Recharts
+  ReferenceLines must land on dates that have no data point. Chart pixel
+  output not asserted in jsdom (no layout) — pure helpers carry the logic
+  coverage; visual correctness is the demo gate's job.
+- State: Core payoff feature complete. Bundle now ~650 KB precache
+  (recharts); code-splitting is a future nicety, not a problem at this
+  scale. Items 7 (export), 8 (sorting), 9 (date navigation) remain.
+- Watch: Demo gate OPEN for item 6 — full demo required.
