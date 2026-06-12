@@ -3,6 +3,7 @@
 // A metric's kind is fixed at creation — changing it would corrupt the
 // meaning of already-logged values.
 import { db, type MetricKind } from './db'
+import { newUid, nowIso } from '../lib/identity'
 
 export interface MetricInput {
   name: string
@@ -17,12 +18,15 @@ export interface MetricUpdate {
 }
 
 export async function addMetric(input: MetricInput): Promise<number> {
+  const stamp = nowIso()
   return db.metrics.add({
+    uid: newUid(),
     name: input.name.trim(),
     kind: input.kind,
     unit: input.unit?.trim() || undefined,
     status: 'active',
-    createdAt: new Date().toISOString(),
+    createdAt: stamp,
+    updatedAt: stamp,
   })
 }
 
@@ -33,15 +37,16 @@ export async function updateMetric(
   await db.metrics.update(id, {
     name: input.name.trim(),
     unit: input.unit?.trim() || undefined,
+    updatedAt: nowIso(),
   })
 }
 
 // Archives a metric. Its logged entries stay — history must survive.
 export async function archiveMetric(id: number): Promise<void> {
-  await db.metrics.update(id, { status: 'archived' })
+  await db.metrics.update(id, { status: 'archived', updatedAt: nowIso() })
 }
 
 // Restores an archived metric.
 export async function unarchiveMetric(id: number): Promise<void> {
-  await db.metrics.update(id, { status: 'active' })
+  await db.metrics.update(id, { status: 'active', updatedAt: nowIso() })
 }

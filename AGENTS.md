@@ -697,6 +697,9 @@ Reads: screens query db directly (read-only) via useLiveQuery
   after a rename/regroup
 - StackEvent.date is the LOCAL calendar date (lib/dates.toIsoDate), not UTC —
   same rule for IntakeRecord.date and ItemNote.date
+- Every record carries uid (device-independent, lib/identity.newUid) and
+  updatedAt; every repository write MUST set/refresh them. Cross-table refs
+  exist twice: numeric id (local queries) and uid (merge-safe) — keep both
 - Taking/untaking an item (intakes) is NOT a stack event — no graph marker;
   same for logging metric values
 - A metric's kind (rating | number) is immutable after creation — changing

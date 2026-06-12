@@ -3,14 +3,14 @@
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **As of update:** 2026-06-12
-**Last completed:** Backlog item 11 — GitHub repo (private, LarsonRogers/StackTrack) + CI auto-publish to Cloudflare Pages (awaiting first green Actions run)
-**Confirmed next task:** Verify first CI run is green (user watches repo → Actions), then item 12 — interim cloud-drive file sync (needs task brief)
-**Backlog position:** items 1–10 done; 11 awaiting CI verification; 12 (interim sync) next; 13 (E2E sync backend — required before shipping to users) queued (see BACKLOG.md)
+**Last completed:** Item 12a — sync foundations (uid + updatedAt on every record, schema v5, backfill migration). Committed locally, NOT pushed.
+**Confirmed next task:** HOLD: user must export JSON backups on PC + phone, then push (auto-deploys the v5 migration). Then item 12b — merge-import "Sync from file" flow (needs task brief)
+**Backlog position:** items 1–11 done; 12a done/12b next; 13 (E2E sync backend — required before shipping to users) queued (see BACKLOG.md)
 
 **Open watch items:**
-- First GitHub Actions run: user must confirm green + auto-deploy worked.
+- DO NOT PUSH until user confirms JSON backups on both devices (v5 device DBs cannot downgrade; backups are the rollback path).
 - Root README.md still describes the starter pack, not StackTrack.
-- MVP fully shipped: live at https://stacktrack-ea9.pages.dev, installed on user's phone.
+- Live app: https://stacktrack-ea9.pages.dev (still serving pre-v5 build until push).
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders — wiring it needs user confirmation (CI-change policy).
 - Root README.md still describes the starter pack, not StackTrack.
 

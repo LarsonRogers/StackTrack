@@ -13,7 +13,15 @@ import {
 const TODAY = new Date(2026, 5, 11) // June 11 2026
 
 function entry(date: string, value: number): MetricEntry {
-  return { id: 0, metricId: 1, date, value }
+  return {
+    id: 0,
+    uid: `entry-${date}`,
+    metricId: 1,
+    metricUid: 'metric-1',
+    date,
+    value,
+    updatedAt: '',
+  }
 }
 
 let nextItemId = 1
@@ -25,7 +33,19 @@ function event(
   group?: string,
   summary = '',
 ): StackEvent {
-  return { id: 0, itemId: nextItemId++, date, type, itemName, group, summary }
+  const itemId = nextItemId++
+  return {
+    id: 0,
+    uid: `event-${itemId}-${date}`,
+    itemId,
+    itemUid: `item-${itemId}`,
+    date,
+    type,
+    itemName,
+    group,
+    summary,
+    updatedAt: '',
+  }
 }
 
 describe('rangeStartDate', () => {

@@ -3,6 +3,7 @@
 // values are validated against the metric's kind here, at the boundary,
 // so bad values can never reach the graphs.
 import { db } from './db'
+import { newUid, nowIso } from '../lib/identity'
 
 // Logs (or replaces) the value for a metric on a date.
 // Rating metrics accept integers 1–10 only; number metrics any finite number.
@@ -31,9 +32,19 @@ export async function setMetricEntry(
       .equals([metricId, date])
       .first()
     if (existing) {
-      await db.metricEntries.update(existing.id, { value })
+      await db.metricEntries.update(existing.id, {
+        value,
+        updatedAt: nowIso(),
+      })
     } else {
-      await db.metricEntries.add({ metricId, date, value })
+      await db.metricEntries.add({
+        uid: newUid(),
+        metricId,
+        metricUid: metric.uid,
+        date,
+        value,
+        updatedAt: nowIso(),
+      })
     }
   })
 }

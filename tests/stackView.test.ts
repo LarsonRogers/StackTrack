@@ -13,8 +13,10 @@ import {
 let nextId = 1
 
 function item(name: string, times: string[], group?: string): StackItem {
+  const id = nextId++
   return {
-    id: nextId++,
+    id,
+    uid: `item-${id}`,
     name,
     kind: 'supplement',
     dose: '',
@@ -22,6 +24,7 @@ function item(name: string, times: string[], group?: string): StackItem {
     group,
     status: 'active',
     createdAt: '',
+    updatedAt: '',
   }
 }
 
@@ -53,31 +56,27 @@ describe('latestEventDates / sortByRecentlyChanged', () => {
   it('keeps the newest event date per item and sorts newest first', () => {
     const a = item('Zinc', [])
     const b = item('Boron', [])
+    const stackEvent = (
+      id: number,
+      itemId: number,
+      date: string,
+      type: StackEvent['type'],
+      itemName: string,
+    ): StackEvent => ({
+      id,
+      uid: `event-${id}`,
+      itemId,
+      itemUid: `item-${itemId}`,
+      date,
+      type,
+      itemName,
+      summary: '',
+      updatedAt: '',
+    })
     const events: StackEvent[] = [
-      {
-        id: 1,
-        itemId: a.id,
-        date: '2026-06-01',
-        type: 'added',
-        itemName: 'Zinc',
-        summary: '',
-      },
-      {
-        id: 2,
-        itemId: a.id,
-        date: '2026-06-10',
-        type: 'changed',
-        itemName: 'Zinc',
-        summary: '',
-      },
-      {
-        id: 3,
-        itemId: b.id,
-        date: '2026-06-05',
-        type: 'added',
-        itemName: 'Boron',
-        summary: '',
-      },
+      stackEvent(1, a.id, '2026-06-01', 'added', 'Zinc'),
+      stackEvent(2, a.id, '2026-06-10', 'changed', 'Zinc'),
+      stackEvent(3, b.id, '2026-06-05', 'added', 'Boron'),
     ]
     const latest = latestEventDates(events)
     expect(latest.get(a.id)).toBe('2026-06-10')

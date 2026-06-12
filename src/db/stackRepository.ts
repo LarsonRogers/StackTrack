@@ -4,6 +4,7 @@
 // it) can never silently drift from the data. Reads may query db directly.
 import { db, type ItemKind, type StackItem } from './db'
 import { toIsoDate } from '../lib/dates'
+import { newUid, nowIso } from '../lib/identity'
 
 // What the user supplies when creating or editing an item.
 export interface StackItemInput {
@@ -54,12 +55,16 @@ export function buildChangeSummary(
 export async function addItem(input: StackItemInput): Promise<number> {
   const item = normalizeInput(input)
   return db.transaction('rw', db.items, db.stackEvents, async () => {
+    const uid = newUid()
+    const stamp = nowIso()
     const id = await db.items.add({
       ...item,
+      uid,
       status: 'active',
-      createdAt: new Date().toISOString(),
+      createdAt: stamp,
+      updatedAt: stamp,
     })
-    await recordEvent(id, item, 'added', 'added to stack')
+    await recordEvent(id, uid, item, 'added', 'added to stack')
     return id
   })
 }
@@ -84,8 +89,8 @@ export async function updateItem(
     if (summary === null) return
     // put (full replace) instead of update: Dexie's UpdateSpec typing does
     // not accept plain array properties like `times`
-    await db.items.put({ ...existing, ...after })
-    await recordEvent(id, after, 'changed', summary)
+    await db.items.put({ ...existing, ...after, updatedAt: nowIso() })
+    await recordEvent(id, existing.uid, after, 'changed', summary)
   })
 }
 
@@ -93,8 +98,8 @@ export async function updateItem(
 export async function archiveItem(id: number): Promise<void> {
   await db.transaction('rw', db.items, db.stackEvents, async () => {
     const item = await mustGetItem(id)
-    await db.items.update(id, { status: 'archived' })
-    await recordEvent(id, item, 'removed', 'removed from stack')
+    await db.items.update(id, { status: 'archived', updatedAt: nowIso() })
+    await recordEvent(id, item.uid, item, 'removed', 'removed from stack')
   })
 }
 
@@ -102,8 +107,8 @@ export async function archiveItem(id: number): Promise<void> {
 export async function unarchiveItem(id: number): Promise<void> {
   await db.transaction('rw', db.items, db.stackEvents, async () => {
     const item = await mustGetItem(id)
-    await db.items.update(id, { status: 'active' })
-    await recordEvent(id, item, 'added', 're-added to stack')
+    await db.items.update(id, { status: 'active', updatedAt: nowIso() })
+    await recordEvent(id, item.uid, item, 'added', 're-added to stack')
   })
 }
 
@@ -116,16 +121,20 @@ async function mustGetItem(id: number): Promise<StackItem> {
 // Snapshot name/group onto the event so history survives later renames.
 async function recordEvent(
   itemId: number,
+  itemUid: string,
   snapshot: Pick<StackItemInput, 'name' | 'group'>,
   type: 'added' | 'changed' | 'removed',
   summary: string,
 ): Promise<void> {
   await db.stackEvents.add({
+    uid: newUid(),
     itemId,
+    itemUid,
     date: toIsoDate(new Date()),
     type,
     itemName: snapshot.name,
     group: snapshot.group,
     summary,
+    updatedAt: nowIso(),
   })
 }

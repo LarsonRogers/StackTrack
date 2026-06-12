@@ -2,6 +2,7 @@
 // journal. One note per date: setting replaces, empty text clears (the UI
 // offers no separate delete action — same convention as item notes).
 import { db } from './db'
+import { newUid, nowIso } from '../lib/identity'
 
 export async function setDayNote(date: string, text: string): Promise<void> {
   const trimmed = text.trim()
@@ -14,9 +15,17 @@ export async function setDayNote(date: string, text: string): Promise<void> {
     }
 
     if (existing) {
-      await db.dayNotes.update(existing.id, { text: trimmed })
+      await db.dayNotes.update(existing.id, {
+        text: trimmed,
+        updatedAt: nowIso(),
+      })
     } else {
-      await db.dayNotes.add({ date, text: trimmed })
+      await db.dayNotes.add({
+        uid: newUid(),
+        date,
+        text: trimmed,
+        updatedAt: nowIso(),
+      })
     }
   })
 }

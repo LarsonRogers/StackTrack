@@ -427,3 +427,27 @@
 - State: Next: item 12 (interim cloud-drive file sync) — task brief
   pending confirmation. Brief will split foundations (device-independent
   record identity) from the merge-import flow.
+
+## [2026-06-12] Item 12a: sync foundations (uid + updatedAt, schema v5) — Claude Code
+- Did: `src/lib/identity.ts` (newUid via crypto.randomUUID, nowIso).
+  Schema v5 in `src/db/db.ts`: every table gains unique `&uid` index;
+  every interface gains uid + updatedAt; dependents gain uid references
+  (StackEvent.itemUid, IntakeRecord.itemUid, ItemNote.itemUid,
+  MetricEntry.metricUid). `backfillIdentity(host)` exported — fills
+  uid/updatedAt (items/metrics first, from createdAt; intakes from
+  takenAt) and wires uid refs from numeric ids; idempotent; used by BOTH
+  the v5 .upgrade() and applyBundle (pre-v5 backups import clean). All
+  five repositories now set uid + stamp updatedAt on every write.
+  Export schemaVersion now 5. 5 new tests in tests/syncIdentity.test.ts
+  (repo identity writes, uid stability + updatedAt refresh on edit,
+  legacy backfill incl. reference wiring, idempotence, v4-bundle import);
+  graphView/stackView test helpers updated for required fields. 75 total.
+- Decisions: Keep numeric auto-increment PKs, ADD uid alongside — WHY:
+  Dexie cannot change a table's primary key across versions; dual-key
+  keeps all existing indexes/queries intact while uid carries cross-device
+  identity. updatedAt backfill uses createdAt/takenAt where available —
+  WHY: closest honest approximation of last change for legacy rows.
+- State: Committed locally, NOT pushed — push auto-deploys the migration;
+  user must export JSON backups on PC + phone first (v5 device DBs cannot
+  downgrade; backup is the rollback path). 12b (merge import) next.
+- Watch: HOLD push until user confirms backups on both devices.

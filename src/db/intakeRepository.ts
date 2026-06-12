@@ -1,6 +1,7 @@
 // src/db/intakeRepository.ts — the only write path for intake records
 // (the Today checklist's taken/not-taken state). Reads may query db directly.
 import { db } from './db'
+import { newUid, nowIso } from '../lib/identity'
 
 // Marks one scheduled slot taken. Already marked = no-op (no duplicates).
 export async function markTaken(
@@ -8,14 +9,19 @@ export async function markTaken(
   date: string,
   time: string,
 ): Promise<void> {
-  await db.transaction('rw', db.intakes, async () => {
+  await db.transaction('rw', db.intakes, db.items, async () => {
     const existing = await findIntake(itemId, date, time)
     if (existing) return
+    const item = await db.items.get(itemId)
+    const stamp = nowIso()
     await db.intakes.add({
+      uid: newUid(),
       itemId,
+      itemUid: item?.uid ?? '',
       date,
       time,
-      takenAt: new Date().toISOString(),
+      takenAt: stamp,
+      updatedAt: stamp,
     })
   })
 }
