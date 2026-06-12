@@ -42,5 +42,7 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Inherited starter-pack git history (kept as local backup; safe to delete)
-.git_starter_pack_backup/
+# Vite / TypeScript / PWA artifacts
+*.local
+*.tsbuildinfo
+dev-dist/

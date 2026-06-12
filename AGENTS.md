@@ -557,7 +557,6 @@ above, run it after each edit and fix errors before committing.
 ├── CLAUDE.md                  # Claude Code import shim
 ├── opencode.json              # OpenCode permissions (enforcement layer)
 ├── protocols/                 # On-demand procedures
-├── pack-dev/                  # starter-pack development history — not app code
 ├── BACKLOG.md                 # ordered feature backlog (agent-maintained)
 ├── DECISION_LOG.md            # append-only task log
 ├── HANDOFF.md                 # current-state snapshot (overwritten per task)
@@ -636,7 +635,6 @@ schema or config change.
 | `README.md` | Human-facing pack documentation |
 | `SETUP.md` | Human bootstrap walkthrough |
 | `BACKLOG.md` | Ordered MVP feature list — top item is next work |
-| `pack-dev/` | Starter-pack development files — unrelated to the app; do not treat as project source |
 
 ## Pattern Registry
 <!-- Agent-maintained. HARD CAP: 40 lines. Check here before implementing
