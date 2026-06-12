@@ -228,3 +228,9 @@
   (recharts); code-splitting is a future nicety, not a problem at this
   scale. Items 7 (export), 8 (sorting), 9 (date navigation) remain.
 - Watch: Demo gate OPEN for item 6 — full demo required.
+
+## [2026-06-11] Backlog item 6 demo confirmed — Claude Code
+- Did: User confirmed the graph, markers, and collapsed change legend
+  (FULL demo). Item 6 marked done.
+- State: Next: backlog item 7 (data export), task brief pending
+  confirmation.
