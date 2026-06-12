@@ -1,11 +1,12 @@
 // src/components/NavBar.tsx — bottom tab bar for switching top-level views.
 // Pure presentation: receives the active view and reports taps; App owns
 // which view is shown.
-export type View = 'today' | 'stack'
+export type View = 'today' | 'stack' | 'metrics'
 
 const TABS: { view: View; label: string }[] = [
   { view: 'today', label: 'Today' },
   { view: 'stack', label: 'Stack' },
+  { view: 'metrics', label: 'Metrics' },
 ]
 
 interface NavBarProps {

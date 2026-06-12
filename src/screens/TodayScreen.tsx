@@ -10,6 +10,7 @@ import { markTaken, unmarkTaken } from '../db/intakeRepository'
 import { setItemNote } from '../db/itemNoteRepository'
 import { formatTime, formatTodayHeading, toIsoDate } from '../lib/dates'
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
+import MetricLogger from '../components/MetricLogger'
 
 export default function TodayScreen() {
   const today = toIsoDate(new Date())
@@ -25,6 +26,14 @@ export default function TodayScreen() {
     () => db.itemNotes.where('date').equals(today).toArray(),
     [today],
   )
+  const metrics = useLiveQuery(
+    () => db.metrics.where('status').equals('active').toArray(),
+    [],
+  )
+  const metricEntries = useLiveQuery(
+    () => db.metricEntries.where('date').equals(today).toArray(),
+    [today],
+  )
   // Which item's note is being edited (keyed to the row that opened it,
   // since an item can appear at several times), and the in-progress text
   const [noteEditor, setNoteEditor] = useState<{
@@ -33,7 +42,13 @@ export default function TodayScreen() {
     draft: string
   } | null>(null)
 
-  if (items === undefined || intakes === undefined || notes === undefined)
+  if (
+    items === undefined ||
+    intakes === undefined ||
+    notes === undefined ||
+    metrics === undefined ||
+    metricEntries === undefined
+  )
     return null
 
   const sections = buildTimeSections(items)
@@ -191,6 +206,24 @@ export default function TodayScreen() {
             </section>
           ))}
         </>
+      )}
+
+      {metrics.length > 0 && (
+        <section className="today-section" aria-label="Daily metrics">
+          <h2 className="today-section-title">Daily metrics</h2>
+          <ul className="today-list">
+            {metrics
+              .toSorted((a, b) => a.name.localeCompare(b.name))
+              .map((metric) => (
+                <MetricLogger
+                  key={metric.id}
+                  metric={metric}
+                  entry={metricEntries.find((e) => e.metricId === metric.id)}
+                  date={today}
+                />
+              ))}
+          </ul>
+        </section>
       )}
     </main>
   )

@@ -148,3 +148,25 @@
   stack views.
 - State: Next: backlog item 4 (custom metrics), task brief pending
   confirmation.
+
+## [2026-06-11] Backlog item 4: custom metrics — Claude Code
+- Did: Schema v3 (additive) in `src/db/db.ts`: `metrics` (name, kind
+  rating|number, unit?, status) and `metricEntries` (metricId, date, value;
+  [metricId+date] index). `src/db/metricRepository.ts` (add/update/archive/
+  unarchive; MAX_ACTIVE_METRICS=10 enforced in-transaction; kind immutable
+  after creation). `src/db/metricEntryRepository.ts` (setMetricEntry upsert
+  — one per metric+date, validates rating 1–10 integer at the boundary;
+  clearMetricEntry). UI: `src/screens/MetricsScreen.tsx` + `src/components/
+  MetricForm.tsx` (definitions tab; kind radios disabled in edit mode; cap
+  messaging), `src/components/MetricLogger.tsx` (Today rows: 1–10 tap
+  buttons with tap-again-to-clear; number input with save/clear-on-empty),
+  Today screen "Daily metrics" section, third NavBar tab, App routed via a
+  Record lookup. 12 new tests (9 repository, 3 UI), 36 total.
+- Decisions: Metric kind immutable after creation — WHY: switching
+  rating↔number corrupts the meaning of logged history (recorded as Part 2
+  invariant). Logging values records NO StackEvent — same reasoning as
+  intakes. Metric logging lives on Today screen, definitions on their own
+  tab — WHY: the daily check-in stays one stop.
+- State: Define-and-log loop complete; values per local day, replace on
+  re-log. Items 5 (daily journal note) and 6 (graphs) remain.
+- Watch: Demo gate OPEN for item 4 — full demo required.
