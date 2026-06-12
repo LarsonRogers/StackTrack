@@ -110,3 +110,10 @@
   screen still skeleton (item 3 next). Validations all green.
 - Watch: Demo gate OPEN for item 2 — full demo required. Restore
   (unarchive) has no window.confirm — intentional, it's non-destructive.
+
+## [2026-06-11] Backlog item 2 demo confirmed — Claude Code
+- Did: User confirmed the full add/edit/archive/persist flow in the browser
+  (FULL demo). Backlog item 2 marked done. Resolves the demo-gate watch
+  item from the previous entry.
+- State: Stack management live. Next: backlog item 3 (Today checklist),
+  task brief pending confirmation.
