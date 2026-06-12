@@ -198,3 +198,10 @@
 - State: Full daily check-in now: checklist + per-item notes + metrics +
   journal. Item 6 (graphs with stack-change markers) is next.
 - Watch: Demo gate OPEN for item 5 — full demo required.
+
+## [2026-06-11] Backlog item 5 demo confirmed; date navigation queued — Claude Code
+- Did: User confirmed the journal flow (FULL demo). Item 5 marked done.
+  Added backlog item 9 at user request: calendar date navigation to
+  view/edit past days' entries.
+- State: Next: backlog item 6 (metric graphs with stack-change markers),
+  task brief pending confirmation.
