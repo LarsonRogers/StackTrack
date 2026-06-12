@@ -31,3 +31,21 @@
 - Watch: Local-first = data lost if browser storage cleared before export
   (backlog item 7) lands — keep item 7 early. Reminders/notifications are
   the expected first post-MVP request.
+
+## [2026-06-11] Detach from starter-pack repo; fresh git history — Claude Code
+- Did: Folder had been copied from the AI_Agent_Starter_Pack repo with its
+  .git intact (origin → github.com/LarsonRogers/AI_Agent_Starter_Pack.git,
+  branches main/revised) — push risk to the pack repo. Renamed `.git` →
+  `.git_starter_pack_backup/` (kept locally, gitignored, safe to delete —
+  pack history also exists on GitHub and in the user's original folder).
+  Ran `git init -b main`; initial commit 298c600 contains all 41 files
+  including the project-definition work from the prior commit.
+- Decisions: Back up inherited .git instead of deleting — WHY: safe-deletion
+  protocol; it held one commit unique to this copy (content fully preserved
+  in the initial commit). New default branch is `main` — WHY: pack git
+  workflow; old `revised` branch was pack-development context.
+- State: Standalone repo, no remotes. Inherited pack files (.github CI
+  template, .claude/.codex/opencode enforcement configs) retained.
+- Watch: `.git_starter_pack_backup/` can be deleted once the user confirms
+  it is not needed. `pack-dev/` is starter-pack development history,
+  unrelated to the app — candidate for deletion, needs user confirmation.
