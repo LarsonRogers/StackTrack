@@ -477,3 +477,14 @@
   Queued item 14 (README rewrite, user request). Item 13 (E2E backend)
   remains the ship-to-users precondition.
 - Watch: Demo gate OPEN for item 12 — full demo (real two-device merge).
+
+## [2026-06-12] Item 14: README rewrite — Claude Code
+- Did: Replaced the starter-pack README.md with StackTrack documentation:
+  features, privacy model (data never leaves devices; code-only hosting;
+  no analytics; not-medical-advice), live URL + install pointers, tech
+  stack, dev commands, CI/deploy note, project-organization pointers
+  (AGENTS/HANDOFF/DECISION_LOG/BACKLOG), MIT license. Docs-only; pack
+  files (SETUP.md, TASK_TEMPLATE.md, protocols/) untouched. Resolves the
+  long-standing stale-README watch item.
+- State: Item 13 (E2E-encrypted sync backend) is the only substantive
+  backlog item left — the ship-to-users precondition.

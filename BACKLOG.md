@@ -16,5 +16,5 @@
 | 10 | Import / restore — load a JSON export back in, replacing current data, with safety snapshot | Move to a new device or recover from data loss using a backup file | done (2026-06-12) |
 | 11 | GitHub repo + auto-publish — push code to GitHub; every push runs lint/tests and auto-deploys to the existing Cloudflare Pages URL | Update the live app by committing, with CI guarding every deploy | done (2026-06-12) |
 | 12 | Interim device sync — 12a foundations (uid + updatedAt, schema v5) + 12b "Sync from file" merge import | Carry data between own devices today without a backend | awaiting demo |
-| 14 | Rewrite repo README to describe StackTrack (currently describes the starter pack) | Repo visitors see what the app actually is | pending |
+| 14 | Rewrite repo README to describe StackTrack (currently describes the starter pack) | Repo visitors see what the app actually is | done (2026-06-12) |
 | 13 | E2E-encrypted sync backend — passphrase-encrypted sync via own Worker; REQUIRED before shipping to other users (user decision 2026-06-12) | Automatic cross-device sync where the server can never read the data | pending |

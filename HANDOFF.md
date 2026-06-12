@@ -3,14 +3,13 @@
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **As of update:** 2026-06-12
-**Last completed:** Item 12b — "Sync from file" merge import (code done, validations green; demo gate awaiting user confirmation)
-**Confirmed next task:** Close item 12 demo gate (real two-device merge), then item 14 — README rewrite (confirmed by user, brief pending). Item 13 (E2E sync backend) remains the ship-to-users precondition.
-**Backlog position:** items 1–11 done; 12 awaiting demo; 14 (README) next; 13 queued (see BACKLOG.md)
+**Last completed:** Item 14 — README rewritten for StackTrack (docs-only)
+**Confirmed next task:** Close item 12 demo gate (real two-device merge via "Sync from file"). Then item 13 — E2E-encrypted sync backend — is the only substantive item left (research protocol first, then product brief).
+**Backlog position:** items 1–11 + 14 done; 12 awaiting demo; 13 queued (see BACKLOG.md)
 
 **Open watch items:**
 - Demo gate OPEN for item 12: user must run a real cross-device merge.
-- Root README.md still describes the starter pack (item 14, confirmed).
-- Live app: https://stacktrack-ea9.pages.dev (v5 migration deployed and verified).
+- Live app: https://stacktrack-ea9.pages.dev (v5 + sync deployed via CI).
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders — wiring it needs user confirmation (CI-change policy).
 - Root README.md still describes the starter pack, not StackTrack.
 
