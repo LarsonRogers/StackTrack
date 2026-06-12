@@ -108,6 +108,19 @@ export interface DayNote {
   updatedAt: string
 }
 
+// Local-only sync configuration: the passphrase-derived credentials and
+// the pull cursor. ONE row at most. Deliberately EXCLUDED from exports —
+// a backup file must never carry sync credentials.
+export interface SyncState {
+  id: number
+  groupId: string
+  authToken: string
+  encKeyHex: string // see lib/crypto.ts SyncKeys for the threat model
+  cursor: number // last server seq this device has seen
+  lastPushedAt?: string // local watermark: push records changed after this
+  lastSyncedAt?: string
+}
+
 // A deletion marker: "the record with this uid was removed at this time."
 // Lets deletions propagate through sync/merge instead of silently
 // resurrecting (items/metrics archive rather than delete, so tombstones
@@ -128,6 +141,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   metricEntries: EntityTable<MetricEntry, 'id'>
   dayNotes: EntityTable<DayNote, 'id'>
   tombstones: EntityTable<Tombstone, 'id'>
+  syncState: EntityTable<SyncState, 'id'>
 }
 
 // Schema v1. Only indexed fields are listed; other fields are stored as-is.
@@ -174,6 +188,11 @@ db.version(5)
 // data migration.
 db.version(6).stores({
   tombstones: '++id, &uid',
+})
+
+// Schema v7 (additive): local-only sync configuration — empty new table.
+db.version(7).stores({
+  syncState: '++id',
 })
 
 // Minimal table access shared by the live db, a transaction zone, and the

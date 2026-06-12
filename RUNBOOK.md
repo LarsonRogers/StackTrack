@@ -47,11 +47,13 @@ Press `Ctrl+C` in the terminal where it's running.
   Screen" → Add.
 - The phone copy starts EMPTY. To move data the first time: Stack tab →
   Export JSON on the old device, then Stack tab → Import backup on the phone.
-- To carry changes between devices afterwards: Export JSON on one device
+- Easiest way to keep devices in sync: the **Sync tab** — enter the same
+  passphrase on each device and they sync automatically (end-to-end
+  encrypted; the server never sees readable data; deletions propagate).
+  WRITE THE PASSPHRASE DOWN — there is no reset.
+- File-based alternative (no server involved): Export JSON on one device
   (drop it in your cloud-drive folder), then Stack tab → "Sync from file"
-  on the other. Sync MERGES (adds + newest-wins updates, never deletes);
-  "Import backup" REPLACES. One quirk to know: a check you removed on one
-  device can reappear after a sync if the other device's file still has it.
+  on the other. Merges, never deletes; "Import backup" REPLACES.
 
 ## Sync server (item 13)
 - Live at: https://stacktrack-sync.el-m-rogers.workers.dev (health check:

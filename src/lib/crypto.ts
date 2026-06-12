@@ -24,7 +24,13 @@ const APP_SALT = 'stacktrack-sync-v1'
 export interface SyncKeys {
   groupId: string // 64-char hex — matches the server's groupId format
   authToken: string // 64-char hex — sent as the bearer token
-  encKey: CryptoKey // AES-GCM 256 — local only
+  encKey: CryptoKey // AES-GCM 256 — local only, ready to use
+  encKeyHex: string // key material as hex for local persistence (plain
+  // string survives IndexedDB's structured clone everywhere). Stored in
+  // syncState so sync survives restarts. Anyone who can read it can also
+  // read the plaintext data sitting beside it in the same database, so
+  // this stores no NEW risk; the E2E guarantee protects against the
+  // SERVER, not against someone holding the unlocked device.
 }
 
 const encoder = new TextEncoder()
@@ -91,28 +97,39 @@ export async function deriveSyncKeys(
       bits,
     )
 
-  const [groupIdBits, authTokenBits] = await Promise.all([
+  const [groupIdBits, authTokenBits, encKeyBits] = await Promise.all([
     expand('stacktrack-group-id', 256),
     expand('stacktrack-auth-token', 256),
+    expand('stacktrack-encryption', 256),
   ])
-  const encKey = await crypto.subtle.deriveKey(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt: new Uint8Array(0),
-      info: encoder.encode('stacktrack-encryption'),
-    },
-    masterKey,
-    { name: 'AES-GCM', length: 256 },
-    false, // not extractable — the key bytes never exist in app code
-    ['encrypt', 'decrypt'],
-  )
+  const encKeyHex = bytesToHex(encKeyBits)
 
   return {
     groupId: bytesToHex(groupIdBits),
     authToken: bytesToHex(authTokenBits),
-    encKey,
+    encKey: await importEncKey(encKeyHex),
+    encKeyHex,
   }
+}
+
+function hexToBytes(hex: string): Uint8Array<ArrayBuffer> {
+  // explicit ArrayBuffer backing — WebCrypto's BufferSource typing rejects
+  // the default ArrayBufferLike under TS6 lib definitions
+  const bytes = new Uint8Array(new ArrayBuffer(hex.length / 2))
+  for (let i = 0; i < bytes.length; i++)
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16)
+  return bytes
+}
+
+// Rehydrates the usable (non-extractable) AES key from persisted hex.
+export async function importEncKey(hex: string): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    'raw',
+    hexToBytes(hex),
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt', 'decrypt'],
+  )
 }
 
 // Encrypts any JSON-serializable record. Output: base64(iv || ciphertext).

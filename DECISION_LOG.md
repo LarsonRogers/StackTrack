@@ -596,3 +596,33 @@
 - State: 13c committed, push HELD for the user backup ritual (v6
   migration is empty-table-only, mildest possible; holding on
   principle). Next: 13d (sync engine + settings UI).
+
+## [2026-06-12] Item 13d: sync engine + Sync tab — Claude Code
+- Did: Schema v7 (additive, empty): `syncState` (single row: groupId,
+  authToken, encKeyHex, cursor, lastPushedAt/lastSyncedAt) — local-only,
+  EXCLUDED from exports (tested: no credentials in bundle JSON).
+  `src/lib/syncEngine.ts`: runSync = gather changes since lastPushedAt
+  watermark (+tombstones by deletedAt) → encrypt per record →
+  POST /v1/sync → decrypt pulls → apply via mergeBundle (reuses ALL
+  merge/tombstone semantics); cursor loop until drained; re-entrant
+  calls coalesce (pendingRerun); status pub/sub; triggers = app open +
+  visibilitychange + Dexie write hooks debounced 8s (syncState
+  excluded from hooks to avoid self-trigger). enableSync (derive 600k →
+  store → first sync), disableSync (forget keys; data stays).
+  `src/screens/SyncScreen.tsx` + 5th NavBar tab: setup form (min 8
+  chars, confirm match, four-word suggestion generator, no-reset
+  warning, "slow on purpose" spinner), connected view (status, last
+  synced, Sync now, Disconnect w/ confirm). crypto.ts: encKey persisted
+  as hex string (importEncKey) — ArrayBuffer didn't survive IndexedDB
+  structured clone in the test env and is fragile generally. RUNBOOK
+  updated (sync is now the primary multi-device path). 11 new tests
+  (7 engine vs simulated server incl. ciphertext-only assertion,
+  tombstone pull, cursor persistence, 403 + offline errors, export
+  exclusion; 4 settings flow), 117 total.
+- Decisions: Pulled echoes of own pushes are merged as no-ops — WHY:
+  simpler than server-side echo suppression; cost is trivial decryption.
+  SyncScreen had the same first()-undefined ambiguity bug as
+  JournalSection (setup form never rendered for new users) — caught by
+  the flow tests; fixed with the ?? null sentinel pattern.
+- State: 13d done; v7 deploy covered by today's backups (empty-table
+  migration). Next: 13e — live two-device demo closes the phase.

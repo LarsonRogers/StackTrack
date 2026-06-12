@@ -3,9 +3,9 @@
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **As of update:** 2026-06-12
-**Last completed:** Item 13c — deletion tombstones, schema v6 (committed, push HELD for user backup ritual)
-**Confirmed next task:** User exports fresh JSON backups (PC + phone) → push 13c → item 13d — sync engine + settings UI (needs task brief). Then 13e live demo.
-**Backlog position:** items 1–11 + 14 done; 12 awaiting demo; 13a–13c done of five (see BACKLOG.md)
+**Last completed:** Item 13d — sync engine + Sync tab (E2E sync fully built; 117 tests)
+**Confirmed next task:** Item 13e — the live two-device demo: user enables sync with the same passphrase on PC + phone and confirms data flows both ways (incl. a deletion). Closing it also closes item 12's still-open file-merge demo (sync supersedes it as the primary path, but file-merge should still be confirmed or explicitly waived).
+**Backlog position:** items 1–11 + 14 done; 12 awaiting demo; 13a–13d done, 13e = demo (see BACKLOG.md)
 
 **Open watch items:**
 - Demo gate OPEN for item 12: user must run a real cross-device merge.

@@ -41,7 +41,7 @@ describe('buildExportBundle', () => {
     const bundle = await buildExportBundle()
 
     expect(bundle.app).toBe('StackTrack')
-    expect(bundle.schemaVersion).toBe(6)
+    expect(bundle.schemaVersion).toBe(7)
     expect(bundle.data.items).toHaveLength(1)
     expect(bundle.data.stackEvents).toHaveLength(1) // the 'added' event
     expect(bundle.data.intakes).toHaveLength(1)
