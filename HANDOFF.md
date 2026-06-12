@@ -2,13 +2,12 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Backlog item 7 — data export, JSON + CSV (code done, validations green; demo gate awaiting user confirmation)
-**Confirmed next task:** Close item 7 demo gate, then backlog item 8 — stack view sorting (needs task brief)
-**Backlog position:** item 7 awaiting demo; items 8 (sorting) + 9 (date navigation) remain (see BACKLOG.md)
+**As of update:** 2026-06-12
+**Last completed:** Backlog item 7 — data export, JSON + CSV (closed by user instruction)
+**Confirmed next task:** Backlog item 10 — import/restore (task brief presented, awaiting confirmation)
+**Backlog position:** item 10 next (user-prioritized); items 8 (sorting) + 9 (date navigation) after (see BACKLOG.md)
 
-**Open watch items:**
-- Demo gate OPEN for item 7: user must confirm both export downloads (dev server at http://localhost:5173).
-- Import/restore not yet queued — offered to user, no answer; re-offer when relevant.
+**Open watch items:** (none)
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders — wiring it needs user confirmation (CI-change policy).
 - Root README.md still describes the starter pack, not StackTrack.
 

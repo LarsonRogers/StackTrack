@@ -253,3 +253,10 @@
   open since project definition. Items 8 (sorting) + 9 (date navigation)
   remain.
 - Watch: Demo gate OPEN for item 7 — full demo required.
+
+## [2026-06-12] Item 7 closed; import/restore queued and prioritized — Claude Code
+- Did: Item 7 closed on the user's "continue" (user-initiated acceptance,
+  as with item 4). Added backlog item 10 (import/restore) at user request,
+  ordered ahead of items 8–9 per "before we continue, we also need to be
+  able to import data". Resolves the import watch item.
+- State: Next: item 10 (import/restore), task brief pending confirmation.
