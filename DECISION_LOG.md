@@ -541,3 +541,25 @@
   crypto (re-verify PBKDF2 params against OWASP at build time).
 - Watch: Item 12 demo gate still open. CI does not yet deploy the worker
   (manual redeploy via RUNBOOK command until token is widened).
+
+## [2026-06-12] Item 13b: client crypto — Claude Code
+- Did: Re-verified OWASP guidance live (PBKDF2-HMAC-SHA256: 600,000
+  iterations — current). `src/lib/crypto.ts` (WebCrypto only, no deps):
+  deriveSyncKeys(passphrase) → PBKDF2 600k stretch (NFKC-normalized
+  input) → HKDF split into groupId (hex64), authToken (hex64), and a
+  non-extractable AES-GCM-256 encKey; encryptRecord/decryptRecord
+  (fresh 96-bit IV per record, output base64(iv||ct), GCM authenticates
+  so tampering throws). 10 tests: determinism, NFKC keyboard
+  equivalence, cross-passphrase independence, groupId≠authToken,
+  derived values pass the SERVER's own validators (cross-checked
+  against workers/sync logic), default work factor pinned, round-trip,
+  fresh-IV, tamper rejection, wrong-key rejection. 101 total.
+- Decisions: App-constant PBKDF2 salt ('stacktrack-sync-v1') — WHY: a
+  new device must find its group from the passphrase ALONE, so no
+  per-user salt can exist before auth; standard trade-off for
+  passphrase-derived E2E, compensated by the 600k work factor and
+  passphrase quality (13d's UI will encourage strong ones). encKey
+  created non-extractable — key bytes never exist in app-readable form.
+  Tests run at 1000 iterations (speed); algorithm identical, work
+  factor pinned by its own assertion.
+- State: 13a+13b done. Next: 13c (tombstones, schema v6).
