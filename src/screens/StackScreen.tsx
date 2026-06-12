@@ -13,6 +13,7 @@ import {
   type StackItemInput,
 } from '../db/stackRepository'
 import { distinctGroups, groupByPurpose } from '../lib/stackView'
+import { exportAsCsv, exportAsJson } from '../lib/exportData'
 import ItemForm from '../components/ItemForm'
 
 // Form state: closed, adding new, or editing a specific item.
@@ -156,6 +157,30 @@ export default function StackScreen() {
           )}
         </section>
       )}
+
+      <section className="stack-export" aria-label="Export">
+        <h2 className="today-section-title">Backup</h2>
+        <p className="screen-note">
+          Your data lives only on this device. Download a copy now and then —
+          JSON is the full backup; CSV opens in spreadsheets.
+        </p>
+        <div className="stack-export-actions">
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => exportAsJson()}
+          >
+            Export JSON
+          </button>
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => exportAsCsv()}
+          >
+            Export CSV
+          </button>
+        </div>
+      </section>
     </main>
   )
 }

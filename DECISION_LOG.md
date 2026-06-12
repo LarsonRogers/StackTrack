@@ -234,3 +234,22 @@
   (FULL demo). Item 6 marked done.
 - State: Next: backlog item 7 (data export), task brief pending
   confirmation.
+
+## [2026-06-11] Backlog item 7: data export (JSON + CSV) — Claude Code
+- Did: `src/lib/exportData.ts`: buildExportBundle (all 7 tables +
+  exportedAt + schemaVersion), buildExportCsv (one labeled section per
+  table, RFC-4180 quoting, arrays joined "; "), toCsvValue,
+  exportAsJson/exportAsCsv download triggers (Blob + anchor). "Backup"
+  section at the bottom of StackScreen with both buttons and a plain-text
+  note that data lives on-device. 4 new tests (bundle completeness, CSV
+  quoting/arrays/sections), 54 total.
+- Decisions: CSV format added by user amendment (2026-06-11). JSON is
+  canonical for a future import/restore; CSV is human/spreadsheet-facing
+  only — WHY: one multi-section CSV is readable in Sheets/Excel but not
+  round-trippable. Export buttons live on the Stack screen — WHY: no
+  settings screen yet; revisit when one exists. Import/restore NOT queued
+  (user did not answer the offer) — re-offer when relevant.
+- State: Backup safety net closed — resolves the local-first watch item
+  open since project definition. Items 8 (sorting) + 9 (date navigation)
+  remain.
+- Watch: Demo gate OPEN for item 7 — full demo required.

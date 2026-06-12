@@ -561,6 +561,19 @@ body {
   min-width: 3.5rem;
 }
 
+/* --- Export / backup --- */
+
+.stack-export {
+  margin-top: 2rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+
+.stack-export-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 /* Screen-reader-only labels (e.g. per-row time inputs) */
 .visually-hidden {
   position: absolute;
