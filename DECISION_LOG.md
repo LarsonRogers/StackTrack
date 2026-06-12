@@ -141,3 +141,10 @@
 - State: Daily check-in works end-to-end (mark/unmark, progress, notes,
   per-day scoping). Items 4 (metrics) next.
 - Watch: Demo gate OPEN for item 3 — full demo required.
+
+## [2026-06-11] Backlog item 3 demo confirmed; sorting queued — Claude Code
+- Did: User confirmed the daily check-in flow (FULL demo). Item 3 marked
+  done. Added backlog item 8 at user request: user-selectable sorting for
+  stack views.
+- State: Next: backlog item 4 (custom metrics), task brief pending
+  confirmation.
