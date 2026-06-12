@@ -310,3 +310,25 @@
   Item 8 marked done.
 - State: Item 9 (date navigation) is the final backlog item; task brief
   pending confirmation.
+
+## [2026-06-12] Backlog item 9: date navigation — Claude Code
+- Did: `src/lib/dates.ts`: parseIsoDate (local noon), addDays.
+  `src/components/DateNav.tsx`: prev/next arrows (next disabled at today;
+  future blocked at the input via max=today too), native date picker,
+  "Back to today" shortcut (renamed from "Today" — collided with the
+  NavBar tab name in role queries and was ambiguous for users too).
+  TodayScreen: selectedDate state drives ALL day-scoped queries and writes
+  (checklist, item notes, metrics, journal); items query widened to all
+  items so archived names can label history; "Also recorded this day"
+  section surfaces intakes with no current-schedule row; MetricLogger and
+  JournalSection keyed by date so per-day drafts can't leak across days;
+  note editor closes on navigation. 3 new tests (future blocked, past-day
+  write doesn't touch today, orphaned records visible), 70 total.
+- Decisions: Past-day checklist rows derive from the CURRENT schedule —
+  WHY: stackEvents record that things changed, not full schedule
+  snapshots, so historical reconstruction isn't reliably possible;
+  limitation stated in the brief and accepted by the user. Recorded
+  intakes always display faithfully via the orphan section.
+- State: ALL backlog items (1–10) complete pending this demo. MVP feature
+  set fully built.
+- Watch: Demo gate OPEN for item 9 — full demo required.

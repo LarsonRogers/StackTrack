@@ -1,39 +1,49 @@
-// src/screens/TodayScreen.tsx — the "Today" view: the daily check-in.
-// Active items appear under each of their scheduled times; tapping toggles
-// taken/not-taken (intakeRepository), and each item can carry one note for
-// the day (itemNoteRepository). Reads are live; all writes go through the
-// repositories — this screen never touches the stack tables.
+// src/screens/TodayScreen.tsx — the daily check-in, for today or any past
+// day (DateNav; never the future). Active items appear under each of their
+// scheduled times; tapping toggles taken/not-taken (intakeRepository), each
+// item can carry one note for the day (itemNoteRepository), metrics and the
+// journal follow the selected date too. Records from items no longer in the
+// current schedule (archived/changed since) surface in "Also recorded this
+// day" — history must stay visible. Reads are live; all writes go through
+// the repositories — this screen never touches the stack tables.
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type ItemNote } from '../db/db'
 import { markTaken, unmarkTaken } from '../db/intakeRepository'
 import { setItemNote } from '../db/itemNoteRepository'
-import { formatTime, formatTodayHeading, toIsoDate } from '../lib/dates'
+import {
+  formatTime,
+  formatTodayHeading,
+  parseIsoDate,
+  toIsoDate,
+} from '../lib/dates'
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
 import MetricLogger from '../components/MetricLogger'
 import JournalSection from '../components/JournalSection'
+import DateNav from '../components/DateNav'
 
 export default function TodayScreen() {
   const today = toIsoDate(new Date())
-  const items = useLiveQuery(
-    () => db.items.where('status').equals('active').toArray(),
-    [],
-  )
+  const [selectedDate, setSelectedDate] = useState(today)
+
+  // All items (not just active): names/doses of archived items are still
+  // needed to label historical records on past days.
+  const allItems = useLiveQuery(() => db.items.toArray(), [])
   const intakes = useLiveQuery(
-    () => db.intakes.where('date').equals(today).toArray(),
-    [today],
+    () => db.intakes.where('date').equals(selectedDate).toArray(),
+    [selectedDate],
   )
   const notes = useLiveQuery(
-    () => db.itemNotes.where('date').equals(today).toArray(),
-    [today],
+    () => db.itemNotes.where('date').equals(selectedDate).toArray(),
+    [selectedDate],
   )
   const metrics = useLiveQuery(
     () => db.metrics.where('status').equals('active').toArray(),
     [],
   )
   const metricEntries = useLiveQuery(
-    () => db.metricEntries.where('date').equals(today).toArray(),
-    [today],
+    () => db.metricEntries.where('date').equals(selectedDate).toArray(),
+    [selectedDate],
   )
   // Which item's note is being edited (keyed to the row that opened it,
   // since an item can appear at several times), and the in-progress text
@@ -44,7 +54,7 @@ export default function TodayScreen() {
   } | null>(null)
 
   if (
-    items === undefined ||
+    allItems === undefined ||
     intakes === undefined ||
     notes === undefined ||
     metrics === undefined ||
@@ -52,7 +62,8 @@ export default function TodayScreen() {
   )
     return null
 
-  const sections = buildTimeSections(items)
+  const activeItems = allItems.filter((item) => item.status === 'active')
+  const sections = buildTimeSections(activeItems)
   const takenKeys = new Set(intakes.map((i) => `${i.itemId}@${i.time}`))
   const notesByItem = new Map(notes.map((note) => [note.itemId, note]))
   const totalSlots = sections.reduce((sum, s) => sum + s.entries.length, 0)
@@ -63,17 +74,28 @@ export default function TodayScreen() {
     0,
   )
 
+  // Records on this date that no current schedule row explains — e.g. the
+  // item was archived, or its times changed since. Shown so history never
+  // silently disappears. Unchecking one deletes that record.
+  const scheduledKeys = new Set(
+    sections.flatMap((s) => s.entries.map((e) => `${e.item.id}@${e.time}`)),
+  )
+  const orphanedIntakes = intakes.filter(
+    (intake) => !scheduledKeys.has(`${intake.itemId}@${intake.time}`),
+  )
+  const itemNameById = new Map(allItems.map((item) => [item.id, item.name]))
+
   async function toggleTaken(entry: ChecklistEntry, taken: boolean) {
     if (taken) {
-      await unmarkTaken(entry.item.id, today, entry.time)
+      await unmarkTaken(entry.item.id, selectedDate, entry.time)
     } else {
-      await markTaken(entry.item.id, today, entry.time)
+      await markTaken(entry.item.id, selectedDate, entry.time)
     }
   }
 
   async function saveNote() {
     if (!noteEditor) return
-    await setItemNote(noteEditor.itemId, today, noteEditor.draft)
+    await setItemNote(noteEditor.itemId, selectedDate, noteEditor.draft)
     setNoteEditor(null)
   }
 
@@ -92,7 +114,18 @@ export default function TodayScreen() {
     <main className="today">
       <header className="today-header">
         <h1>StackTrack</h1>
-        <p className="today-date">{formatTodayHeading(new Date())}</p>
+        <p className="today-date">
+          {formatTodayHeading(parseIsoDate(selectedDate))}
+          {selectedDate === today && ' (today)'}
+        </p>
+        <DateNav
+          date={selectedDate}
+          today={today}
+          onChange={(date) => {
+            setSelectedDate(date)
+            setNoteEditor(null) // a draft belongs to the day it was opened on
+          }}
+        />
       </header>
 
       {totalSlots === 0 ? (
@@ -107,7 +140,9 @@ export default function TodayScreen() {
         <>
           <p className="today-progress" role="status">
             {takenCount === totalSlots
-              ? 'All done for today.'
+              ? selectedDate === today
+                ? 'All done for today.'
+                : 'Everything was taken this day.'
               : `${takenCount} of ${totalSlots} taken`}
           </p>
 
@@ -209,6 +244,37 @@ export default function TodayScreen() {
         </>
       )}
 
+      {orphanedIntakes.length > 0 && (
+        <section className="today-section" aria-label="Also recorded this day">
+          <h2 className="today-section-title">Also recorded this day</h2>
+          <p className="screen-note">
+            Taken records from items no longer on this schedule (archived or
+            changed since). Unchecking removes the record.
+          </p>
+          <ul className="today-list">
+            {orphanedIntakes.map((intake) => (
+              <li key={intake.id} className="today-item">
+                <label className="today-item-check">
+                  <input
+                    type="checkbox"
+                    checked
+                    onChange={() =>
+                      unmarkTaken(intake.itemId, selectedDate, intake.time)
+                    }
+                  />
+                  <span className="today-item-name today-item-taken">
+                    {itemNameById.get(intake.itemId) ?? 'Removed item'}
+                  </span>
+                  <span className="today-item-detail">
+                    {formatTime(intake.time)}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {metrics.length > 0 && (
         <section className="today-section" aria-label="Daily metrics">
           <h2 className="today-section-title">Daily metrics</h2>
@@ -217,17 +283,17 @@ export default function TodayScreen() {
               .toSorted((a, b) => a.name.localeCompare(b.name))
               .map((metric) => (
                 <MetricLogger
-                  key={metric.id}
+                  key={`${metric.id}@${selectedDate}`}
                   metric={metric}
                   entry={metricEntries.find((e) => e.metricId === metric.id)}
-                  date={today}
+                  date={selectedDate}
                 />
               ))}
           </ul>
         </section>
       )}
 
-      <JournalSection date={today} />
+      <JournalSection key={selectedDate} date={selectedDate} />
     </main>
   )
 }

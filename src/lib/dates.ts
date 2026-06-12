@@ -31,3 +31,17 @@ export function toIsoDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+// Parses 'YYYY-MM-DD' to a local Date at noon (noon keeps the calendar day
+// stable across DST shifts).
+export function parseIsoDate(date: string): Date {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(year, month - 1, day, 12)
+}
+
+// 'YYYY-MM-DD' plus/minus whole days, in local time.
+export function addDays(date: string, delta: number): string {
+  const parsed = parseIsoDate(date)
+  parsed.setDate(parsed.getDate() + delta)
+  return toIsoDate(parsed)
+}

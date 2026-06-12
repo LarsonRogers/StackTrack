@@ -561,6 +561,40 @@ body {
   min-width: 3.5rem;
 }
 
+/* --- Date navigation (Today screen) --- */
+
+.date-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.date-nav-arrow {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+}
+
+.date-nav-arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.date-nav input[type='date'] {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.875rem;
+  background: var(--color-surface);
+}
+
 /* --- Stack sort control --- */
 
 .stack-sort {

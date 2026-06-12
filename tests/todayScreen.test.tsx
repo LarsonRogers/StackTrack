@@ -7,7 +7,9 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
-import { addItem } from '../src/db/stackRepository'
+import { addItem, archiveItem } from '../src/db/stackRepository'
+import { markTaken } from '../src/db/intakeRepository'
+import { addDays, toIsoDate } from '../src/lib/dates'
 
 beforeEach(async () => {
   await db.items.clear()
@@ -70,5 +72,68 @@ describe('Today checklist', () => {
     expect(
       screen.getByRole('button', { name: 'Edit note' }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('Date navigation', () => {
+  it('cannot navigate into the future', async () => {
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+    })
+    render(<App />)
+
+    expect(
+      await screen.findByRole('button', { name: 'Next day' }),
+    ).toBeDisabled()
+  })
+
+  it('marks an intake on a past day without touching today', async () => {
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Previous day' }),
+    )
+    await user.click(await screen.findByRole('checkbox'))
+
+    const intakes = await db.intakes.toArray()
+    expect(intakes).toHaveLength(1)
+    expect(intakes[0].date).toBe(addDays(toIsoDate(new Date()), -1))
+
+    // back on today, nothing is checked
+    await user.click(screen.getByRole('button', { name: 'Back to today' }))
+    expect(await screen.findByText('0 of 1 taken')).toBeInTheDocument()
+  })
+
+  it('shows records from archived items under "Also recorded this day"', async () => {
+    const itemId = await addItem({
+      name: 'Boron',
+      kind: 'supplement',
+      dose: '6 mg',
+      times: ['08:00'],
+    })
+    const yesterday = addDays(toIsoDate(new Date()), -1)
+    await markTaken(itemId, yesterday, '08:00')
+    await archiveItem(itemId)
+
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(
+      await screen.findByRole('button', { name: 'Previous day' }),
+    )
+
+    const orphanSection = await screen.findByRole('region', {
+      name: 'Also recorded this day',
+    })
+    expect(orphanSection).toHaveTextContent('Boron')
   })
 })
