@@ -15,4 +15,5 @@
 | 9 | Date navigation — pick a date (calendar) and view/edit that day's entries (checklist, metrics, notes, journal) | Review or correct any past day, not just today | done (2026-06-12) |
 | 10 | Import / restore — load a JSON export back in, replacing current data, with safety snapshot | Move to a new device or recover from data loss using a backup file | done (2026-06-12) |
 | 11 | GitHub repo + auto-publish — push code to GitHub; every push runs lint/tests and auto-deploys to the existing Cloudflare Pages URL | Update the live app by committing, with CI guarding every deploy | pending |
-| 12 | Device sync — keep data in sync across the user's devices (approach to be decided: E2E-encrypted sync backend vs. managed sync vs. cloud-drive file) | Enter data on the phone, see it on the PC and vice versa | pending |
+| 12 | Interim device sync — smooth the export/import round-trip through the user's own cloud drive (file-based, manual trigger) | Carry data between own devices today without a backend | pending |
+| 13 | E2E-encrypted sync backend — passphrase-encrypted sync via own Worker; REQUIRED before shipping to other users (user decision 2026-06-12) | Automatic cross-device sync where the server can never read the data | pending |

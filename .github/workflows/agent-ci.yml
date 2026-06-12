@@ -1,25 +1,17 @@
 # .github/workflows/agent-ci.yml
 #
-# CI enforcement for agent-produced code.
-# Runs on every push and pull request.
-# CI green is part of the Definition of Done — the agent must not consider
-# a task complete until this workflow passes.
+# CI + auto-deploy for StackTrack.
+# Every push and PR: lint, format check, typecheck, tests, build.
+# Pushes to main that pass all checks additionally deploy dist/ to the
+# existing Cloudflare Pages project (same URL as manual deploys:
+# https://stacktrack-ea9.pages.dev).
 #
-# SETUP: Replace the [NOT CONFIGURED] steps below with your actual stack.
-# Add or remove jobs as needed. Commit this file to your repo.
-#
-# UNCONFIGURED JOBS FAIL ON PURPOSE. A placeholder that passes green would
-# falsely satisfy the Definition of Done while verifying nothing. Each job
-# exits 1 until you replace it with a real command — so "CI is green" can
-# never be true by accident. To skip a job your stack genuinely doesn't
-# need (e.g. typecheck for plain JS), delete the job rather than letting
-# it fail.
-#
-# For non-GitHub CI (GitLab, Bitbucket, CircleCI, etc.): adapt the
-# structure below to your platform's syntax. The job names and intent
-# are platform-agnostic even if the YAML format is not.
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN  — scoped to Cloudflare Pages : Edit
+#   CLOUDFLARE_ACCOUNT_ID — the Cloudflare account id
+# Neither value ever lives in this repo.
 
-name: Agent CI
+name: CI & Deploy
 
 on:
   push:
@@ -27,95 +19,44 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
-
-  lint:
-    name: Lint
+  validate:
+    name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # Replace with your language setup and lint command
-      # Examples:
-      #   Node:   actions/setup-node + npm ci + npm run lint
-      #   Python: actions/setup-python + pip install + ruff check .
-      #   Rust:   actions/setup-rust + cargo clippy
-      - name: Run linter
-        run: |
-          echo "::error::Lint is NOT CONFIGURED. Replace this step with your stack's lint command. This job fails on purpose so unconfigured CI cannot satisfy the Definition of Done."
-          exit 1
-
-  format:
-    name: Format check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Examples:
-      #   Node:   npx prettier --check .
-      #   Python: black --check .
-      #   Rust:   cargo fmt --check
-      - name: Check formatting
-        run: |
-          echo "::error::Format check is NOT CONFIGURED. Replace this step with your stack's format-check command. This job fails on purpose so unconfigured CI cannot satisfy the Definition of Done."
-          exit 1
-
-  typecheck:
-    name: Type check
-    runs-on: ubuntu-latest
-    # Delete this job if your stack has no type checker
-    steps:
-      - uses: actions/checkout@v4
-
-      # Examples:
-      #   TypeScript: npx tsc --noEmit
-      #   Python:     mypy .
-      - name: Run type checker
-        run: |
-          echo "::error::Type check is NOT CONFIGURED. Replace this step with your stack's type-check command, or delete this job if your stack has no type checker. This job fails on purpose so unconfigured CI cannot satisfy the Definition of Done."
-          exit 1
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Examples:
-      #   Node:   npm ci + npm test
-      #   Python: pip install -r requirements.txt + pytest
-      #   Rust:   cargo test
-      - name: Run tests
-        run: |
-          echo "::error::Tests are NOT CONFIGURED. Replace this step with your stack's test command. This job fails on purpose so unconfigured CI cannot satisfy the Definition of Done."
-          exit 1
-
-  security:
-    name: Security scan
-    runs-on: ubuntu-latest
-    steps:
-      # fetch-depth: 0 — trufflehog needs full history to diff the pushed range
-      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-
-      # Secret scanning — detects accidentally committed credentials.
-      # Pinned to a release tag (not @main) so the security job itself is not
-      # an unpinned supply-chain dependency. base/head are deliberately
-      # omitted: the action auto-detects the commit range per event, which
-      # avoids the "BASE and HEAD commits are the same" failure on pushes
-      # and the initial-commit failure.
-      - name: Scan for secrets
-        uses: trufflesecurity/trufflehog@v3.95.5
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      # hand the exact validated build to the deploy job — deploy never rebuilds
+      - uses: actions/upload-artifact@v4
         with:
-          extra_args: --results=verified,unknown
+          name: dist
+          path: dist
 
-      # Dependency audit — detects vulnerable packages
-      # Examples:
-      #   Node:   npm audit --audit-level=high
-      #   Python: pip-audit
-      #   Rust:   cargo audit
-      - name: Audit dependencies
-        run: |
-          echo "::error::Dependency audit is NOT CONFIGURED. Replace this step with your stack's audit command (npm audit / pip-audit / cargo audit). This job fails on purpose so unconfigured CI cannot satisfy the Definition of Done."
-          exit 1
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=stacktrack --branch main
