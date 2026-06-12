@@ -392,3 +392,29 @@
 - State: MVP shipped and installed. Next: item 11 brief presented;
   item 12 needs an approach decision (E2E-encrypted backend vs. managed
   sync vs. cloud-drive files) before any brief.
+
+## [2026-06-12] Backlog item 11: GitHub repo + CI auto-publish — Claude Code
+- Did: Pre-push sensitive-data scan (clean — all pattern hits were policy
+  text/package names; committer email noted, fine for private repo).
+  Replaced placeholder `.github/workflows/agent-ci.yml` with real
+  CI & Deploy workflow: validate job (npm ci, lint, format:check,
+  typecheck, test, build; uploads dist artifact) on every push/PR; deploy
+  job (cloudflare/wrangler-action@v3, verified current via docs) deploys
+  the validated artifact to the existing `stacktrack` Pages project on
+  pushes to main only. Secrets: CLOUDFLARE_API_TOKEN (user-created,
+  Pages:Edit scope) + CLOUDFLARE_ACCOUNT_ID, stored in GitHub Actions
+  secrets by the user — never in the repo. Remote:
+  https://github.com/LarsonRogers/StackTrack (private). First push
+  rejected (repo auto-initialized with MIT LICENSE); merged with
+  --allow-unrelated-histories to keep the user's license choice instead
+  of force-pushing. Full history pushed.
+- Decisions: GitHub Actions → wrangler deploy instead of Cloudflare's git
+  integration — WHY: direct-upload Pages projects cannot be converted to
+  git-connected; this keeps the same URL and adds CI gating. Sync
+  direction (item 12/13) decided by user: cloud-drive file flow as
+  interim, E2E-encrypted backend REQUIRED before shipping to other users.
+- State: Repo live, CI wired. Awaiting first green Actions run +
+  auto-deploy verification (user watches Actions tab — private repo, no
+  gh CLI installed).
+- Watch: DoD "CI green" is now enforceable — verify the first run before
+  calling item 11 done. README still describes the starter pack.

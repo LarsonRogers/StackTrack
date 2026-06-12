@@ -28,12 +28,16 @@ Press `Ctrl+C` in the terminal where it's running.
 
 ## Deployed version
 - Live at: https://stacktrack-ea9.pages.dev
+- Code repository: https://github.com/LarsonRogers/StackTrack (private)
 - What's on the server: the app's CODE ONLY — all health data stays in each
   device's own browser storage (see DECISION_LOG.md 2026-06-12 gate entry).
-- Redeploy after changes (run from the project folder):
+- Updating the live app (primary path): commit and push to `main` —
+  GitHub Actions runs lint/typecheck/tests/build and, only if all pass,
+  deploys automatically (repo → Actions tab shows progress).
+- Manual fallback (run from the project folder):
   1. `npm run build`
   2. `npx wrangler pages deploy dist --project-name=stacktrack --branch main`
-  Installed phones pick the new version up automatically on next open
+- Installed phones pick the new version up automatically on next open
   (open the app, then close and reopen once if it looks stale).
 
 ## Install on a phone

@@ -3,15 +3,14 @@
 
 **As of:** 2026-06-11 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **As of update:** 2026-06-12
-**Last completed:** Deployed to Cloudflare Pages — live at https://stacktrack-ea9.pages.dev (code-only; data stays on-device per gate sign-off)
-**Confirmed next task:** Close the demo gates: item 9 (date navigation) + live URL / phone install confirmation from the user. Then MVP backlog is COMPLETE; candidates next: reminders/notifications, app README, CI wiring, wrangler as devDependency
-**Backlog position:** all items done or awaiting final demo (see BACKLOG.md)
+**Last completed:** Backlog item 11 — GitHub repo (private, LarsonRogers/StackTrack) + CI auto-publish to Cloudflare Pages (awaiting first green Actions run)
+**Confirmed next task:** Verify first CI run is green (user watches repo → Actions), then item 12 — interim cloud-drive file sync (needs task brief)
+**Backlog position:** items 1–10 done; 11 awaiting CI verification; 12 (interim sync) next; 13 (E2E sync backend — required before shipping to users) queued (see BACKLOG.md)
 
 **Open watch items:**
-- Demo gate OPEN: item 9 (past-day editing) and the live-URL/phone install — user confirmation pending.
+- First GitHub Actions run: user must confirm green + auto-deploy worked.
 - Root README.md still describes the starter pack, not StackTrack.
-- `.github/workflows/agent-ci.yml` placeholders still unconfigured (needs user OK; only matters once a remote exists).
-- wrangler via npx — consider devDependency + `deploy` script if deploys become routine (confirm first).
+- MVP fully shipped: live at https://stacktrack-ea9.pages.dev, installed on user's phone.
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders — wiring it needs user confirmation (CI-change policy).
 - Root README.md still describes the starter pack, not StackTrack.
 
