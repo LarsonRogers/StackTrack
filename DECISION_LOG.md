@@ -76,3 +76,10 @@
   has failing placeholder jobs — wiring it to the npm scripts is a CI
   change needing user confirmation (no remote yet, so nothing runs it).
   Root README.md still describes the starter pack, not StackTrack.
+
+## [2026-06-11] Backlog item 1 demo confirmed — Claude Code
+- Did: User confirmed seeing the app run at http://localhost:5173 (FULL
+  demo, run-demo protocol). Backlog item 1 marked done. Resolves the
+  "demo gate OPEN" watch item from the previous entry.
+- State: Walking skeleton complete and demonstrated. Next: backlog item 2
+  (stack management), task brief pending confirmation.
