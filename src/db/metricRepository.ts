@@ -2,16 +2,18 @@
 // Enforces the never-delete rule (archive keeps all logged entries).
 // A metric's kind is fixed at creation — changing it would corrupt the
 // meaning of already-logged values.
-import { db, type MetricKind } from './db'
+import { db, type MetricComponent, type MetricKind } from './db'
 import { newUid, nowIso } from '../lib/identity'
 
 export interface MetricInput {
   name: string
   kind: MetricKind
   unit?: string
+  components?: MetricComponent[] // 'composite' only — the ordered parts
 }
 
-// What can change after creation — everything except kind.
+// What can change after creation — everything except kind and components
+// (changing components would misalign already-logged values).
 export interface MetricUpdate {
   name: string
   unit?: string
@@ -23,7 +25,14 @@ export async function addMetric(input: MetricInput): Promise<number> {
     uid: newUid(),
     name: input.name.trim(),
     kind: input.kind,
-    unit: input.unit?.trim() || undefined,
+    unit: input.kind === 'number' ? input.unit?.trim() || undefined : undefined,
+    components:
+      input.kind === 'composite'
+        ? input.components?.map((c) => ({
+            name: c.name.trim(),
+            unit: c.unit?.trim() || undefined,
+          }))
+        : undefined,
     status: 'active',
     createdAt: stamp,
     updatedAt: stamp,

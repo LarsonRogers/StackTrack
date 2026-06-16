@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ReferenceLine,
@@ -16,8 +17,10 @@ import {
 } from 'recharts'
 import { db } from '../db/db'
 import {
+  buildCompositeSeries,
   buildSeries,
   collapseEvents,
+  COMPONENT_COLORS,
   dateToTs,
   RANGE_LABELS,
   rangeStartDate,
@@ -75,14 +78,21 @@ export default function GraphsScreen() {
   }
 
   const startDate = rangeStartDate(range, new Date())
-  const series = buildSeries(entries, startDate)
+  const isComposite = metric.kind === 'composite'
+  const components = metric.components ?? []
+  const series = isComposite ? [] : buildSeries(entries, startDate)
+  const compositeSeries = isComposite
+    ? buildCompositeSeries(entries, startDate)
+    : []
+  const chartData = isComposite ? compositeSeries : series
+  const hasData = chartData.length > 0
   const markers = collapseEvents(events, startDate)
 
   // X domain spans the whole range (or all data + markers for 'all'), so
   // markers render even on dates with no logged value.
   const todayTs = dateToTs(toIsoDate(new Date()))
   const candidateStarts = [
-    ...series.map((p) => p.ts),
+    ...chartData.map((p) => p.ts),
     ...markers.map((m) => m.ts),
   ]
   const domainStart = startDate
@@ -135,7 +145,7 @@ export default function GraphsScreen() {
         </div>
       </div>
 
-      {series.length === 0 ? (
+      {!hasData ? (
         <p className="screen-note">
           No values logged for {metric.name} in this range yet — log them on the
           Today screen.
@@ -144,7 +154,7 @@ export default function GraphsScreen() {
         <div className="graph-chart">
           <ResponsiveContainer width="100%" height={280}>
             <LineChart
-              data={series}
+              data={chartData as object[]}
               margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -158,10 +168,14 @@ export default function GraphsScreen() {
               <YAxis domain={yDomain} fontSize={12} width={48} />
               <Tooltip
                 labelFormatter={(ts) => formatTs(Number(ts))}
-                formatter={(value) => [
-                  `${value}${metric.unit ? ` ${metric.unit}` : ''}`,
-                  metric.name,
-                ]}
+                formatter={(value, seriesName) =>
+                  isComposite
+                    ? [value, seriesName]
+                    : [
+                        `${value}${metric.unit ? ` ${metric.unit}` : ''}`,
+                        metric.name,
+                      ]
+                }
               />
               {markers.map((marker) => (
                 <ReferenceLine
@@ -172,14 +186,38 @@ export default function GraphsScreen() {
                   strokeDasharray="5 3"
                 />
               ))}
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#0f766e"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                isAnimationActive={false}
-              />
+              {isComposite ? (
+                <>
+                  <Legend />
+                  {components.map((component, index) => (
+                    <Line
+                      key={index}
+                      type="monotone"
+                      dataKey={(point: { values: number[] }) =>
+                        point.values[index]
+                      }
+                      name={
+                        component.unit
+                          ? `${component.name} (${component.unit})`
+                          : component.name
+                      }
+                      stroke={COMPONENT_COLORS[index % COMPONENT_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </>
+              ) : (
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#0f766e"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  isAnimationActive={false}
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>

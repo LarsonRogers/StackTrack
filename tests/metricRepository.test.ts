@@ -11,6 +11,7 @@ import {
 } from '../src/db/metricRepository'
 import {
   clearMetricEntry,
+  setCompositeEntry,
   setMetricEntry,
 } from '../src/db/metricEntryRepository'
 
@@ -95,5 +96,69 @@ describe('metric entries', () => {
     await clearMetricEntry(id, TODAY)
 
     expect(await db.metricEntries.count()).toBe(0)
+  })
+})
+
+describe('composite metrics', () => {
+  async function addBloodPressure() {
+    return addMetric({
+      name: 'Blood Pressure',
+      kind: 'composite',
+      components: [
+        { name: 'Systolic', unit: 'mmHg' },
+        { name: 'Diastolic', unit: 'mmHg' },
+      ],
+    })
+  }
+
+  it('stores the ordered components on the definition', async () => {
+    const id = await addBloodPressure()
+    expect(await db.metrics.get(id)).toMatchObject({
+      kind: 'composite',
+      components: [
+        { name: 'Systolic', unit: 'mmHg' },
+        { name: 'Diastolic', unit: 'mmHg' },
+      ],
+    })
+  })
+
+  it('logs all values and mirrors value from values[0]', async () => {
+    const id = await addBloodPressure()
+    await setCompositeEntry(id, TODAY, [120, 80])
+
+    const entry = (await db.metricEntries.toArray())[0]
+    expect(entry.values).toEqual([120, 80])
+    expect(entry.value).toBe(120) // single-value readers keep working
+  })
+
+  it('re-logging replaces; one entry per day', async () => {
+    const id = await addBloodPressure()
+    await setCompositeEntry(id, TODAY, [120, 80])
+    await setCompositeEntry(id, TODAY, [118, 78])
+
+    const entries = await db.metricEntries.toArray()
+    expect(entries).toHaveLength(1)
+    expect(entries[0].values).toEqual([118, 78])
+  })
+
+  it('rejects a value count that does not match the components', async () => {
+    const id = await addBloodPressure()
+    await expect(setCompositeEntry(id, TODAY, [120])).rejects.toThrow(
+      /Expected 2 values/,
+    )
+  })
+
+  it('rejects non-finite values', async () => {
+    const id = await addBloodPressure()
+    await expect(setCompositeEntry(id, TODAY, [120, NaN])).rejects.toThrow(
+      /must all be numbers/,
+    )
+  })
+
+  it('rejects composite values for a non-composite metric', async () => {
+    const id = await addMetric({ name: 'Energy', kind: 'rating' })
+    await expect(setCompositeEntry(id, TODAY, [5])).rejects.toThrow(
+      /not a composite/,
+    )
   })
 })

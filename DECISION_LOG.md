@@ -758,3 +758,29 @@
   format/build clean.
 - State: committed + pushed (safe deploy). Wave 3 remaining: B composite
   measurements, C boolean kind, D rename Metrics→"Tracking".
+
+## [2026-06-16] Wave 3-B: composite measurements (new metric kind) — Claude Code
+- Did: Added a third MetricKind 'composite' — a metric whose value is several
+  numbers logged together (e.g. Blood Pressure = Systolic + Diastolic). NO
+  schema migration: `Metric.components` and `MetricEntry.values` are not
+  indexed, so they ride along on writes exactly like W2's unit/note (no
+  v-bump, no backup ritual, safe deploy — corrects the W2-log guess that
+  Wave 3 would need a schema change). MetricEntry.value mirrors values[0] so
+  every existing single-value reader (graphs, tooltips, CSV) keeps working.
+  New write path setCompositeEntry validates at the boundary: value count
+  must equal the component count and all values finite; kind must be
+  composite. components are fixed after creation (like kind) — MetricUpdate
+  unchanged. Form: a "Multiple numbers" radio reveals dynamic part rows
+  (name + optional unit) mirroring ItemForm's "times" pattern; ≥2 named
+  parts required. Logger: N number inputs, Save writes all, display "120/80";
+  all-empty clears. Graphs: one Recharts <Line> per component (function
+  dataKey reads values[index]) on one chart with a <Legend>, palette in
+  graphView.COMPONENT_COLORS. Export/import/merge untouched (whole-record copy
+  carries the new fields).
+- Decisions (user): 3 commits B→C→D (one logical change each); composite
+  graph = multiple lines on one chart (not separate charts).
+- Tests: +10 — repository (components stored, values logged + value mirror,
+  re-log replaces, count/finite/wrong-kind rejections), buildCompositeSeries
+  (filter+sort, skips non-composite), UI (define via form, log → "✓ 120/80").
+  143 tests pass; lint/format/typecheck/build all green.
+- State: committed (local only — not pushed). Next: Wave 3-C boolean kind.

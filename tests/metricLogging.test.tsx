@@ -34,6 +34,31 @@ describe('Metrics tab', () => {
     expect(await screen.findByText('Energy')).toBeInTheDocument()
     expect(screen.getByText('1–10 rating')).toBeInTheDocument()
   })
+
+  it('defines a composite metric with named parts', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Metrics' }))
+    await user.click(
+      await screen.findByRole('button', { name: '+ Add metric' }),
+    )
+    await user.type(screen.getByLabelText('Name'), 'Blood Pressure')
+    await user.click(screen.getByRole('radio', { name: 'Multiple numbers' }))
+    await user.type(screen.getByLabelText('Part 1 name'), 'Systolic')
+    await user.type(screen.getByLabelText('Part 2 name'), 'Diastolic')
+    await user.click(screen.getByRole('button', { name: 'Add metric' }))
+
+    expect(await screen.findByText('Blood Pressure')).toBeInTheDocument()
+    expect(
+      screen.getByText('multiple numbers (Systolic / Diastolic)'),
+    ).toBeInTheDocument()
+    const metric = (await db.metrics.toArray())[0]
+    expect(metric.components).toEqual([
+      { name: 'Systolic', unit: undefined },
+      { name: 'Diastolic', unit: undefined },
+    ])
+  })
 })
 
 describe('Today screen metric logging', () => {
@@ -66,5 +91,25 @@ describe('Today screen metric logging', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(await screen.findByText('✓ 83.6')).toBeInTheDocument()
+  })
+
+  it('logs a composite metric and shows the joined value', async () => {
+    await addMetric({
+      name: 'Blood Pressure',
+      kind: 'composite',
+      components: [
+        { name: 'Systolic', unit: 'mmHg' },
+        { name: 'Diastolic', unit: 'mmHg' },
+      ],
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(await screen.findByLabelText('Systolic (mmHg)'), '120')
+    await user.type(screen.getByLabelText('Diastolic (mmHg)'), '80')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText('✓ 120/80')).toBeInTheDocument()
+    expect((await db.metricEntries.toArray())[0].values).toEqual([120, 80])
   })
 })

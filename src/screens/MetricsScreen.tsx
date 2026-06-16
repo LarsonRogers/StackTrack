@@ -21,6 +21,10 @@ type FormState =
 // Plain-language label for a metric's value type.
 function kindLabel(metric: Metric): string {
   if (metric.kind === 'rating') return '1–10 rating'
+  if (metric.kind === 'composite') {
+    const parts = (metric.components ?? []).map((c) => c.name).join(' / ')
+    return parts ? `multiple numbers (${parts})` : 'multiple numbers'
+  }
   return metric.unit ? `number (${metric.unit})` : 'number'
 }
 

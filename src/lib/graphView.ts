@@ -58,6 +58,41 @@ export function buildSeries(
     }))
 }
 
+// Distinct line colors for the components of a composite metric. Cycles if a
+// metric somehow has more parts than colors (no practical limit on parts).
+export const COMPONENT_COLORS = [
+  '#0f766e', // teal (matches the single-metric line)
+  '#b45309', // amber
+  '#7c3aed', // violet
+  '#be123c', // rose
+  '#0369a1', // blue
+  '#4d7c0f', // green
+]
+
+export interface CompositePoint {
+  ts: number
+  date: string
+  values: number[] // one per component, in component order
+}
+
+// Chronological points for a composite metric — each point carries every
+// component's value, so the chart draws one line per component. Entries
+// without a `values` array (other kinds) are skipped.
+export function buildCompositeSeries(
+  entries: MetricEntry[],
+  startDate: string | null,
+): CompositePoint[] {
+  return entries
+    .filter((entry) => startDate === null || entry.date >= startDate)
+    .filter((entry) => Array.isArray(entry.values))
+    .toSorted((a, b) => a.date.localeCompare(b.date))
+    .map((entry) => ({
+      ts: dateToTs(entry.date),
+      date: entry.date,
+      values: entry.values!,
+    }))
+}
+
 export interface ChangeMarker {
   ts: number
   date: string

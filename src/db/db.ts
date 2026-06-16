@@ -72,17 +72,27 @@ export interface ItemNote {
   updatedAt: string
 }
 
-export type MetricKind = 'rating' | 'number'
+export type MetricKind = 'rating' | 'number' | 'composite'
 
-// A user-defined daily metric, e.g. "Energy" (1–10 rating) or "Weight"
-// (free number with unit). No cap on count (user decision 2026-06-11).
-// kind is fixed after creation: changing it would corrupt logged history.
+// One numeric part of a 'composite' metric, e.g. Blood Pressure = Systolic
+// (mmHg) + Diastolic (mmHg). Defined at metric creation and fixed thereafter:
+// changing the component list would misalign already-logged MetricEntry.values.
+export interface MetricComponent {
+  name: string
+  unit?: string // display label for this part, e.g. "mmHg"
+}
+
+// A user-defined daily metric, e.g. "Energy" (1–10 rating), "Weight"
+// (free number with unit), or "Blood Pressure" (composite: several numbers
+// at once). No cap on count (user decision 2026-06-11). kind is fixed after
+// creation: changing it would corrupt logged history.
 export interface Metric {
   id: number
   uid: string
   name: string
   kind: MetricKind
   unit?: string // display label for 'number' metrics, e.g. "kg", "hours"
+  components?: MetricComponent[] // 'composite' only: the ordered parts (≥2)
   status: ItemStatus // archived metrics keep their entries — never deleted
   createdAt: string
   updatedAt: string
@@ -96,7 +106,8 @@ export interface MetricEntry {
   metricId: number
   metricUid: string
   date: string // local calendar date 'YYYY-MM-DD'
-  value: number // rating metrics: integer 1–10; number metrics: any finite number
+  value: number // rating: integer 1–10; number: any finite number; composite: mirrors values[0] so single-value readers keep working
+  values?: number[] // 'composite' only: one finite number per component, in component order
   updatedAt: string
 }
 

@@ -4,7 +4,11 @@
 // goes through metricEntryRepository.
 import { useState } from 'react'
 import type { Metric, MetricEntry } from '../db/db'
-import { clearMetricEntry, setMetricEntry } from '../db/metricEntryRepository'
+import {
+  clearMetricEntry,
+  setCompositeEntry,
+  setMetricEntry,
+} from '../db/metricEntryRepository'
 
 const RATING_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -29,6 +33,8 @@ export default function MetricLogger({
       </span>
       {metric.kind === 'rating' ? (
         <RatingButtons metric={metric} entry={entry} date={date} />
+      ) : metric.kind === 'composite' ? (
+        <CompositeInput metric={metric} entry={entry} date={date} />
       ) : (
         <NumberInput metric={metric} entry={entry} date={date} />
       )}
@@ -111,6 +117,78 @@ function NumberInput({ metric, entry, date }: MetricLoggerProps) {
         Save
       </button>
       {entry && <span className="metric-number-saved">✓ {entry.value}</span>}
+      {error && (
+        <span className="item-form-error" role="alert">
+          {error}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// One number input per component (e.g. Systolic / Diastolic). Save all at
+// once; clearing every field removes the day's entry. Shows "120/80" once saved.
+function CompositeInput({ metric, entry, date }: MetricLoggerProps) {
+  const components = metric.components ?? []
+  const [drafts, setDrafts] = useState<string[]>(() =>
+    components.map((_, i) => entry?.values?.[i]?.toString() ?? ''),
+  )
+  const [error, setError] = useState<string | null>(null)
+
+  function setDraft(index: number, value: string) {
+    setDrafts((current) => current.map((d, i) => (i === index ? value : d)))
+  }
+
+  async function handleSave() {
+    const trimmed = drafts.map((d) => d.trim())
+    if (trimmed.every((d) => d === '')) {
+      await clearMetricEntry(metric.id, date) // all empty = clear
+      setError(null)
+      return
+    }
+    if (trimmed.some((d) => d === '')) {
+      setError('Please enter all parts.')
+      return
+    }
+    const values = trimmed.map(Number)
+    if (values.some((v) => !Number.isFinite(v))) {
+      setError('Please enter numbers only.')
+      return
+    }
+    setError(null)
+    await setCompositeEntry(metric.id, date, values)
+  }
+
+  return (
+    <div className="metric-composite">
+      <div className="metric-composite-inputs">
+        {components.map((component, index) => (
+          <span className="metric-composite-field" key={index}>
+            <label htmlFor={`metric-value-${metric.id}-${index}`}>
+              {component.name}
+              {component.unit && ` (${component.unit})`}
+            </label>
+            <input
+              id={`metric-value-${metric.id}-${index}`}
+              type="number"
+              inputMode="decimal"
+              step="any"
+              value={drafts[index] ?? ''}
+              onChange={(e) => setDraft(index, e.target.value)}
+            />
+          </span>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="button-primary button-compact"
+        onClick={handleSave}
+      >
+        Save
+      </button>
+      {entry?.values && (
+        <span className="metric-number-saved">✓ {entry.values.join('/')}</span>
+      )}
       {error && (
         <span className="item-form-error" role="alert">
           {error}

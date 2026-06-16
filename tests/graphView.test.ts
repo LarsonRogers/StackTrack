@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import type { MetricEntry, StackEvent } from '../src/db/db'
 import {
+  buildCompositeSeries,
   buildSeries,
   collapseEvents,
   EVENT_COLORS,
@@ -66,6 +67,42 @@ describe('buildSeries', () => {
     )
     expect(series.map((p) => p.date)).toEqual(['2026-06-01', '2026-06-10'])
     expect(series[0].value).toBe(6)
+  })
+})
+
+describe('buildCompositeSeries', () => {
+  function composite(date: string, values: number[]): MetricEntry {
+    return {
+      id: 0,
+      uid: `entry-${date}`,
+      metricId: 1,
+      metricUid: 'metric-1',
+      date,
+      value: values[0],
+      values,
+      updatedAt: '',
+    }
+  }
+
+  it('carries every component value, filtered and sorted', () => {
+    const series = buildCompositeSeries(
+      [
+        composite('2026-06-10', [118, 78]),
+        composite('2026-04-01', [130, 85]),
+        composite('2026-06-01', [120, 80]),
+      ],
+      '2026-05-12',
+    )
+    expect(series.map((p) => p.date)).toEqual(['2026-06-01', '2026-06-10'])
+    expect(series.map((p) => p.values)).toEqual([
+      [120, 80],
+      [118, 78],
+    ])
+  })
+
+  it('skips entries without a values array (other kinds)', () => {
+    const series = buildCompositeSeries([entry('2026-06-01', 7)], null)
+    expect(series).toHaveLength(0)
   })
 })
 
