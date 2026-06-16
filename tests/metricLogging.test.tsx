@@ -112,4 +112,24 @@ describe('Today screen metric logging', () => {
     expect(await screen.findByText('✓ 120/80')).toBeInTheDocument()
     expect((await db.metricEntries.toArray())[0].values).toEqual([120, 80])
   })
+
+  it('logs a boolean metric via the checkbox', async () => {
+    await addMetric({ name: 'Exercised', kind: 'boolean' })
+    const user = userEvent.setup()
+    render(<App />)
+
+    const checkbox = await screen.findByRole('checkbox', { name: /Exercised/ })
+    expect(checkbox).not.toBeChecked()
+
+    await user.click(checkbox)
+
+    expect(
+      await screen.findByRole('checkbox', { name: /Exercised/, checked: true }),
+    ).toBeInTheDocument()
+    expect((await db.metricEntries.toArray())[0].value).toBe(1)
+
+    // unchecking clears the day's entry
+    await user.click(screen.getByRole('checkbox', { name: /Exercised/ }))
+    expect(await db.metricEntries.count()).toBe(0)
+  })
 })

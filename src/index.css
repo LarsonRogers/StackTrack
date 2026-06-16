@@ -545,6 +545,62 @@ body {
   font-weight: 600;
 }
 
+/* Boolean metric logger: a sliding No/Yes switch (a styled checkbox). */
+.metric-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+/* Real checkbox kept for accessibility + behavior, hidden behind the track. */
+.metric-switch-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.metric-switch-track {
+  position: relative;
+  flex: none;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--color-border);
+  transition: background 0.15s ease;
+}
+
+.metric-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(1.5rem - 4px);
+  height: calc(1.5rem - 4px);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.metric-switch-input:checked + .metric-switch-track {
+  background: var(--color-primary);
+}
+
+.metric-switch-input:checked + .metric-switch-track .metric-switch-thumb {
+  transform: translateX(1.25rem);
+}
+
+.metric-switch-input:focus-visible + .metric-switch-track {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.metric-switch-label {
+  font-weight: 600;
+  min-width: 2rem;
+}
+
 /* Composite metric form: a name + unit pair per part. */
 .metric-component-row {
   display: flex;

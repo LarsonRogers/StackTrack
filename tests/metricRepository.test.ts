@@ -162,3 +162,18 @@ describe('composite metrics', () => {
     )
   })
 })
+
+describe('boolean metrics', () => {
+  it('stores a checked value as 1', async () => {
+    const id = await addMetric({ name: 'Exercised', kind: 'boolean' })
+    await setMetricEntry(id, TODAY, 1)
+
+    expect((await db.metricEntries.toArray())[0].value).toBe(1)
+  })
+
+  it('rejects any value other than 0 or 1', async () => {
+    const id = await addMetric({ name: 'Exercised', kind: 'boolean' })
+    await expect(setMetricEntry(id, TODAY, 2)).rejects.toThrow(/0 or 1/)
+    await expect(setMetricEntry(id, TODAY, 0.5)).rejects.toThrow(/0 or 1/)
+  })
+})

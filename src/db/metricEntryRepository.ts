@@ -27,6 +27,9 @@ export async function setMetricEntry(
         `Rating must be a whole number from 1 to 10, got ${value}`,
       )
     }
+    if (metric.kind === 'boolean' && value !== 0 && value !== 1) {
+      throw new Error(`Boolean value must be 0 or 1, got ${value}`)
+    }
 
     const existing = await db.metricEntries
       .where('[metricId+date]')

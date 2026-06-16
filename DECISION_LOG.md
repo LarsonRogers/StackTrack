@@ -784,3 +784,23 @@
   (filter+sort, skips non-composite), UI (define via form, log → "✓ 120/80").
   143 tests pass; lint/format/typecheck/build all green.
 - State: committed (local only — not pushed). Next: Wave 3-C boolean kind.
+
+## [2026-06-16] Wave 3-C: boolean (yes/no) metric kind — Claude Code
+- Did: Added MetricKind 'boolean' for yes/no tracking (e.g. "Exercised
+  today?"). NO schema change — value 0/1 reuses the existing required `value`
+  field and the existing setMetricEntry/clearMetricEntry write paths (no new
+  repository function). Boundary validation added: a boolean entry must be
+  exactly 0 or 1. Form: a "Yes / no" radio (no unit, no components). Logger:
+  a sliding No/Yes switch — a real checkbox kept for accessibility/behavior
+  (aria-label = metric name) but visually hidden behind a CSS track+thumb
+  slider; checked writes value 1, unchecking clears the day's entry.
+  kindLabel = "yes/no". Graphs: 0/1 step line (Recharts type="stepAfter"),
+  yDomain [0,1] with No/Yes Y-axis tick labels and a Yes/No tooltip.
+- Decisions (user): logger is a sliding switch, not a default-No checkbox
+  (asked for mid-task; UI may be revamped later). Functionality approved
+  before the switch tweak.
+- Tests: +3 — repository (checked stores 1; rejects values other than 0/1),
+  UI (toggle on writes 1, toggle off clears). 146 tests pass; lint/format/
+  typecheck/build all green.
+- State: committed (local only — not pushed). Next: Wave 3-D rename
+  Metrics tab → "Tracking" (label only, no file/type renames).

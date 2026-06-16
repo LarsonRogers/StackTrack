@@ -72,7 +72,7 @@ export interface ItemNote {
   updatedAt: string
 }
 
-export type MetricKind = 'rating' | 'number' | 'composite'
+export type MetricKind = 'rating' | 'number' | 'composite' | 'boolean'
 
 // One numeric part of a 'composite' metric, e.g. Blood Pressure = Systolic
 // (mmHg) + Diastolic (mmHg). Defined at metric creation and fixed thereafter:
@@ -106,7 +106,7 @@ export interface MetricEntry {
   metricId: number
   metricUid: string
   date: string // local calendar date 'YYYY-MM-DD'
-  value: number // rating: integer 1–10; number: any finite number; composite: mirrors values[0] so single-value readers keep working
+  value: number // rating: integer 1–10; number: any finite number; boolean: 0 or 1; composite: mirrors values[0] so single-value readers keep working
   values?: number[] // 'composite' only: one finite number per component, in component order
   updatedAt: string
 }

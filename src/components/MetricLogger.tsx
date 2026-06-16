@@ -35,6 +35,8 @@ export default function MetricLogger({
         <RatingButtons metric={metric} entry={entry} date={date} />
       ) : metric.kind === 'composite' ? (
         <CompositeInput metric={metric} entry={entry} date={date} />
+      ) : metric.kind === 'boolean' ? (
+        <BooleanToggle metric={metric} entry={entry} date={date} />
       ) : (
         <NumberInput metric={metric} entry={entry} date={date} />
       )}
@@ -123,6 +125,36 @@ function NumberInput({ metric, entry, date }: MetricLoggerProps) {
         </span>
       )}
     </div>
+  )
+}
+
+// Yes/no tracking (e.g. "Exercised today?"). A checkbox stored as value 1
+// when checked; unchecking clears the day's entry (no value logged).
+function BooleanToggle({ metric, entry, date }: MetricLoggerProps) {
+  const checked = entry?.value === 1
+
+  async function handleToggle() {
+    if (checked) {
+      await clearMetricEntry(metric.id, date)
+    } else {
+      await setMetricEntry(metric.id, date, 1)
+    }
+  }
+
+  return (
+    <label className="metric-switch">
+      <input
+        type="checkbox"
+        className="metric-switch-input"
+        aria-label={metric.name}
+        checked={checked}
+        onChange={handleToggle}
+      />
+      <span className="metric-switch-track" aria-hidden="true">
+        <span className="metric-switch-thumb" />
+      </span>
+      <span className="metric-switch-label">{checked ? 'Yes' : 'No'}</span>
+    </label>
   )
 }
 

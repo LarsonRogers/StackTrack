@@ -108,6 +108,16 @@ export default function MetricForm({
           />
           Multiple numbers
         </label>
+        <label>
+          <input
+            type="radio"
+            name="metric-kind"
+            checked={kind === 'boolean'}
+            disabled={isEdit}
+            onChange={() => setKind('boolean')}
+          />
+          Yes / no
+        </label>
       </fieldset>
 
       {kind === 'number' && (

@@ -79,6 +79,7 @@ export default function GraphsScreen() {
 
   const startDate = rangeStartDate(range, new Date())
   const isComposite = metric.kind === 'composite'
+  const isBoolean = metric.kind === 'boolean'
   const components = metric.components ?? []
   const series = isComposite ? [] : buildSeries(entries, startDate)
   const compositeSeries = isComposite
@@ -101,7 +102,7 @@ export default function GraphsScreen() {
       ? Math.min(...candidateStarts)
       : todayTs
   const yDomain: [number | 'auto', number | 'auto'] =
-    metric.kind === 'rating' ? [1, 10] : ['auto', 'auto']
+    metric.kind === 'rating' ? [1, 10] : isBoolean ? [0, 1] : ['auto', 'auto']
 
   return (
     <main className="screen">
@@ -165,16 +166,26 @@ export default function GraphsScreen() {
                 tickFormatter={formatTs}
                 fontSize={12}
               />
-              <YAxis domain={yDomain} fontSize={12} width={48} />
+              <YAxis
+                domain={yDomain}
+                fontSize={12}
+                width={48}
+                ticks={isBoolean ? [0, 1] : undefined}
+                tickFormatter={
+                  isBoolean ? (v) => (v === 1 ? 'Yes' : 'No') : undefined
+                }
+              />
               <Tooltip
                 labelFormatter={(ts) => formatTs(Number(ts))}
                 formatter={(value, seriesName) =>
                   isComposite
                     ? [value, seriesName]
-                    : [
-                        `${value}${metric.unit ? ` ${metric.unit}` : ''}`,
-                        metric.name,
-                      ]
+                    : isBoolean
+                      ? [value === 1 ? 'Yes' : 'No', metric.name]
+                      : [
+                          `${value}${metric.unit ? ` ${metric.unit}` : ''}`,
+                          metric.name,
+                        ]
                 }
               />
               {markers.map((marker) => (
@@ -210,7 +221,7 @@ export default function GraphsScreen() {
                 </>
               ) : (
                 <Line
-                  type="monotone"
+                  type={isBoolean ? 'stepAfter' : 'monotone'}
                   dataKey="value"
                   stroke="#0f766e"
                   strokeWidth={2}
