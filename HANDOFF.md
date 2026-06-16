@@ -2,7 +2,7 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Item 15 — multiple groups per item (schema v8, lossless migration) + the 1–10 rating-row UI fix. 129 tests green; lint/format/typecheck/build all pass.
+**Last completed:** Item 15 — multiple groups per item (schema v8, lossless migration) + the 1–10 rating-row UI fix + a CI fix (flaky multi-group form test → functional group state, robust waits). Pushed to main; 129 tests green; lint/format/typecheck/build all pass.
 **Confirmed next task:** None set — awaiting user. Open: user's pre-deploy backup + live look at the new build, then push/deploy; item 13e (live two-device sync demo) and item 12's file-merge demo still open.
 
 **Open watch items:**
@@ -16,6 +16,9 @@
 - CI deploys the app but NOT the sync worker (manual redeploy in RUNBOOK).
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders.
+- CI warning (not failing): actions/checkout@v4 + setup-node@v4 run on Node
+  20, deprecated after June 2026. Bumping to v5/Node 24 is a CI-config change
+  — needs user confirmation before editing.
 - Root README.md describes StackTrack (done item 14).
 
 **Resume prompt (paste into any agent):**
