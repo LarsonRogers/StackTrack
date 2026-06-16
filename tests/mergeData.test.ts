@@ -49,6 +49,7 @@ const PHONE_ITEM = {
   kind: 'supplement',
   dose: '400 mg',
   times: ['20:00'],
+  groups: [],
   status: 'active',
   createdAt: '2026-06-10T08:00:00.000Z',
   updatedAt: '2026-06-10T08:00:00.000Z',
@@ -67,6 +68,7 @@ describe('mergeBundle', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
 
     const bundle = bundleWith({
@@ -135,6 +137,7 @@ describe('mergeBundle', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await setItemNote(itemId, '2026-06-11', 'PC note')
     const localItem = (await db.items.toArray())[0]
@@ -168,6 +171,7 @@ describe('mergeBundle', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await addMetric({ name: 'Energy', kind: 'rating' })
 
@@ -208,6 +212,7 @@ describe('mergeBundle', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     const bundle = await buildExportBundle()
 

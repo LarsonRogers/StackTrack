@@ -59,6 +59,7 @@ describe('clearing actions record tombstones', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
 
@@ -85,6 +86,7 @@ describe('merge with tombstones', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await markTaken(itemId, TODAY, '08:00')
     const intake = (await db.intakes.toArray())[0]
@@ -107,6 +109,7 @@ describe('merge with tombstones', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await markTaken(itemId, TODAY, '08:00')
     const intakeBefore = (await db.intakes.toArray())[0]
@@ -127,6 +130,7 @@ describe('merge with tombstones', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await setItemNote(itemId, TODAY, 'first note')
     const note = (await db.itemNotes.toArray())[0]

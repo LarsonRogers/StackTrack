@@ -39,9 +39,10 @@ describe('Stack screen', () => {
 
     await user.type(screen.getByLabelText('Name'), 'Zinc')
     await user.type(screen.getByLabelText('Dose'), '25 mg')
+    // Groups are tag chips: type a name and press Enter to commit it.
     await user.type(
-      screen.getByLabelText('Group (optional)'),
-      'Testosterone Support',
+      screen.getByLabelText('Groups (optional)'),
+      'Testosterone Support{Enter}',
     )
     await user.click(screen.getByRole('button', { name: 'Add to stack' }))
 
@@ -49,6 +50,34 @@ describe('Stack screen', () => {
     expect(await screen.findByText('Zinc')).toBeInTheDocument()
     expect(screen.getByText('Testosterone Support')).toBeInTheDocument()
     expect(screen.getByText(/25 mg/)).toBeInTheDocument()
+  })
+
+  it('puts an item in multiple groups and marks it across sections', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Stack' }))
+    await user.click(
+      await screen.findByRole('button', {
+        name: '+ Add medication or supplement',
+      }),
+    )
+
+    await user.type(screen.getByLabelText('Name'), 'Vitamin D')
+    await user.type(screen.getByLabelText('Dose'), '2000 IU')
+    const groupInput = screen.getByLabelText('Groups (optional)')
+    await user.type(groupInput, 'Bone{Enter}')
+    await user.type(groupInput, 'Immune{Enter}')
+    // both groups show as removable chips
+    expect(screen.getByLabelText('Remove group Bone')).toBeInTheDocument()
+    expect(screen.getByLabelText('Remove group Immune')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Add to stack' }))
+
+    // listed under BOTH sections, each marked "in 2 groups" (not a duplicate)
+    expect(await screen.findByText('Bone')).toBeInTheDocument()
+    expect(screen.getByText('Immune')).toBeInTheDocument()
+    expect(screen.getAllByText('Vitamin D')).toHaveLength(2)
+    expect(screen.getAllByText(/in 2 groups/)).toHaveLength(2)
   })
 
   it('rejects an empty name with an inline error', async () => {
@@ -74,14 +103,14 @@ describe('Stack screen', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['20:00'],
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
     })
     await addItem({
       name: 'Creatine',
       kind: 'supplement',
       dose: '5 g',
       times: ['08:00'],
-      group: 'Performance',
+      groups: ['Performance'],
     })
     const user = userEvent.setup()
     render(<App />)
@@ -104,7 +133,7 @@ describe('Stack screen', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
     })
     const phoneBundle = {
       app: 'StackTrack',

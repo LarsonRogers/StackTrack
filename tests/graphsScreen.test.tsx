@@ -48,14 +48,14 @@ describe('Graphs screen', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
     })
     await addItem({
       name: 'Magnesium',
       kind: 'supplement',
       dose: '400 mg',
       times: ['20:00'],
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
     })
 
     await openGraphsTab()

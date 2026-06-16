@@ -12,12 +12,27 @@ export interface StackItemInput {
   kind: ItemKind
   dose: string
   times: string[]
-  group?: string
+  groups: string[] // [] = ungrouped; an item may belong to many groups
 }
 
 // Sorted + deduplicated so times compare reliably and display consistently.
 function normalizeTimes(times: string[]): string[] {
   return [...new Set(times)].sort()
+}
+
+// Trim each group, drop blanks, dedupe (case-insensitive), preserve order.
+function normalizeGroups(groups: string[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const group of groups) {
+    const trimmed = group.trim()
+    const key = trimmed.toLowerCase()
+    if (trimmed && !seen.has(key)) {
+      seen.add(key)
+      out.push(trimmed)
+    }
+  }
+  return out
 }
 
 function normalizeInput(input: StackItemInput): StackItemInput {
@@ -26,7 +41,7 @@ function normalizeInput(input: StackItemInput): StackItemInput {
     kind: input.kind,
     dose: input.dose.trim(),
     times: normalizeTimes(input.times),
-    group: input.group?.trim() || undefined,
+    groups: normalizeGroups(input.groups ?? []),
   }
 }
 
@@ -46,9 +61,18 @@ export function buildChangeSummary(
     parts.push(`dose: ${before.dose} → ${after.dose}`)
   if (before.times.join(',') !== after.times.join(','))
     parts.push(`times: ${before.times.join(', ')} → ${after.times.join(', ')}`)
-  if ((before.group ?? '') !== (after.group ?? ''))
-    parts.push(`group: ${before.group ?? 'none'} → ${after.group ?? 'none'}`)
+  // Compare as sets (sorted) so reordering groups is not a "change".
+  const beforeGroups = (before.groups ?? []).toSorted().join('')
+  const afterGroups = (after.groups ?? []).toSorted().join('')
+  if (beforeGroups !== afterGroups)
+    parts.push(
+      `groups: ${fmtGroups(before.groups)} → ${fmtGroups(after.groups)}`,
+    )
   return parts.length > 0 ? parts.join('; ') : null
+}
+
+function fmtGroups(groups: string[] | undefined): string {
+  return groups && groups.length > 0 ? groups.join(', ') : 'none'
 }
 
 // Adds an item and records its 'added' event. Returns the new item id.
@@ -83,7 +107,7 @@ export async function updateItem(
       kind: existing.kind,
       dose: existing.dose,
       times: existing.times,
-      group: existing.group,
+      groups: existing.groups,
     }
     const summary = buildChangeSummary(before, after)
     if (summary === null) return
@@ -118,11 +142,11 @@ async function mustGetItem(id: number): Promise<StackItem> {
   return item
 }
 
-// Snapshot name/group onto the event so history survives later renames.
+// Snapshot name/groups onto the event so history survives later renames.
 async function recordEvent(
   itemId: number,
   itemUid: string,
-  snapshot: Pick<StackItemInput, 'name' | 'group'>,
+  snapshot: Pick<StackItemInput, 'name' | 'groups'>,
   type: 'added' | 'changed' | 'removed',
   summary: string,
 ): Promise<void> {
@@ -133,7 +157,7 @@ async function recordEvent(
     date: toIsoDate(new Date()),
     type,
     itemName: snapshot.name,
-    group: snapshot.group,
+    groups: snapshot.groups ?? [],
     summary,
     updatedAt: nowIso(),
   })

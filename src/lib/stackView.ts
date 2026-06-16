@@ -17,14 +17,19 @@ export interface GroupSection {
 }
 
 // Groups items by purpose group: sections alphabetical, items alphabetical,
-// ungrouped items in a trailing null section.
+// ungrouped items in a trailing null section. An item in multiple groups
+// appears in EACH of its sections (the screen marks it as multi-group so it
+// reads as one item, not duplicates).
 export function groupByPurpose(items: StackItem[]): GroupSection[] {
   const byGroup = new Map<string | null, StackItem[]>()
-  for (const item of items) {
-    const key = item.group ?? null
+  const add = (key: string | null, item: StackItem) => {
     const section = byGroup.get(key) ?? []
     section.push(item)
     byGroup.set(key, section)
+  }
+  for (const item of items) {
+    if (item.groups.length === 0) add(null, item)
+    else for (const group of item.groups) add(group, item)
   }
 
   const sections = [...byGroup.entries()].map(([group, groupItems]) => ({
@@ -83,7 +88,7 @@ export function sortByRecentlyChanged(
 export function distinctGroups(items: StackItem[]): string[] {
   const groups = new Set<string>()
   for (const item of items) {
-    if (item.group) groups.add(item.group)
+    for (const group of item.groups) if (group) groups.add(group)
   }
   return [...groups].sort()
 }

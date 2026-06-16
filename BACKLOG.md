@@ -18,3 +18,4 @@
 | 12 | Interim device sync — 12a foundations (uid + updatedAt, schema v5) + 12b "Sync from file" merge import | Carry data between own devices today without a backend | awaiting demo |
 | 14 | Rewrite repo README to describe StackTrack (currently describes the starter pack) | Repo visitors see what the app actually is | done (2026-06-12) |
 | 13 | E2E-encrypted sync backend — 13a server; 13b client crypto; 13c tombstones; 13d sync engine + Sync tab (done 2026-06-12); 13e live two-device demo | Automatic cross-device sync where the server can never read the data | 13a–13d done; awaiting live demo |
+| 15 | Multiple groups per item — an item can belong to many purpose groups (tag chips); the "by group" view lists it under each, marked "in N groups"; graph markers batch per group (schema v8) | Organize one item under several purposes (e.g. Bone + Immune) | done (2026-06-16) |

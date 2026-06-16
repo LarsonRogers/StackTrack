@@ -42,7 +42,7 @@ function event(
     date,
     type,
     itemName,
-    group,
+    groups: group ? [group] : [],
     summary,
     updatedAt: '',
   }
@@ -133,6 +133,36 @@ describe('collapseEvents', () => {
       null,
     )
     expect(markers).toHaveLength(2)
+  })
+
+  it('a solo multi-group event yields one per-item marker, not one per group', () => {
+    const markers = collapseEvents(
+      [
+        {
+          ...event('2026-06-01', 'added', 'Vitamin D'),
+          groups: ['Bone', 'Immune'],
+        },
+      ],
+      null,
+    )
+    expect(markers).toHaveLength(1)
+    expect(markers[0].label).toBe('Started Vitamin D')
+  })
+
+  it('a multi-group item joins each of its group batches', () => {
+    const vitD = {
+      ...event('2026-06-01', 'added', 'Vitamin D'),
+      groups: ['Bone', 'Immune'],
+    }
+    const calcium = {
+      ...event('2026-06-01', 'added', 'Calcium'),
+      groups: ['Bone'],
+    }
+    const labels = collapseEvents([vitD, calcium], null).map((m) => m.label)
+    // Bone has two items → merged; Immune has only Vitamin D → solo
+    expect(labels).toContain('Started Bone (2 items)')
+    expect(labels).toContain('Started Vitamin D')
+    expect(labels).toHaveLength(2)
   })
 
   it('filters events outside the range', () => {

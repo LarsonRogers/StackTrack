@@ -11,7 +11,7 @@
 // Known limitation (interim file sync): deletions don't propagate — a record
 // removed on one device reappears if the other device's file still has it.
 // Tombstones arrive with the real sync backend (backlog item 13).
-import { db } from '../db/db'
+import { db, normalizeGroupsField } from '../db/db'
 import type { ExportBundle } from './exportData'
 
 export interface MergeSummary {
@@ -56,6 +56,14 @@ export async function mergeBundle(
         '(or use "Import backup" to fully replace instead).',
     )
   }
+
+  // Pre-v8 bundles (and pulls from older peers) carry the single `group`
+  // field — carry it onto `groups` before any matching/payload work so the
+  // merged records land in the current shape.
+  for (const row of (bundle.data.items ?? []) as AnyRow[])
+    normalizeGroupsField(row)
+  for (const row of (bundle.data.stackEvents ?? []) as AnyRow[])
+    normalizeGroupsField(row)
 
   const summary: MergeSummary = {
     added: 0,

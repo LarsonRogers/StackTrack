@@ -4,7 +4,7 @@
 // — a failure mid-import leaves current data exactly as it was).
 // The UI is responsible for the confirmation step and the pre-import
 // safety snapshot between the two phases.
-import { backfillIdentity, db } from '../db/db'
+import { backfillIdentity, db, migrateGroups } from '../db/db'
 import type { ExportBundle } from './exportData'
 
 const TABLE_NAMES = [
@@ -86,6 +86,9 @@ export async function applyBundle(bundle: ExportBundle): Promise<void> {
       // Pre-v5 backups have no uid/updatedAt — give them sync identity,
       // same backfill the schema upgrade uses (idempotent for v5 bundles).
       await backfillIdentity(db)
+      // Pre-v8 backups carry the single `group` field — carry it onto
+      // `groups` (same migration the v8 upgrade runs; idempotent for v8+).
+      await migrateGroups(db)
     },
   )
 }

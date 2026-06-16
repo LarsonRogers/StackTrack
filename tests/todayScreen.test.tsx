@@ -28,6 +28,7 @@ describe('Today checklist', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00', '20:00'],
+      groups: [],
     })
     render(<App />)
 
@@ -41,6 +42,7 @@ describe('Today checklist', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     const user = userEvent.setup()
     render(<App />)
@@ -61,6 +63,7 @@ describe('Today checklist', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     const user = userEvent.setup()
     render(<App />)
@@ -87,6 +90,7 @@ describe('Date navigation', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     render(<App />)
 
@@ -101,6 +105,7 @@ describe('Date navigation', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     const user = userEvent.setup()
     render(<App />)
@@ -125,6 +130,7 @@ describe('Date navigation', () => {
       kind: 'supplement',
       dose: '6 mg',
       times: ['08:00'],
+      groups: [],
     })
     const yesterday = addDays(toIsoDate(new Date()), -1)
     await markTaken(itemId, yesterday, '08:00')

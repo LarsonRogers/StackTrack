@@ -12,7 +12,7 @@ import {
 
 let nextId = 1
 
-function item(name: string, times: string[], group?: string): StackItem {
+function item(name: string, times: string[], ...groups: string[]): StackItem {
   const id = nextId++
   return {
     id,
@@ -21,7 +21,7 @@ function item(name: string, times: string[], group?: string): StackItem {
     kind: 'supplement',
     dose: '',
     times,
-    group,
+    groups,
     status: 'active',
     createdAt: '',
     updatedAt: '',
@@ -70,6 +70,7 @@ describe('latestEventDates / sortByRecentlyChanged', () => {
       date,
       type,
       itemName,
+      groups: [],
       summary: '',
       updatedAt: '',
     })
@@ -98,5 +99,16 @@ describe('groupByPurpose', () => {
       'Testosterone Support',
       null,
     ])
+  })
+
+  it('lists an item in every group it belongs to', () => {
+    const sections = groupByPurpose([
+      item('Vitamin D', [], 'Bone', 'Immune'),
+      item('Calcium', [], 'Bone'),
+    ])
+    const bone = sections.find((s) => s.group === 'Bone')
+    const immune = sections.find((s) => s.group === 'Immune')
+    expect(bone?.items.map((i) => i.name)).toEqual(['Calcium', 'Vitamin D'])
+    expect(immune?.items.map((i) => i.name)).toEqual(['Vitamin D'])
   })
 })

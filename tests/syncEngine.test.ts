@@ -113,6 +113,7 @@ describe('sync engine', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
 
     await enableSync(PASS, ITER)
@@ -134,6 +135,7 @@ describe('sync engine', () => {
       kind: 'supplement',
       dose: '400 mg',
       times: ['20:00'],
+      groups: [],
       status: 'active',
       createdAt: '2026-06-12T08:00:00.000Z',
       updatedAt: '2026-06-12T08:00:00.000Z',
@@ -162,6 +164,7 @@ describe('sync engine', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     void itemId
     const localItem = (await db.items.toArray())[0]
@@ -190,6 +193,7 @@ describe('sync engine', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await enableSync(PASS, ITER)
     const afterFirst = (await db.syncState.toCollection().first())!.cursor

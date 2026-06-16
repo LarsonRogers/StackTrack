@@ -167,9 +167,21 @@ export default function StackScreen() {
     )
   }
 
-  // One active-item row. showGroup: flat sorts lose the section headers,
-  // so the group rides along in the detail line instead.
-  function renderActiveItem(item: StackItem, showGroup: boolean) {
+  // One active-item row. groupHint controls the group text in the detail line:
+  //  'list'  → all groups (flat sorts lose the section headers)
+  //  'count' → "in N groups" when multi-group (inside a group section, so the
+  //            row reads as one item shown in several sections, not a copy)
+  //  'none'  → no group text
+  function renderActiveItem(
+    item: StackItem,
+    groupHint: 'list' | 'count' | 'none',
+  ) {
+    const groupText =
+      groupHint === 'list'
+        ? item.groups.join(', ') || null
+        : groupHint === 'count' && item.groups.length > 1
+          ? `in ${item.groups.length} groups`
+          : null
     return (
       <li key={item.id} className="stack-item">
         <div className="stack-item-info">
@@ -180,7 +192,7 @@ export default function StackScreen() {
             </span>
           </span>
           <span className="stack-item-detail">
-            {[item.dose, item.times.join(', '), showGroup ? item.group : null]
+            {[item.dose, item.times.join(', '), groupText]
               .filter(Boolean)
               .join(' · ')}
           </span>
@@ -265,13 +277,13 @@ export default function StackScreen() {
           <section key={section.group ?? '(ungrouped)'} className="stack-group">
             <h2 className="stack-group-title">{section.group ?? 'No group'}</h2>
             <ul className="stack-list">
-              {section.items.map((item) => renderActiveItem(item, false))}
+              {section.items.map((item) => renderActiveItem(item, 'count'))}
             </ul>
           </section>
         ))
       ) : (
         <ul className="stack-list stack-list-flat">
-          {sortedFlatItems().map((item) => renderActiveItem(item, true))}
+          {sortedFlatItems().map((item) => renderActiveItem(item, 'list'))}
         </ul>
       )}
 

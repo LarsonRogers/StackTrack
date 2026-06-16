@@ -636,3 +636,45 @@
 - State: committed; held in the same backup-ritual hold as the upcoming v8
   groups migration (next task). Brief 2 (multiple groups per item) is the
   active task.
+
+## [2026-06-16] Item 15: multiple groups per item (schema v8) — Claude Code
+- Did: Replaced the single `group?: string` with `groups: string[]` on
+  items AND on the change-history snapshots (stackEvents). Schema v8
+  (additive + lossless): items index `status, group` → `status, *groups`
+  (multi-entry); the v8 `.upgrade` runs `migrateGroups` which carries the
+  old value over (group "X" → ["X"]; none → []) and touches no other
+  field. New shared helpers in db.ts: `normalizeGroupsField` (row-level,
+  in-place, idempotent) + `migrateGroups` (items+stackEvents). Write path
+  (stackRepository): input `groups: string[]`, normalize (trim/blank-drop/
+  case-insensitive dedupe, order preserved), change-summary diffs the group
+  SET (reorder is not a change), event snapshots groups. Form (ItemForm):
+  single text box → tag chips (type + Enter/comma to add, × or Backspace to
+  remove, datalist suggestions, a still-typed draft is folded in on submit).
+  Stack screen: "by group" lists an item under EACH of its groups, marked
+  "in N groups" so it reads as one item not duplicates; flat-sort detail
+  line shows all groups; group-section view shows the count hint. Graph
+  markers (graphView): an event joins each of its groups' same-day/same-type
+  batches; a solo multi-group event de-dupes to one per-item marker.
+  Back-compat: `migrateGroups`/`normalizeGroupsField` also run in
+  applyBundle (import) and mergeBundle (sync) so pre-v8 backups + older-peer
+  pulls load cleanly. Export unchanged (arrays already serialize; CSV joins
+  with "; ").
+- Tests: new tests/groupsMigration.test.ts (normalizeGroupsField cases;
+  LOSSLESS migrateGroups proof — every non-group field byte-identical;
+  idempotent; pre-v8 import + merge normalization). Multi-group cases added
+  to stackView (listed under each section), graphView (per-group batch +
+  solo de-dupe), stackScreen (chips + "in 2 groups" across sections).
+  Updated ~12 test files for the field rename. 129 tests pass; lint, format,
+  typecheck, build all green.
+- Data safety: only the v8 upgrade touches stored data and it is lossless +
+  atomic (Dexie rolls back on any error) + proved by the migration test.
+- Decisions: StackItemInput.groups is REQUIRED (canonical input); the form
+  always supplies it. Group-set comparison ignores order.
+- Honest note: the pre-existing flaky test (todayScreen "attaches a daily
+  note", environment timing per 2026-06-12 entry) failed once mid-run then
+  passed 3/3 in isolation and in the final full-suite run — unrelated to
+  groups (daily-note flow). Not a regression.
+- State: committed; PUSH HELD pending the user's pre-deploy backup ritual
+  (export JSON) — the v8 migration runs on their real device on next load.
+  Next: user backs up + sees it run, then push/deploy; item 13e sync demo
+  still open.

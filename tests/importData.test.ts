@@ -27,7 +27,7 @@ async function seedRealisticData() {
     kind: 'supplement',
     dose: '25 mg',
     times: ['08:00'],
-    group: 'Testosterone Support',
+    groups: ['Testosterone Support'],
   })
   const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
   await setMetricEntry(metricId, '2026-06-11', 7)
@@ -105,6 +105,7 @@ describe('applyBundle', () => {
       kind: 'supplement',
       dose: '5 g',
       times: ['09:00'],
+      groups: [],
     })
 
     await applyBundle(backup)

@@ -31,7 +31,7 @@ describe('buildExportBundle', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00', '20:00'],
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
     })
     await markTaken(itemId, '2026-06-11', '08:00')
     const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
@@ -41,7 +41,7 @@ describe('buildExportBundle', () => {
     const bundle = await buildExportBundle()
 
     expect(bundle.app).toBe('StackTrack')
-    expect(bundle.schemaVersion).toBe(7)
+    expect(bundle.schemaVersion).toBe(8)
     expect(bundle.data.items).toHaveLength(1)
     expect(bundle.data.stackEvents).toHaveLength(1) // the 'added' event
     expect(bundle.data.intakes).toHaveLength(1)
@@ -71,7 +71,7 @@ describe('buildExportCsv', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00', '20:00'],
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
     })
 
     const csv = buildExportCsv(await buildExportBundle())

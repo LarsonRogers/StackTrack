@@ -11,6 +11,7 @@ const EMPTY_FORM: StackItemInput = {
   kind: 'supplement',
   dose: '',
   times: [DEFAULT_TIME],
+  groups: [],
 }
 
 interface ItemFormProps {
@@ -27,6 +28,7 @@ export default function ItemForm({
   onCancel,
 }: ItemFormProps) {
   const [form, setForm] = useState<StackItemInput>(initial ?? EMPTY_FORM)
+  const [groupDraft, setGroupDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
   const isEdit = initial !== undefined
 
@@ -44,6 +46,37 @@ export default function ItemForm({
     )
   }
 
+  // Add a typed group as a chip (case-insensitive dedupe). Returns the groups
+  // list it produced so the submit handler can fold a still-typed draft in.
+  function addGroup(raw: string): string[] {
+    const name = raw.trim()
+    if (name === '') return form.groups
+    const exists = form.groups.some(
+      (group) => group.toLowerCase() === name.toLowerCase(),
+    )
+    const next = exists ? form.groups : [...form.groups, name]
+    setField('groups', next)
+    setGroupDraft('')
+    return next
+  }
+
+  function removeGroup(name: string) {
+    setField(
+      'groups',
+      form.groups.filter((group) => group !== name),
+    )
+  }
+
+  function handleGroupKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault() // Enter would otherwise submit the form
+      addGroup(groupDraft)
+    } else if (event.key === 'Backspace' && groupDraft === '') {
+      const last = form.groups[form.groups.length - 1]
+      if (last) removeGroup(last)
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (form.name.trim() === '') {
@@ -55,7 +88,13 @@ export default function ItemForm({
       return
     }
     setError(null)
-    await onSubmit({ ...form, times: form.times.filter((time) => time !== '') })
+    // Fold any group still typed but not yet committed to a chip.
+    const groups = addGroup(groupDraft)
+    await onSubmit({
+      ...form,
+      groups,
+      times: form.times.filter((time) => time !== ''),
+    })
   }
 
   return (
@@ -141,14 +180,32 @@ export default function ItemForm({
         </button>
       </fieldset>
 
-      <label htmlFor="item-group">Group (optional)</label>
+      <label htmlFor="item-group">Groups (optional)</label>
+      {form.groups.length > 0 && (
+        <ul className="group-chips">
+          {form.groups.map((group) => (
+            <li key={group} className="group-chip">
+              {group}
+              <button
+                type="button"
+                className="group-chip-remove"
+                aria-label={`Remove group ${group}`}
+                onClick={() => removeGroup(group)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <input
         id="item-group"
         type="text"
         list="group-suggestions"
-        value={form.group ?? ''}
-        onChange={(e) => setField('group', e.target.value || undefined)}
-        placeholder="e.g. Testosterone Support"
+        value={groupDraft}
+        onChange={(e) => setGroupDraft(e.target.value)}
+        onKeyDown={handleGroupKeyDown}
+        placeholder="Type a group, press Enter — e.g. Testosterone Support"
       />
       <datalist id="group-suggestions">
         {groupSuggestions.map((group) => (

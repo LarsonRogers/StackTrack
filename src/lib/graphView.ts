@@ -90,30 +90,35 @@ export function collapseEvents(
     (event) => startDate === null || event.date >= startDate,
   )
 
-  // Group key: date + type + group. Ungrouped items never merge — each gets
-  // a per-item key.
-  const buckets = new Map<string, StackEvent[]>()
-  for (const event of inRange) {
-    const key = event.group
-      ? `${event.date}|${event.type}|${event.group}`
-      : `${event.date}|${event.type}|item:${event.itemId}`
-    const bucket = buckets.get(key) ?? []
-    bucket.push(event)
+  // Bucket key: date + type + group. An event in several groups lands in each
+  // group's bucket. Ungrouped items never merge — each gets a per-item key.
+  const buckets = new Map<string, { group: string; events: StackEvent[] }>()
+  const add = (key: string, group: string, event: StackEvent) => {
+    const bucket = buckets.get(key) ?? { group, events: [] }
+    bucket.events.push(event)
     buckets.set(key, bucket)
+  }
+  for (const event of inRange) {
+    if (event.groups.length > 0) {
+      for (const group of event.groups)
+        add(`${event.date}|${event.type}|${group}`, group, event)
+    } else {
+      add(`${event.date}|${event.type}|item:${event.itemId}`, '', event)
+    }
   }
 
   const markers: ChangeMarker[] = []
-  for (const bucket of buckets.values()) {
-    const { date, type, group } = bucket[0]
+  for (const { group, events } of buckets.values()) {
+    const { date, type } = events[0]
     let label: string
-    if (bucket.length === 1) {
-      label = eventLabel(bucket[0])
+    if (events.length === 1) {
+      label = eventLabel(events[0])
     } else if (type === 'added') {
-      label = `Started ${group} (${bucket.length} items)`
+      label = `Started ${group} (${events.length} items)`
     } else if (type === 'removed') {
-      label = `Stopped ${group} (${bucket.length} items)`
+      label = `Stopped ${group} (${events.length} items)`
     } else {
-      label = `${group}: ${bucket.length} changes`
+      label = `${group}: ${events.length} changes`
     }
     markers.push({
       ts: dateToTs(date),
@@ -124,7 +129,17 @@ export function collapseEvents(
     })
   }
 
-  return markers.toSorted(
+  // A solo event for a multi-group item lands in several buckets and yields
+  // the same per-item marker each time — collapse those duplicates.
+  const seen = new Set<string>()
+  const unique = markers.filter((marker) => {
+    const key = `${marker.date}|${marker.type}|${marker.label}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  return unique.toSorted(
     (a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label),
   )
 }

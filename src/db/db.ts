@@ -21,7 +21,7 @@ export interface StackItem {
   kind: ItemKind
   dose: string // free text, e.g. "500 mg" — no parsing, no dosage logic (out of scope, permanently)
   times: string[] // scheduled times of day as 'HH:mm', sorted, unique
-  group?: string // purpose group, e.g. "Testosterone Support"
+  groups: string[] // purpose groups, e.g. ["Testosterone Support"]; [] = ungrouped. An item may belong to many.
   status: ItemStatus // archived items are hidden, never deleted — history must survive
   createdAt: string // ISO datetime
   updatedAt: string // ISO datetime of last change (merge: newest wins)
@@ -30,7 +30,7 @@ export interface StackItem {
 export type StackEventType = 'added' | 'changed' | 'removed'
 
 // One dated change to the stack — the source of the graph markers (backlog
-// item 6). itemName/group are snapshots taken at event time so history stays
+// item 6). itemName/groups are snapshots taken at event time so history stays
 // accurate if the item is later renamed or regrouped.
 export interface StackEvent {
   id: number
@@ -40,7 +40,7 @@ export interface StackEvent {
   date: string // local calendar date 'YYYY-MM-DD' — markers are per-day
   type: StackEventType
   itemName: string
-  group?: string
+  groups: string[] // snapshot of the item's groups at event time; [] = ungrouped
   summary: string // human-readable, e.g. "dose: 25 mg → 50 mg"
   updatedAt: string
 }
@@ -195,6 +195,18 @@ db.version(7).stores({
   syncState: '++id',
 })
 
+// Schema v8 (groups migration): an item can belong to MANY purpose groups.
+// The legacy single `group?: string` becomes `groups: string[]` on items AND
+// on the change-history snapshots (stackEvents). The upgrade carries the old
+// value over LOSSLESSLY — group "X" → groups ["X"]; no group → [] — and never
+// reads or rewrites any other field. The items index changes from the single
+// `group` to the multi-entry `*groups` so items stay queryable by group.
+db.version(8)
+  .stores({
+    items: '++id, &uid, status, *groups',
+  })
+  .upgrade((tx) => migrateGroups(tx))
+
 // Minimal table access shared by the live db, a transaction zone, and the
 // v5 upgrade transaction — lets one backfill serve all callers.
 interface TableHost {
@@ -205,6 +217,35 @@ interface TableHost {
 }
 
 type AnyRow = Record<string, unknown>
+
+// Ensures a row carries `groups: string[]` and no legacy single `group`.
+// Mutates the row in place; returns true if it changed anything. Used by the
+// v8 schema upgrade AND by import/merge of pre-v8 bundles (which still carry
+// the old `group` field). Idempotent: rows already on `groups` are untouched
+// except for stripping a stray `group`.
+export function normalizeGroupsField(row: AnyRow): boolean {
+  let changed = false
+  if (!Array.isArray(row.groups)) {
+    const single = row.group
+    row.groups = typeof single === 'string' && single.trim() ? [single] : []
+    changed = true
+  }
+  if ('group' in row) {
+    delete row.group
+    changed = true
+  }
+  return changed
+}
+
+// Carries the legacy `group` field onto `groups` for items and stackEvents,
+// losslessly. Shared by the v8 upgrade and by pre-v8 bundle import/merge.
+export async function migrateGroups(host: TableHost): Promise<void> {
+  for (const tableName of ['items', 'stackEvents']) {
+    const rows = (await host.table(tableName).toArray()) as AnyRow[]
+    const changed = rows.filter((row) => normalizeGroupsField(row))
+    if (changed.length > 0) await host.table(tableName).bulkPut(changed)
+  }
+}
 
 // Fills uid/updatedAt on every row that lacks them and wires uid-based
 // references (itemUid/metricUid) from the legacy numeric ids. Used by the

@@ -19,7 +19,7 @@ const ZINC: StackItemInput = {
   kind: 'supplement',
   dose: '25 mg',
   times: ['08:00'],
-  group: 'Testosterone Support',
+  groups: ['Testosterone Support'],
 }
 
 beforeEach(async () => {
@@ -40,7 +40,7 @@ describe('addItem', () => {
       itemId: id,
       type: 'added',
       itemName: 'Zinc',
-      group: 'Testosterone Support',
+      groups: ['Testosterone Support'],
       date: toIsoDate(new Date()),
     })
   })
@@ -113,10 +113,10 @@ describe('buildChangeSummary', () => {
       ...ZINC,
       dose: '50 mg',
       times: ['08:00', '20:00'],
-      group: undefined,
+      groups: [],
     })
     expect(summary).toBe(
-      'dose: 25 mg → 50 mg; times: 08:00 → 08:00, 20:00; group: Testosterone Support → none',
+      'dose: 25 mg → 50 mg; times: 08:00 → 08:00, 20:00; groups: Testosterone Support → none',
     )
   })
 

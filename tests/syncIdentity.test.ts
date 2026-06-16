@@ -33,6 +33,7 @@ describe('repositories write sync identity', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     await markTaken(itemId, TODAY, '08:00')
     await setItemNote(itemId, TODAY, 'ran low')
@@ -64,6 +65,7 @@ describe('repositories write sync identity', () => {
       kind: 'supplement',
       dose: '25 mg',
       times: ['08:00'],
+      groups: [],
     })
     const before = (await db.items.toArray())[0]
     await new Promise((resolve) => setTimeout(resolve, 5))
@@ -72,6 +74,7 @@ describe('repositories write sync identity', () => {
       kind: 'supplement',
       dose: '50 mg',
       times: ['08:00'],
+      groups: [],
     })
     const after = (await db.items.toArray())[0]
 
@@ -89,6 +92,7 @@ describe('backfillIdentity', () => {
         kind: 'supplement',
         dose: '25 mg',
         times: ['08:00'],
+        groups: [],
         status: 'active',
         createdAt: '2026-06-01T08:00:00.000Z',
       },
@@ -157,6 +161,7 @@ describe('importing pre-v5 backups', () => {
             kind: 'supplement',
             dose: '25 mg',
             times: ['08:00'],
+            groups: [],
             status: 'active',
             createdAt: '2026-06-01T08:00:00.000Z',
           },
