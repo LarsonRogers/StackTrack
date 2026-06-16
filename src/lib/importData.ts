@@ -15,6 +15,7 @@ const TABLE_NAMES = [
   'metrics',
   'metricEntries',
   'dayNotes',
+  'healthEvents',
   'tombstones',
 ] as const
 
@@ -75,6 +76,7 @@ export async function applyBundle(bundle: ExportBundle): Promise<void> {
       db.metrics,
       db.metricEntries,
       db.dayNotes,
+      db.healthEvents,
       db.tombstones,
     ],
     async () => {

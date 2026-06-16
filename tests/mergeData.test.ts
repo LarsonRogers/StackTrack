@@ -36,6 +36,7 @@ function bundleWith(data: Partial<ExportBundle['data']>): ExportBundle {
       metrics: [],
       metricEntries: [],
       dayNotes: [],
+      healthEvents: [],
       tombstones: [],
       ...data,
     },
@@ -204,6 +205,28 @@ describe('mergeBundle', () => {
 
     expect(summary.added).toBe(1)
     expect(await db.items.count()).toBe(0)
+  })
+
+  it('adds a health event, then dedupes it by uid on re-merge', async () => {
+    const phoneEvent = {
+      id: 4,
+      uid: 'phone-event-uid',
+      date: '2026-06-16',
+      label: 'Fever',
+      category: 'symptom',
+      updatedAt: '2026-06-16T09:00:00.000Z',
+    }
+    const bundle = bundleWith({ healthEvents: [phoneEvent] })
+
+    let summary = await mergeBundle(bundle, true)
+    expect(summary.added).toBe(1)
+    expect(await db.healthEvents.count()).toBe(1)
+    expect((await db.healthEvents.toArray())[0].id).not.toBe(4) // local id
+
+    // same uid again → no duplicate
+    summary = await mergeBundle(bundle, true)
+    expect(summary.unchanged).toBe(1)
+    expect(await db.healthEvents.count()).toBe(1)
   })
 
   it('round-trip self-merge is a no-op', async () => {

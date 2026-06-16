@@ -2,42 +2,39 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Wave 3 COMPLETE (A+B+C+D). D = rename Metrics tab →
-"Tracking" (label only; no file/type/route renames). Earlier this session:
-B = composite measurements (new 'composite' kind), C = boolean (yes/no) kind
-with a sliding switch. All committed LOCAL ONLY — nothing pushed/deployed
-since e287af9 — now PUSHED (main → 0f5eb8d) on user go-ahead; CI auto-deploys
-the app to Cloudflare Pages. 146 tests green; lint/format/typecheck/build
-pass. NO schema changes anywhere in Wave 3 (new fields/values are unindexed
-and ride along).
-**Confirmed next task:** None set. Suggested: verify Wave 3 live on the
-deployed app once the Pages build finishes, then pick the next backlog item.
-Backlog 12/13e demo gates remain open.
+**Last completed:** Events feature **Part 1** (data + repository + Today UI +
+export/import/merge/sync registration). New `healthEvents` table (additive
+schema v9), `healthEventRepository`, `EventsSection` on Today, `lib/events.ts`.
+Committed LOCAL ONLY. 154 tests green; lint/format/typecheck/build pass.
+**Confirmed next task:** Events **Part 2** — show events as markers on the
+metric graphs. Then Part 3 (collapsible Today sections), Part 4 (backlog/docs).
+Full plan: `C:/Users/larso/.claude/plans/abstract-wondering-beacon.md`.
 
-**Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 ✅ (A layout · B composite ·
-C boolean · D rename "Tracking"). Wave 3 done.
+  Part 2 — `graphView.ts`: add `EVENT_CATEGORY_COLORS` (distinct from the
+  green/amber/red stack `EVENT_COLORS`) + `buildEventMarkers(events, startDate)`
+  → lightweight `EventMarker` shape. `GraphsScreen.tsx`: read
+  `db.healthEvents.toArray()`, render event markers as `<ReferenceLine>` with a
+  distinct dash (stack uses "5 3"), add a "Health events in this period" legend
+  list. Reuse `CATEGORY_LABELS` from `lib/events.ts`. Tests: `graphView.test.ts`.
+  Part 3 — new `CollapsibleSection.tsx` (title + storageKey; persist open/closed
+  in localStorage `stacktrack:section:<key>`); wrap the major Today sections.
+  Part 4 — BACKLOG: Events, Collapsible sections, + future **push reminders**
+  (Cloudflare Cron + web-push + subscription endpoint + custom SW; iOS
+  Home-Screen-only) and **Apple Health via native Capacitor wrapper** (no web
+  API; needs App Store + Mac/Xcode).
+
+**Wave plan:** W1–W3 ✅ shipped+live. Now: Events feature (Parts 1✅/2/3/4),
+all LOCAL ONLY until the user okays a push.
 
 **Open watch items:**
-- **Wave 3 SHIPPED + CONFIRMED LIVE (user verified on the deployed app,
-  2026-06-16).** main → 826c6e6; feature commits 0e30773 composite,
-  67a22f5 boolean, 0f5eb8d rename. Cloudflare Pages auto-deployed the app
-  (NOT the sync worker; manual redeploy in RUNBOOK). agent-ci.yml's
-  placeholder jobs fail by design — did not block the deploy. Demo gate for
-  Wave 3 is CLOSED.
-- A Vite dev server may still be running on :5173 from this session (couldn't
-  auto-stop — a guardrail blocked the process-kill); harmless, dies with the
-  session.
-- Naming locked: the tab/screen title is "Tracking"; individual items stay
-  "metric(s)" in copy (user reverted a tried "tracker" wording).
-- Composite stores Metric.components[] + MetricEntry.values[]; value mirrors
-  values[0]. Boolean stores value 0/1. Components & kind are immutable after
-  creation. Invariant kept: raw values only, NO normal-range coloring.
-- Demo gate still OPEN for item 12 (real cross-device merge) + item 13e
-  (live two-device sync demo).
-- `.github/workflows/agent-ci.yml` has intentional failing placeholders.
-- CI warning (not failing): actions/checkout@v4 + setup-node@v4 run on Node
-  20, deprecated after June 2026. Bumping to v5/Node 24 is a CI-config change
-  — needs user confirmation before editing.
+- Events Parts are committed LOCAL ONLY; nothing pushed since `5b49625`
+  (Wave 3 shipped/live). Push the Events work only on user go-ahead.
+- Schema is now v9 (additive new `healthEvents` table; no migration). Invariant
+  kept: raw user data only, NO medical interpretation (categories organize only).
+- A Vite dev server may need restarting for the demo (`npm run dev`, :5173).
+- Demo gate OPEN for the Events feature (show on Today + graphs before push).
+- Also open: item 12 (cross-device merge demo), 13e (two-device sync demo).
+- `.github/workflows/agent-ci.yml` placeholder jobs fail by design.
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 
 **Resume prompt (paste into any agent):**

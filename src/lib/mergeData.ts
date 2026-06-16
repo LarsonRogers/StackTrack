@@ -1,6 +1,7 @@
 // src/lib/mergeData.ts — merge a StackTrack export from another device into
 // this one ("Sync from file"). Never deletes. Match rules:
-//   items / metrics / stackEvents — by uid (newest updatedAt wins on conflict)
+//   items / metrics / stackEvents / healthEvents — by uid (newest updatedAt
+//   wins on conflict)
 //   intakes / itemNotes / metricEntries / dayNotes — by uid first, then by
 //   natural key (same item+date[+time] created independently on two devices
 //   converges to the newest copy instead of duplicating; the local uid is
@@ -81,6 +82,7 @@ export async function mergeBundle(
     'metrics',
     'metricEntries',
     'dayNotes',
+    'healthEvents',
   ] as const
 
   await db.transaction(
@@ -93,6 +95,7 @@ export async function mergeBundle(
       db.metrics,
       db.metricEntries,
       db.dayNotes,
+      db.healthEvents,
       db.tombstones,
     ],
     async () => {
@@ -210,6 +213,7 @@ export async function mergeBundle(
           | 'itemNotes'
           | 'metricEntries'
           | 'dayNotes'
+          | 'healthEvents'
         refUidField?: 'itemUid' | 'metricUid'
         refIdField?: 'itemId' | 'metricId'
         refMap?: Map<unknown, unknown>
@@ -246,6 +250,11 @@ export async function mergeBundle(
         {
           tableName: 'dayNotes',
           naturalKey: (r) => String(r.date),
+        },
+        // parent-less, no natural key: matched by uid only (a logged event is
+        // unique to its device — two identical labels on a day are distinct).
+        {
+          tableName: 'healthEvents',
         },
       ]
 

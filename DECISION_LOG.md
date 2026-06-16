@@ -823,3 +823,31 @@
 - State: committed (local only — not pushed). Wave 3 COMPLETE (A+B+C+D).
   Whole wave is local-only; nothing deployed since e287af9. Awaiting user
   go-ahead to push (CI auto-deploys the app on push).
+
+## [2026-06-16] Events feature — Part 1: data + repo + Today UI + sync — Claude Code
+- Did: New `healthEvents` table (HealthEvent: date, label, category) for
+  discrete per-day health events ("Fever", "GI Doc Appointment",
+  "Appendectomy") — MANY per day, each individually deletable, distinct from
+  the one-per-day journal note. Additive schema v9 (empty new table, no
+  migration — same shape as v6 tombstones / v7 syncState). EventCategory =
+  symptom | appointment | procedure | other (organizational only; NO medical
+  interpretation). New healthEventRepository (add/update/delete); delete
+  records a tombstone in the same transaction (mirrors clearMetricEntry).
+  New EventsSection.tsx on the Today screen (date-scoped, label input +
+  category select + add; list with colored category badge + remove). Shared
+  CATEGORY_LABELS/ORDER in lib/events.ts (kept out of the component file for
+  the react-refresh lint rule; Part 2's graph legend reuses it). Registered
+  the table in every enumeration site: exportData, importData (TABLE_NAMES +
+  applyBundle), mergeData (DATA_TABLES + uid-only dependent — parent-less, no
+  natural key: two identical labels on a day are distinct), syncEngine
+  (DATA_TABLES + emptyBundle; hooks auto-attach). importData already defaults
+  missing tables to [] so older bundles stay importable.
+- Plan: see C:/Users/larso/.claude/plans/abstract-wondering-beacon.md.
+  Remaining: Part 2 graph markers, Part 3 collapsible Today sections, Part 4
+  backlog/docs (push reminders + HealthKit as future items).
+- Tests: +8 — healthEventRepository (add/trim/many-per-day/edit/delete-tombstone),
+  Events UI (add+badge+remove), merge dedup-by-uid, export round-trip count +
+  schemaVersion 9. 154 tests pass; lint/format/typecheck/build all green.
+- State: committed (local only — not pushed). Researched + decided: push
+  reminders and Apple Health are FUTURE backlog items (HealthKit needs a
+  native Capacitor wrapper; push needs a Cloudflare Cron + web-push backend).

@@ -19,6 +19,7 @@ import {
 } from '../lib/dates'
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
 import MetricLogger from '../components/MetricLogger'
+import EventsSection from '../components/EventsSection'
 import JournalSection from '../components/JournalSection'
 import DateNav from '../components/DateNav'
 
@@ -314,6 +315,8 @@ export default function TodayScreen() {
           </ul>
         </section>
       )}
+
+      <EventsSection key={`events-${selectedDate}`} date={selectedDate} />
 
       <JournalSection key={selectedDate} date={selectedDate} />
     </main>

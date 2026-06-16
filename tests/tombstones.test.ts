@@ -27,6 +27,7 @@ async function clearAll() {
     'metrics',
     'metricEntries',
     'dayNotes',
+    'healthEvents',
     'tombstones',
   ])
     await db.table(table).clear()
@@ -47,6 +48,7 @@ function emptyBundle(): ExportBundle {
       metrics: [],
       metricEntries: [],
       dayNotes: [],
+      healthEvents: [],
       tombstones: [],
     },
   }

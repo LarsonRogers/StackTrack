@@ -121,6 +121,22 @@ export interface DayNote {
   updatedAt: string
 }
 
+export type EventCategory = 'symptom' | 'appointment' | 'procedure' | 'other'
+
+// A discrete health event logged for a day, e.g. "Fever" or "GI Doc
+// Appointment". Distinct from DayNote: MANY per date, each individually
+// deletable. Category is organizational only — no medical interpretation.
+// Surfaces as a graph marker (like StackEvent) so events line up with metric
+// trends. Not a stack change — no StackEvent is recorded.
+export interface HealthEvent {
+  id: number
+  uid: string
+  date: string // local calendar date 'YYYY-MM-DD'
+  label: string
+  category: EventCategory
+  updatedAt: string
+}
+
 // Local-only sync configuration: the passphrase-derived credentials and
 // the pull cursor. ONE row at most. Deliberately EXCLUDED from exports —
 // a backup file must never carry sync credentials.
@@ -153,6 +169,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   metrics: EntityTable<Metric, 'id'>
   metricEntries: EntityTable<MetricEntry, 'id'>
   dayNotes: EntityTable<DayNote, 'id'>
+  healthEvents: EntityTable<HealthEvent, 'id'>
   tombstones: EntityTable<Tombstone, 'id'>
   syncState: EntityTable<SyncState, 'id'>
 }
@@ -219,6 +236,12 @@ db.version(8)
     items: '++id, &uid, status, *groups',
   })
   .upgrade((tx) => migrateGroups(tx))
+
+// Schema v9 (additive): per-day health events — an empty new table; no data
+// migration. Many per date (indexed by date); &uid for merge-safe sync.
+db.version(9).stores({
+  healthEvents: '++id, &uid, date',
+})
 
 // Minimal table access shared by the live db, a transaction zone, and the
 // v5 upgrade transaction — lets one backfill serve all callers.
