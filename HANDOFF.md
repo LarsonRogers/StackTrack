@@ -10,8 +10,11 @@
   the user's Export-JSON backup. CI auto-deploys the app; v8 migration runs
   on each device on next load (lossless + atomic). Confirm the live app
   loads existing data correctly after deploy completes.
-- Pre-existing flaky test: todayScreen "attaches a daily note" (environment
-  timing, see 2026-06-12 log) — passes in isolation; not a regression.
+- FIXED 2026-06-16: todayScreen "attaches a daily note" flake — test now
+  waits for the saved end-state (findByRole 'Edit note') instead of the
+  ambiguous note text, and confirms typing landed before saving. Stable
+  25/25 + full suite 3/3. (delay:null was tried and reverted — it broke the
+  Save click.) Pushed; confirm CI green.
 - Demo gate still OPEN for item 12 (real cross-device merge).
 - CI deploys the app but NOT the sync worker (manual redeploy in RUNBOOK).
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
