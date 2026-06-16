@@ -626,3 +626,13 @@
   the flow tests; fixed with the ?? null sentinel pattern.
 - State: 13d done; v7 deploy covered by today's backups (empty-table
   migration). Next: 13e — live two-device demo closes the phase.
+
+## [2026-06-16] Fix: 1–10 rating row wraps "10" — Claude Code
+- Did: `.metric-rating` was a wrapping flexbox; ten buttons overflowed the
+  first line so "10" wrapped and `flex:1` stretched it full-width. Switched
+  to CSS grid `repeat(10, 1fr)` (button `min-width:0`, dropped `flex:1`/wrap)
+  so all ten sit on one equal-width row. CSS-only; lint+typecheck clean,
+  metricLogging test green.
+- State: committed; held in the same backup-ritual hold as the upcoming v8
+  groups migration (next task). Brief 2 (multiple groups per item) is the
+  active task.
