@@ -46,31 +46,35 @@ export default function ItemForm({
     )
   }
 
-  // Add a typed group as a chip (case-insensitive dedupe). Returns the groups
-  // list it produced so the submit handler can fold a still-typed draft in.
-  function addGroup(raw: string): string[] {
+  // Append a group unless it's blank or already present (case-insensitive).
+  // Pure: used both for live state updates and to fold the draft at submit.
+  function withGroup(groups: string[], raw: string): string[] {
     const name = raw.trim()
-    if (name === '') return form.groups
-    const exists = form.groups.some(
-      (group) => group.toLowerCase() === name.toLowerCase(),
-    )
-    const next = exists ? form.groups : [...form.groups, name]
-    setField('groups', next)
+    if (name === '') return groups
+    const exists = groups.some((g) => g.toLowerCase() === name.toLowerCase())
+    return exists ? groups : [...groups, name]
+  }
+
+  // Functional update so rapid successive adds never read stale state.
+  function commitGroup(raw: string) {
+    setForm((current) => ({
+      ...current,
+      groups: withGroup(current.groups, raw),
+    }))
     setGroupDraft('')
-    return next
   }
 
   function removeGroup(name: string) {
-    setField(
-      'groups',
-      form.groups.filter((group) => group !== name),
-    )
+    setForm((current) => ({
+      ...current,
+      groups: current.groups.filter((group) => group !== name),
+    }))
   }
 
   function handleGroupKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'Enter' || event.key === ',') {
       event.preventDefault() // Enter would otherwise submit the form
-      addGroup(groupDraft)
+      commitGroup(groupDraft)
     } else if (event.key === 'Backspace' && groupDraft === '') {
       const last = form.groups[form.groups.length - 1]
       if (last) removeGroup(last)
@@ -89,10 +93,9 @@ export default function ItemForm({
     }
     setError(null)
     // Fold any group still typed but not yet committed to a chip.
-    const groups = addGroup(groupDraft)
     await onSubmit({
       ...form,
-      groups,
+      groups: withGroup(form.groups, groupDraft),
       times: form.times.filter((time) => time !== ''),
     })
   }

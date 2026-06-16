@@ -678,3 +678,19 @@
   (export JSON) — the v8 migration runs on their real device on next load.
   Next: user backs up + sees it run, then push/deploy; item 13e sync demo
   still open.
+
+## [2026-06-16] Fix CI: flaky multi-group form test — Claude Code
+- Did: CI failed on the new stackScreen "puts an item in multiple groups"
+  test (passed locally, flaked in CI). Two fixes: (1) ItemForm group-add now
+  uses functional setForm updates (commitGroup/removeGroup + pure withGroup
+  helper) so rapid successive chip adds never read stale state, and submit
+  folds the draft via withGroup instead of a side-effecting return; behavior
+  unchanged. (2) The test asserted via findByText('Bone'), which is ambiguous
+  (Bone is both a form chip and a list section header) so it resolved while
+  the form was still open and the synchronous count ran too early — switched
+  to findByLabelText for chips and waitFor on the unambiguous 'Vitamin D'
+  list count. Verified stable 5/5 runs; full suite 129 green; lint, format,
+  build clean.
+- State: committed + pushed; CI should go green. (Unrelated CI warning noted:
+  actions/checkout@v4 + setup-node@v4 run on Node 20, deprecated June 2026 —
+  bumping them is a CI-config change, needs user OK; left as a watch item.)

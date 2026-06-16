@@ -2,7 +2,7 @@
 // can navigate to it, add an item through the form, and see it listed under
 // its group. Persistence details are covered by stackRepository.test.ts.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
@@ -67,16 +67,25 @@ describe('Stack screen', () => {
     await user.type(screen.getByLabelText('Dose'), '2000 IU')
     const groupInput = screen.getByLabelText('Groups (optional)')
     await user.type(groupInput, 'Bone{Enter}')
+    // chip appears (wait for the state update) before adding the second
+    expect(
+      await screen.findByLabelText('Remove group Bone'),
+    ).toBeInTheDocument()
     await user.type(groupInput, 'Immune{Enter}')
-    // both groups show as removable chips
+    expect(
+      await screen.findByLabelText('Remove group Immune'),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Remove group Bone')).toBeInTheDocument()
-    expect(screen.getByLabelText('Remove group Immune')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Add to stack' }))
 
-    // listed under BOTH sections, each marked "in 2 groups" (not a duplicate)
-    expect(await screen.findByText('Bone')).toBeInTheDocument()
+    // Back on the list: the item is listed under BOTH sections (Vitamin D is
+    // only a list entry now — not a chip — so its count is unambiguous), each
+    // marked "in 2 groups" so it reads as one item, not a duplicate.
+    await waitFor(() =>
+      expect(screen.getAllByText('Vitamin D')).toHaveLength(2),
+    )
+    expect(screen.getByText('Bone')).toBeInTheDocument()
     expect(screen.getByText('Immune')).toBeInTheDocument()
-    expect(screen.getAllByText('Vitamin D')).toHaveLength(2)
     expect(screen.getAllByText(/in 2 groups/)).toHaveLength(2)
   })
 
