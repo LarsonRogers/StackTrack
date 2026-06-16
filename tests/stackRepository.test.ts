@@ -120,6 +120,15 @@ describe('buildChangeSummary', () => {
     )
   })
 
+  it('reports unit changes and flags note edits without dumping the text', () => {
+    const summary = buildChangeSummary(ZINC, {
+      ...ZINC,
+      unit: 'mcg',
+      note: 'take with food',
+    })
+    expect(summary).toBe('unit: none → mcg; note updated')
+  })
+
   it('returns null when nothing changed', () => {
     expect(buildChangeSummary(ZINC, { ...ZINC })).toBeNull()
   })

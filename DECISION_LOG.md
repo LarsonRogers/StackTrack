@@ -722,3 +722,27 @@
   feature waves. Next: Wave 2 — persistent per-item note + optional
   med/supp unit field (user added the unit field to scope; one design
   question pending on dose↔unit relationship before building).
+
+## [2026-06-16] Wave 2: optional dose unit + persistent per-item note — Claude Code
+- Did: Added two OPTIONAL fields to StackItem — `unit` (dose unit) and `note`
+  (persistent note). No schema migration needed: Dexie only versions indexes
+  and neither field is indexed, so they ride along on writes (no v-bump, no
+  backup ritual, safe deploy). Write path: StackItemInput gains unit/note;
+  normalizeInput trims (blank → undefined); buildChangeSummary reports
+  `unit: X → Y` and flags note edits as `note updated` (concise — the note
+  text can be long and would pollute history/graph-marker labels); updateItem
+  `before` snapshot includes both so edits are detected. Form: unit input
+  beside dose (datalist of common units: mg, mcg, IU, mL, capsule…), dose
+  placeholder now "500"; persistent-note textarea with a "shows on Today"
+  hint. Display: dose+unit joined ("500 mg") on BOTH Today and Stack detail
+  lines; persistent note under the name on Today (today-item-pinned-note,
+  distinct from the per-day italic note) and on the Stack row. Export/merge
+  unchanged (whole-record copy carries the new fields; old bundles simply
+  lack them).
+- Decisions (user): unit is a SEPARATE field joined for display (no parsing
+  of existing doses — non-destructive); note changes ARE recorded via
+  updateItem so they sync + have history (accepted the minor graph marker).
+- Tests: change-summary unit+note; Today shows joined dose+unit + pinned
+  note; Stack form saves unit+note. 133 tests pass; lint/format/build green.
+- State: committed + pushed. Next: Wave 3 — composite measurements + boolean
+  kind + rename Metrics→Tracking (schema change; backup ritual will apply).

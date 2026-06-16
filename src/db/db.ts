@@ -19,9 +19,11 @@ export interface StackItem {
   uid: string // device-independent identity (sync)
   name: string
   kind: ItemKind
-  dose: string // free text, e.g. "500 mg" — no parsing, no dosage logic (out of scope, permanently)
+  dose: string // free text, e.g. "500" or "500 mg" — no parsing, no dosage logic (out of scope, permanently)
+  unit?: string // optional dose unit, e.g. "mg"; shown joined with dose ("500 mg")
   times: string[] // scheduled times of day as 'HH:mm', sorted, unique
   groups: string[] // purpose groups, e.g. ["Testosterone Support"]; [] = ungrouped. An item may belong to many.
+  note?: string // persistent note shown on Today under the name — distinct from the per-day ItemNote
   status: ItemStatus // archived items are hidden, never deleted — history must survive
   createdAt: string // ISO datetime
   updatedAt: string // ISO datetime of last change (merge: newest wins)

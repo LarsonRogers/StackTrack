@@ -197,6 +197,12 @@ body {
   color: var(--color-text-muted);
 }
 
+.stack-item-note {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-style: italic;
+}
+
 .stack-item-actions {
   display: flex;
   flex-shrink: 0;
@@ -286,6 +292,26 @@ body {
 .item-form-error {
   color: #b91c1c;
   font-size: 0.875rem;
+}
+
+.item-form-dose-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.item-form-dose-row #item-dose {
+  flex: 2;
+}
+
+.item-form-dose-row #item-unit {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-form-hint {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
 }
 
 .group-chips {
@@ -408,6 +434,14 @@ body {
   font-size: 0.875rem;
   font-style: italic;
   color: var(--color-text-muted);
+}
+
+/* Persistent per-item note (set on Stack) — distinct from the per-day note:
+   not italic, sits directly under the name. */
+.today-item-pinned-note {
+  margin: 0.25rem 0 0 1.875rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
 }
 
 .today-note-editor {

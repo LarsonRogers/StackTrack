@@ -51,6 +51,23 @@ describe('Today checklist', () => {
     expect(screen.getByText(/Hormones, Performance/)).toBeInTheDocument()
   })
 
+  it('joins dose+unit and shows the persistent note under the name', async () => {
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '500',
+      unit: 'mg',
+      times: ['08:00'],
+      groups: [],
+      note: 'take with food',
+    })
+    render(<App />)
+
+    expect(await screen.findByText('Zinc')).toBeInTheDocument()
+    expect(screen.getByText(/500 mg/)).toBeInTheDocument()
+    expect(screen.getByText('take with food')).toBeInTheDocument()
+  })
+
   it('marks an item taken on tap and undoes on second tap', async () => {
     await addItem({
       name: 'Zinc',

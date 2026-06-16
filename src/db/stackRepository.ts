@@ -11,8 +11,10 @@ export interface StackItemInput {
   name: string
   kind: ItemKind
   dose: string
+  unit?: string // optional dose unit, e.g. "mg"
   times: string[]
   groups: string[] // [] = ungrouped; an item may belong to many groups
+  note?: string // persistent note shown on Today (distinct from per-day notes)
 }
 
 // Sorted + deduplicated so times compare reliably and display consistently.
@@ -40,8 +42,10 @@ function normalizeInput(input: StackItemInput): StackItemInput {
     name: input.name.trim(),
     kind: input.kind,
     dose: input.dose.trim(),
+    unit: input.unit?.trim() || undefined,
     times: normalizeTimes(input.times),
     groups: normalizeGroups(input.groups ?? []),
+    note: input.note?.trim() || undefined,
   }
 }
 
@@ -59,6 +63,8 @@ export function buildChangeSummary(
     parts.push(`type: ${before.kind} → ${after.kind}`)
   if (before.dose !== after.dose)
     parts.push(`dose: ${before.dose} → ${after.dose}`)
+  if ((before.unit ?? '') !== (after.unit ?? ''))
+    parts.push(`unit: ${before.unit ?? 'none'} → ${after.unit ?? 'none'}`)
   if (before.times.join(',') !== after.times.join(','))
     parts.push(`times: ${before.times.join(', ')} → ${after.times.join(', ')}`)
   // Compare as sets (sorted) so reordering groups is not a "change".
@@ -68,6 +74,9 @@ export function buildChangeSummary(
     parts.push(
       `groups: ${fmtGroups(before.groups)} → ${fmtGroups(after.groups)}`,
     )
+  // Persistent note: flag the change without dumping (possibly long) text
+  // into the history summary and graph-marker labels.
+  if ((before.note ?? '') !== (after.note ?? '')) parts.push('note updated')
   return parts.length > 0 ? parts.join('; ') : null
 }
 
@@ -106,8 +115,10 @@ export async function updateItem(
       name: existing.name,
       kind: existing.kind,
       dose: existing.dose,
+      unit: existing.unit,
       times: existing.times,
       groups: existing.groups,
+      note: existing.note,
     }
     const summary = buildChangeSummary(before, after)
     if (summary === null) return

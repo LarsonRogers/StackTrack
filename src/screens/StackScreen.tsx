@@ -192,10 +192,15 @@ export default function StackScreen() {
             </span>
           </span>
           <span className="stack-item-detail">
-            {[item.dose, item.times.join(', '), groupText]
+            {[
+              [item.dose, item.unit].filter(Boolean).join(' '),
+              item.times.join(', '),
+              groupText,
+            ]
               .filter(Boolean)
               .join(' · ')}
           </span>
+          {item.note && <span className="stack-item-note">{item.note}</span>}
         </div>
         <div className="stack-item-actions">
           <button

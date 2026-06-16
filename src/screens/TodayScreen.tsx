@@ -185,7 +185,12 @@ export default function TodayScreen() {
                             {entry.item.kind === 'med' ? 'Med' : 'Supp'}
                           </span>
                           <span className="today-item-detail">
-                            {[entry.item.dose, entry.item.groups.join(', ')]
+                            {[
+                              [entry.item.dose, entry.item.unit]
+                                .filter(Boolean)
+                                .join(' '),
+                              entry.item.groups.join(', '),
+                            ]
                               .filter(Boolean)
                               .join(' · ')}
                           </span>
@@ -198,6 +203,12 @@ export default function TodayScreen() {
                           {note ? 'Edit note' : 'Note'}
                         </button>
                       </div>
+
+                      {entry.item.note && (
+                        <p className="today-item-pinned-note">
+                          {entry.item.note}
+                        </p>
+                      )}
 
                       {note && !isEditingNote && (
                         <p className="today-item-note">{note.text}</p>

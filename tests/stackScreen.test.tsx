@@ -89,6 +89,28 @@ describe('Stack screen', () => {
     expect(screen.getAllByText(/in 2 groups/)).toHaveLength(2)
   })
 
+  it('saves an optional unit and persistent note from the form', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'Stack' }))
+    await user.click(
+      await screen.findByRole('button', {
+        name: '+ Add medication or supplement',
+      }),
+    )
+
+    await user.type(screen.getByLabelText('Name'), 'Zinc')
+    await user.type(screen.getByLabelText('Dose'), '500')
+    await user.type(screen.getByLabelText('Unit (optional)'), 'mg')
+    await user.type(screen.getByLabelText('Note (optional)'), 'take with food')
+    await user.click(screen.getByRole('button', { name: 'Add to stack' }))
+
+    expect(await screen.findByText('Zinc')).toBeInTheDocument()
+    expect(screen.getByText(/500 mg/)).toBeInTheDocument()
+    expect(screen.getByText('take with food')).toBeInTheDocument()
+  })
+
   it('rejects an empty name with an inline error', async () => {
     const user = userEvent.setup()
     render(<App />)

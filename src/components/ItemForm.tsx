@@ -6,6 +6,25 @@ import type { StackItemInput } from '../db/stackRepository'
 
 const DEFAULT_TIME = '08:00'
 
+// Common dose units offered as suggestions (free text — the user may type any).
+const UNIT_SUGGESTIONS = [
+  'mg',
+  'mcg',
+  'g',
+  'IU',
+  'mL',
+  'capsule',
+  'capsules',
+  'tablet',
+  'tablets',
+  'drop',
+  'drops',
+  'spray',
+  'sprays',
+  'scoop',
+  'puff',
+]
+
 const EMPTY_FORM: StackItemInput = {
   name: '',
   kind: 'supplement',
@@ -136,13 +155,29 @@ export default function ItemForm({
       </fieldset>
 
       <label htmlFor="item-dose">Dose</label>
-      <input
-        id="item-dose"
-        type="text"
-        value={form.dose}
-        onChange={(e) => setField('dose', e.target.value)}
-        placeholder="e.g. 25 mg"
-      />
+      <div className="item-form-dose-row">
+        <input
+          id="item-dose"
+          type="text"
+          value={form.dose}
+          onChange={(e) => setField('dose', e.target.value)}
+          placeholder="e.g. 500"
+        />
+        <input
+          id="item-unit"
+          type="text"
+          list="unit-suggestions"
+          aria-label="Unit (optional)"
+          value={form.unit ?? ''}
+          onChange={(e) => setField('unit', e.target.value || undefined)}
+          placeholder="unit (e.g. mg)"
+        />
+      </div>
+      <datalist id="unit-suggestions">
+        {UNIT_SUGGESTIONS.map((unit) => (
+          <option key={unit} value={unit} />
+        ))}
+      </datalist>
 
       <fieldset className="item-form-times">
         <legend>Times of day</legend>
@@ -215,6 +250,18 @@ export default function ItemForm({
           <option key={group} value={group} />
         ))}
       </datalist>
+
+      <label htmlFor="item-note">Note (optional)</label>
+      <p className="item-form-hint">
+        Shown on the Today screen under the name.
+      </p>
+      <textarea
+        id="item-note"
+        rows={2}
+        value={form.note ?? ''}
+        onChange={(e) => setField('note', e.target.value || undefined)}
+        placeholder="e.g. take with food"
+      />
 
       {error && (
         <p className="item-form-error" role="alert">
