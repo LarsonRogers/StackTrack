@@ -6,21 +6,23 @@
 "Tracking" (label only; no file/type/route renames). Earlier this session:
 B = composite measurements (new 'composite' kind), C = boolean (yes/no) kind
 with a sliding switch. All committed LOCAL ONLY — nothing pushed/deployed
-since e287af9. 146 tests green; lint/format/typecheck/build pass. NO schema
-changes anywhere in Wave 3 (new fields/values are unindexed and ride along).
-**Confirmed next task:** None set. Likely next = PUSH Wave 3 to ship it
-(user go-ahead needed — CI auto-deploys the app on push), then pick the next
-backlog item. Backlog 12/13e demo gates remain open.
+since e287af9 — now PUSHED (main → 0f5eb8d) on user go-ahead; CI auto-deploys
+the app to Cloudflare Pages. 146 tests green; lint/format/typecheck/build
+pass. NO schema changes anywhere in Wave 3 (new fields/values are unindexed
+and ride along).
+**Confirmed next task:** None set. Suggested: verify Wave 3 live on the
+deployed app once the Pages build finishes, then pick the next backlog item.
+Backlog 12/13e demo gates remain open.
 
 **Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 ✅ (A layout · B composite ·
 C boolean · D rename "Tracking"). Wave 3 done.
 
 **Open watch items:**
-- **Wave 3 (A done+pushed earlier; B/C/D committed LOCAL ONLY).** B/C/D are
-  4 local commits (0e30773 composite, 67a22f5 boolean, + D). The live
-  deployed app does NOT yet have composite/boolean/"Tracking". Push when
-  ready — CI auto-deploys the app (NOT the sync worker; manual redeploy in
-  RUNBOOK).
+- **Wave 3 PUSHED (main → 0f5eb8d): 0e30773 composite, 67a22f5 boolean,
+  0f5eb8d rename.** CI runs + Cloudflare Pages auto-deploys the app (NOT the
+  sync worker; manual redeploy in RUNBOOK). agent-ci.yml's placeholder jobs
+  fail by design — that does not block the Pages deploy. Confirm Wave 3 is
+  live on the deployed URL when the build finishes.
 - Naming locked: the tab/screen title is "Tracking"; individual items stay
   "metric(s)" in copy (user reverted a tried "tracker" wording).
 - Composite stores Metric.components[] + MetricEntry.values[]; value mirrors
