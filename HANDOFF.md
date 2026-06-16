@@ -18,11 +18,15 @@ Backlog 12/13e demo gates remain open.
 C boolean · D rename "Tracking"). Wave 3 done.
 
 **Open watch items:**
-- **Wave 3 PUSHED (main → 0f5eb8d): 0e30773 composite, 67a22f5 boolean,
-  0f5eb8d rename.** CI runs + Cloudflare Pages auto-deploys the app (NOT the
-  sync worker; manual redeploy in RUNBOOK). agent-ci.yml's placeholder jobs
-  fail by design — that does not block the Pages deploy. Confirm Wave 3 is
-  live on the deployed URL when the build finishes.
+- **Wave 3 SHIPPED + CONFIRMED LIVE (user verified on the deployed app,
+  2026-06-16).** main → 826c6e6; feature commits 0e30773 composite,
+  67a22f5 boolean, 0f5eb8d rename. Cloudflare Pages auto-deployed the app
+  (NOT the sync worker; manual redeploy in RUNBOOK). agent-ci.yml's
+  placeholder jobs fail by design — did not block the deploy. Demo gate for
+  Wave 3 is CLOSED.
+- A Vite dev server may still be running on :5173 from this session (couldn't
+  auto-stop — a guardrail blocked the process-kill); harmless, dies with the
+  session.
 - Naming locked: the tab/screen title is "Tracking"; individual items stay
   "metric(s)" in copy (user reverted a tried "tracker" wording).
 - Composite stores Metric.components[] + MetricEntry.values[]; value mirrors
