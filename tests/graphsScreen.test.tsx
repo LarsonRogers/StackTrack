@@ -10,6 +10,7 @@ import { db } from '../src/db/db'
 import { addItem } from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setMetricEntry } from '../src/db/metricEntryRepository'
+import { addHealthEvent } from '../src/db/healthEventRepository'
 import { toIsoDate } from '../src/lib/dates'
 
 beforeEach(async () => {
@@ -20,6 +21,7 @@ beforeEach(async () => {
   await db.metrics.clear()
   await db.metricEntries.clear()
   await db.dayNotes.clear()
+  await db.healthEvents.clear()
 })
 
 afterEach(cleanup)
@@ -74,6 +76,22 @@ describe('Graphs screen', () => {
 
     expect(
       await screen.findByText(/No values logged for Energy/),
+    ).toBeInTheDocument()
+  })
+
+  it('lists logged health events for the period', async () => {
+    const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
+    await setMetricEntry(metricId, toIsoDate(new Date()), 7)
+    await addHealthEvent(toIsoDate(new Date()), 'Fever', 'symptom')
+
+    await openGraphsTab()
+
+    expect(
+      await screen.findByText('Health events in this period'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Symptom: Fever')).toBeInTheDocument()
+    expect(
+      screen.getByRole('region', { name: 'Health events' }),
     ).toBeInTheDocument()
   })
 })

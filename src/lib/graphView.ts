@@ -2,7 +2,13 @@
 // math, metric series building, and collapsing stack events into chart
 // markers. No state, no db access. The chart uses a numeric time axis
 // (timestamps), so markers can sit on dates with no logged value.
-import type { MetricEntry, StackEvent, StackEventType } from '../db/db'
+import type {
+  EventCategory,
+  HealthEvent,
+  MetricEntry,
+  StackEvent,
+  StackEventType,
+} from '../db/db'
 import { toIsoDate } from './dates'
 
 export type GraphRange = '30d' | '90d' | 'all'
@@ -177,4 +183,41 @@ export function collapseEvents(
   return unique.toSorted(
     (a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label),
   )
+}
+
+// Health-event marker palette — distinct hues from the stack EVENT_COLORS
+// (green/amber/red) so user-logged events read as a separate layer.
+export const EVENT_CATEGORY_COLORS: Record<EventCategory, string> = {
+  symptom: '#e11d48', // rose
+  appointment: '#2563eb', // blue
+  procedure: '#7c3aed', // violet
+  other: '#475569', // slate
+}
+
+export interface EventMarker {
+  ts: number
+  date: string
+  category: EventCategory
+  label: string
+  color: string
+}
+
+// Turns logged health events in range into chart markers, one per event
+// (events are not collapsed — each is a distinct moment). Color by category.
+export function buildEventMarkers(
+  events: HealthEvent[],
+  startDate: string | null,
+): EventMarker[] {
+  return events
+    .filter((event) => startDate === null || event.date >= startDate)
+    .toSorted(
+      (a, b) => a.date.localeCompare(b.date) || a.label.localeCompare(b.label),
+    )
+    .map((event) => ({
+      ts: dateToTs(event.date),
+      date: event.date,
+      category: event.category,
+      label: event.label,
+      color: EVENT_CATEGORY_COLORS[event.category],
+    }))
 }

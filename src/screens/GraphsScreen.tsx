@@ -18,6 +18,7 @@ import {
 import { db } from '../db/db'
 import {
   buildCompositeSeries,
+  buildEventMarkers,
   buildSeries,
   collapseEvents,
   COMPONENT_COLORS,
@@ -26,6 +27,7 @@ import {
   rangeStartDate,
   type GraphRange,
 } from '../lib/graphView'
+import { CATEGORY_LABELS } from '../lib/events'
 import { toIsoDate } from '../lib/dates'
 
 const RANGES: GraphRange[] = ['30d', '90d', 'all']
@@ -57,8 +59,14 @@ export default function GraphsScreen() {
     [metricId],
   )
   const events = useLiveQuery(() => db.stackEvents.toArray(), [])
+  const healthEvents = useLiveQuery(() => db.healthEvents.toArray(), [])
 
-  if (metrics === undefined || entries === undefined || events === undefined)
+  if (
+    metrics === undefined ||
+    entries === undefined ||
+    events === undefined ||
+    healthEvents === undefined
+  )
     return null
 
   const metric = metrics.find((m) => m.id === metricId)
@@ -88,6 +96,7 @@ export default function GraphsScreen() {
   const chartData = isComposite ? compositeSeries : series
   const hasData = chartData.length > 0
   const markers = collapseEvents(events, startDate)
+  const eventMarkers = buildEventMarkers(healthEvents, startDate)
 
   // X domain spans the whole range (or all data + markers for 'all'), so
   // markers render even on dates with no logged value.
@@ -95,6 +104,7 @@ export default function GraphsScreen() {
   const candidateStarts = [
     ...chartData.map((p) => p.ts),
     ...markers.map((m) => m.ts),
+    ...eventMarkers.map((m) => m.ts),
   ]
   const domainStart = startDate
     ? dateToTs(startDate)
@@ -197,6 +207,15 @@ export default function GraphsScreen() {
                   strokeDasharray="5 3"
                 />
               ))}
+              {eventMarkers.map((marker, index) => (
+                <ReferenceLine
+                  key={`event-${marker.date}-${index}`}
+                  x={marker.ts}
+                  stroke={marker.color}
+                  strokeWidth={2}
+                  strokeDasharray="2 2"
+                />
+              ))}
               {isComposite ? (
                 <>
                   <Legend />
@@ -250,6 +269,30 @@ export default function GraphsScreen() {
                 />
                 <span className="graph-change-date">{formatTs(marker.ts)}</span>
                 <span>{marker.label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {eventMarkers.length > 0 && (
+        <section className="graph-changes" aria-label="Health events">
+          <h2 className="today-section-title">Health events in this period</h2>
+          <ul className="graph-change-list">
+            {eventMarkers.map((marker, index) => (
+              <li
+                key={`event-${marker.date}-${index}`}
+                className="graph-change"
+              >
+                <span
+                  className="graph-change-dot"
+                  style={{ backgroundColor: marker.color }}
+                  aria-hidden="true"
+                />
+                <span className="graph-change-date">{formatTs(marker.ts)}</span>
+                <span>
+                  {CATEGORY_LABELS[marker.category]}: {marker.label}
+                </span>
               </li>
             ))}
           </ul>

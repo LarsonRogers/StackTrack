@@ -851,3 +851,18 @@
 - State: committed (local only — not pushed). Researched + decided: push
   reminders and Apple Health are FUTURE backlog items (HealthKit needs a
   native Capacitor wrapper; push needs a Cloudflare Cron + web-push backend).
+
+## [2026-06-16] Events feature — Part 2: events as graph markers — Claude Code
+- Did: Logged health events now render as vertical markers on the metric
+  graphs, a distinct layer from stack-change markers. graphView.ts:
+  EVENT_CATEGORY_COLORS (rose/blue/violet/slate — distinct from the stack
+  green/amber/red) + buildEventMarkers(events, startDate) → lightweight
+  EventMarker (one per event, NOT collapsed; color by category).
+  GraphsScreen.tsx: reads db.healthEvents, renders event ReferenceLines with a
+  distinct dash ("2 2" vs stack "5 3"), adds a "Health events in this period"
+  legend list, and includes event ts in the x-domain candidates. Legend reuses
+  CATEGORY_LABELS from lib/events.ts.
+- Tests: +3 — buildEventMarkers (range-filter + sort + category color;
+  same-day events not collapsed); GraphsScreen lists health events with the
+  "Symptom: Fever" legend row. 157 tests pass; lint/format/typecheck/build green.
+- State: committed (local only). Next: Part 3 collapsible Today sections.

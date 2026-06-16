@@ -2,11 +2,13 @@
 // math, series building, and the event-collapsing rules (same-day same-group
 // merge; solo events keep their own labels).
 import { describe, expect, it } from 'vitest'
-import type { MetricEntry, StackEvent } from '../src/db/db'
+import type { HealthEvent, MetricEntry, StackEvent } from '../src/db/db'
 import {
   buildCompositeSeries,
+  buildEventMarkers,
   buildSeries,
   collapseEvents,
+  EVENT_CATEGORY_COLORS,
   EVENT_COLORS,
   rangeStartDate,
 } from '../src/lib/graphView'
@@ -103,6 +105,48 @@ describe('buildCompositeSeries', () => {
   it('skips entries without a values array (other kinds)', () => {
     const series = buildCompositeSeries([entry('2026-06-01', 7)], null)
     expect(series).toHaveLength(0)
+  })
+})
+
+describe('buildEventMarkers', () => {
+  function healthEvent(
+    date: string,
+    label: string,
+    category: HealthEvent['category'],
+  ): HealthEvent {
+    return {
+      id: 0,
+      uid: `he-${date}-${label}`,
+      date,
+      label,
+      category,
+      updatedAt: '',
+    }
+  }
+
+  it('filters to range, sorts by date, and colors by category', () => {
+    const markers = buildEventMarkers(
+      [
+        healthEvent('2026-06-10', 'Fever', 'symptom'),
+        healthEvent('2026-04-01', 'Old', 'other'),
+        healthEvent('2026-06-01', 'GI Doc', 'appointment'),
+      ],
+      '2026-05-12',
+    )
+    expect(markers.map((m) => m.label)).toEqual(['GI Doc', 'Fever'])
+    expect(markers[0].color).toBe(EVENT_CATEGORY_COLORS.appointment)
+    expect(markers[1].color).toBe(EVENT_CATEGORY_COLORS.symptom)
+  })
+
+  it('does not collapse same-day events', () => {
+    const markers = buildEventMarkers(
+      [
+        healthEvent('2026-06-01', 'Fever', 'symptom'),
+        healthEvent('2026-06-01', 'Nausea', 'symptom'),
+      ],
+      null,
+    )
+    expect(markers).toHaveLength(2)
   })
 })
 
