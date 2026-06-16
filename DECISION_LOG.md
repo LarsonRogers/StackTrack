@@ -883,3 +883,14 @@
   typecheck/build green.
 - State: committed (local only). Next: Part 4 backlog + docs (push reminders +
   HealthKit as future items), then demo + offer push.
+
+## [2026-06-16] Events feature — Part 4: backlog + future items (docs) — Claude Code
+- Did: BACKLOG updates — added item 18 (Health events), 19 (Collapsible Today
+  sections), and two FUTURE items from this session's research: 20 (Push/dose
+  reminders — Cloudflare Cron + web-push + subscription endpoint + custom SW;
+  iOS Home-Screen-only) and 21 (Apple Health — NOT possible in a pure PWA;
+  needs a native Capacitor wrapper + App Store). Corrected item 17 status to
+  shipped/live. Docs only — no code.
+- State: committed (local only). Events feature (Parts 1–4) complete; 159
+  tests green. Next: demo on the dev server, then offer to push (CI
+  auto-deploys on push).
