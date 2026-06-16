@@ -170,29 +170,33 @@ export default function TodayScreen() {
                             checked={taken}
                             onChange={() => toggleTaken(entry, taken)}
                           />
-                          <span
-                            className={
-                              taken
-                                ? 'today-item-name today-item-taken'
-                                : 'today-item-name'
-                            }
-                          >
-                            {entry.item.name}
-                          </span>
-                          <span
-                            className={`kind-badge kind-badge-${entry.item.kind}`}
-                          >
-                            {entry.item.kind === 'med' ? 'Med' : 'Supp'}
-                          </span>
-                          <span className="today-item-detail">
-                            {[
-                              [entry.item.dose, entry.item.unit]
+                          <span className="today-item-text">
+                            <span className="today-item-name-row">
+                              <span
+                                className={
+                                  taken
+                                    ? 'today-item-name today-item-taken'
+                                    : 'today-item-name'
+                                }
+                              >
+                                {entry.item.name}
+                              </span>
+                              <span
+                                className={`kind-badge kind-badge-${entry.item.kind}`}
+                              >
+                                {entry.item.kind === 'med' ? 'Med' : 'Supp'}
+                              </span>
+                            </span>
+                            <span className="today-item-detail">
+                              {[
+                                [entry.item.dose, entry.item.unit]
+                                  .filter(Boolean)
+                                  .join(' '),
+                                entry.item.groups.join(', '),
+                              ]
                                 .filter(Boolean)
-                                .join(' '),
-                              entry.item.groups.join(', '),
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
+                                .join(' · ')}
+                            </span>
                           </span>
                         </label>
                         <button

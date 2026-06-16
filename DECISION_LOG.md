@@ -746,3 +746,15 @@
   note; Stack form saves unit+note. 133 tests pass; lint/format/build green.
 - State: committed + pushed. Next: Wave 3 — composite measurements + boolean
   kind + rename Metrics→Tracking (schema change; backup ritual will apply).
+
+## [2026-06-16] Wave 3-A (pulled forward): Today-card layout cleanup — Claude Code
+- Did: Fixed the live Wave-1 regression where Today cards squished
+  badge+dose+groups onto one row. Restructured the TodayScreen card to mirror
+  the Stack card: the checkbox now sits beside a vertical text block
+  (.today-item-text) holding a name row (name + kind badge, .today-item-name-row)
+  over the muted detail line (dose+unit · groups). Checkbox top-aligned
+  (.today-item-check align-items: flex-start). CSS + JSX only; no schema, no
+  new writes. 133 tests still green (text-based assertions unaffected); lint/
+  format/build clean.
+- State: committed + pushed (safe deploy). Wave 3 remaining: B composite
+  measurements, C boolean kind, D rename Metrics→"Tracking".

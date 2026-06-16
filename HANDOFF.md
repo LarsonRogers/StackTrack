@@ -2,22 +2,12 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Feature waves 1 & 2 (pushed/live): W1 = Med/Supp badge + groups on Today cards; W2 = optional dose `unit` + persistent per-item `note` (both optional StackItem fields, NO schema migration — not indexed; shown joined "500 mg" and note under the name on Today + Stack). 133 tests green; lint/format/typecheck/build pass.
-**Confirmed next task:** Wave 3 (do in a fresh session). Four parts, decisions all locked:
+**Last completed:** Feature waves 1 & 2 + Wave 3 Part A (all pushed/live): W1 = Med/Supp badge + groups on Today cards; W2 = optional dose `unit` + persistent per-item `note` (optional StackItem fields, no migration); W3-A = Today-card layout cleanup (vertical text block like the Stack card, fixes the squish). 133 tests green; lint/format/typecheck/build pass.
+**Confirmed next task:** Wave 3 (do in a fresh session). Part A is DONE
+(2026-06-16, pulled forward); remaining parts B/C/D, decisions all locked:
 
-  A. **Today-card layout cleanup (do FIRST — fixes a live Wave-1 regression).**
-     Bug: on Today, the Med/Supp badge + dose + groups are squished onto one
-     line. Cause: `.today-item-check` (TodayScreen card) is a horizontal flex
-     holding checkbox + name + badge + detail all in a row. Fix: mirror the
-     Stack card — wrap the name(+badge) and the detail line in a vertical text
-     block beside the checkbox, like `.stack-item-info` (StackScreen.tsx:187,
-     `display:flex; flex-direction:column`). Concretely: in TodayScreen.tsx
-     the `<label className="today-item-check">` should contain the checkbox +
-     a new `<span className="today-item-text">` column wrapping the name-row
-     (name + kind badge) and the `today-item-detail` line. Add
-     `.today-item-text { display:flex; flex-direction:column; gap:0.125rem;
-     min-width:0 }` and keep the badge inline with the name (its own row).
-     Goal: Today cards read as cleanly as Stack cards. Add/extend a test.
+  A. ✅ DONE — Today-card layout cleanup (squish fixed: card now mirrors the
+     Stack card with a vertical .today-item-text block; shipped/live).
   B. **Composite measurements** — new metric kind with user-defined numeric
      components (name + optional unit each), e.g. Blood Pressure = Systolic
      (mmHg) + Diastolic (mmHg). MetricEntry needs multiple values (add
@@ -47,8 +37,6 @@
   user's device (rating fix, groups v8 [lossless migration ran fine],
   Wave 1, Wave 2). The daily-note test flake is fixed (waits for the saved
   end-state, not the ambiguous note text; delay:null was tried + reverted).
-- KNOWN live cosmetic issue → folded into Wave 3 part A: Today cards squish
-  badge+dose+groups on one line (see Confirmed next task).
 - Demo gate still OPEN for item 12 (real cross-device merge) + item 13e
   (live two-device sync demo).
 - CI deploys the app but NOT the sync worker (manual redeploy in RUNBOOK).
