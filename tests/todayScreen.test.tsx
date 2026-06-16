@@ -3,7 +3,7 @@
 // and a per-item daily note can be added. Persistence details are covered
 // by intakeRepository.test.ts.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
@@ -69,17 +69,26 @@ describe('Today checklist', () => {
     render(<App />)
 
     await user.click(await screen.findByRole('button', { name: 'Note' }))
-    await user.type(screen.getByLabelText('Note for Zinc'), 'ran out of pills')
+    const textarea = screen.getByLabelText('Note for Zinc')
+    await user.type(textarea, 'ran out of pills')
+    // Confirm the keystrokes actually landed before saving — under CPU load
+    // userEvent typing can lag, and saving an empty draft would *clear* the
+    // note instead of setting it.
+    await waitFor(() => expect(textarea).toHaveValue('ran out of pills'))
+
     await user.click(screen.getByRole('button', { name: 'Save note' }))
 
-    // generous timeout: this write crosses three tables and the full suite
-    // runs many files in parallel — 1s default flakes under load
+    // Wait for the unambiguous saved end-state: the editor closes and the
+    // button flips to "Edit note" only once the write has committed. (Asserting
+    // the note text alone is ambiguous — it also matches the open textarea.)
     expect(
-      await screen.findByText('ran out of pills', undefined, { timeout: 5000 }),
+      await screen.findByRole(
+        'button',
+        { name: 'Edit note' },
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Edit note' }),
-    ).toBeInTheDocument()
+    expect(screen.getByText('ran out of pills')).toBeInTheDocument()
   })
 })
 

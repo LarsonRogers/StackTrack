@@ -694,3 +694,20 @@
 - State: committed + pushed; CI should go green. (Unrelated CI warning noted:
   actions/checkout@v4 + setup-node@v4 run on Node 20, deprecated June 2026 —
   bumping them is a CI-config change, needs user OK; left as a watch item.)
+
+## [2026-06-16] Fix CI flake: todayScreen "attaches a daily note" — Claude Code
+- Did: Reproduced the long-standing flake locally (1-in-4 full-suite runs).
+  Root cause was the TEST, not the app: (1) findByText('ran out of pills')
+  is ambiguous — it also matches the OPEN editor textarea's content, so it
+  could pass as a false positive while the save hadn't landed; (2) the
+  follow-up "Edit note" assertion was synchronous, so it raced the
+  live-query re-render. First tried userEvent.setup({ delay: null }) across
+  UI tests — it made THIS test fail 20/20 (the Save click stopped landing),
+  so reverted it entirely. Real fix (test-only): after typing, waitFor the
+  textarea to actually hold the text (guards lost keystrokes under load —
+  an empty draft would clear, not set, the note), then assert the
+  unambiguous saved end-state via findByRole('Edit note') (appears only once
+  the write commits and the editor closes), then check the note text.
+- Verified: previously-flaky test 25/25, full suite 3/3; lint, format,
+  typecheck, build all green.
+- State: committed + pushed. Watching CI to confirm green.
