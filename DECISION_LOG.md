@@ -894,3 +894,17 @@
 - State: committed (local only). Events feature (Parts 1–4) complete; 159
   tests green. Next: demo on the dev server, then offer to push (CI
   auto-deploys on push).
+
+## [2026-06-16] Today card: align both notes under the name/dose — Claude Code
+- Did: Moved both the persistent per-item note (.today-item-pinned-note) and
+  the editable per-day note (.today-item-note) INSIDE the today-item-text
+  block (as spans, after the detail line), so they sit flush under the
+  name/dose — mirroring how .stack-item-note sits inside stack-item-info on
+  the Stack card. Dropped the old 1.875rem magic left margin on both (it
+  approximated the checkbox offset and left the notes slightly left of the
+  text). Persistent note stays plain; per-day note stays italic+muted so the
+  two remain distinguishable. The note editor stays at the row level. CSS +
+  TodayScreen JSX only; no schema, no new writes, no behavior change.
+- Tests: none added (pure layout); existing todayScreen note tests assert the
+  text is present and still pass. 159 tests pass; lint/format/typecheck/build green.
+- State: committed + pushed (safe deploy — CI auto-deploys the app).

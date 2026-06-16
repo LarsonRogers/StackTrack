@@ -199,6 +199,16 @@ export default function TodayScreen() {
                                 .filter(Boolean)
                                 .join(' · ')}
                             </span>
+                            {entry.item.note && (
+                              <span className="today-item-pinned-note">
+                                {entry.item.note}
+                              </span>
+                            )}
+                            {note && !isEditingNote && (
+                              <span className="today-item-note">
+                                {note.text}
+                              </span>
+                            )}
                           </span>
                         </label>
                         <button
@@ -209,16 +219,6 @@ export default function TodayScreen() {
                           {note ? 'Edit note' : 'Note'}
                         </button>
                       </div>
-
-                      {entry.item.note && (
-                        <p className="today-item-pinned-note">
-                          {entry.item.note}
-                        </p>
-                      )}
-
-                      {note && !isEditingNote && (
-                        <p className="today-item-note">{note.text}</p>
-                      )}
 
                       {isEditingNote && (
                         <div className="today-note-editor">

@@ -2,9 +2,11 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Events feature COMPLETE (Parts 1–4) + collapsible Today
-sections — demoed, user-confirmed, and PUSHED (main → c51e146; CI
-auto-deploys). New `healthEvents` table (schema v9, additive), repository,
+**Last completed:** Today-card note alignment fix — both the persistent and
+the per-day notes now sit inside the text block, flush under name/dose (like
+the Stack card); dropped the 1.875rem magic margin. Pushed. Before that:
+Events feature COMPLETE (Parts 1–4) + collapsible Today sections — demoed,
+user-confirmed, and PUSHED (CI auto-deploys). New `healthEvents` table (schema v9, additive), repository,
 Today `EventsSection`, color-coded graph markers, `CollapsibleSection` (state
 in localStorage), backlog updated. 159 tests green; lint/format/typecheck/
 build pass.

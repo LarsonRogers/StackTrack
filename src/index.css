@@ -469,17 +469,21 @@ body {
   color: var(--color-text-muted);
 }
 
+/* Per-day note (the editable daily note) — italic + muted to distinguish it
+   from the persistent note. Sits inside the text block, flush under the
+   name/dose like the persistent note. */
 .today-item-note {
-  margin: 0.5rem 0 0 1.875rem;
+  margin-top: 0.125rem;
   font-size: 0.875rem;
   font-style: italic;
   color: var(--color-text-muted);
 }
 
 /* Persistent per-item note (set on Stack) — distinct from the per-day note:
-   not italic, sits directly under the name. */
+   not italic. Sits inside the text block, flush under the name/dose (mirrors
+   .stack-item-note on the Stack card). */
 .today-item-pinned-note {
-  margin: 0.25rem 0 0 1.875rem;
+  margin-top: 0.125rem;
   font-size: 0.875rem;
   color: var(--color-text);
 }
