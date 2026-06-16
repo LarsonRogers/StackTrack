@@ -3,21 +3,54 @@
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **Last completed:** Feature waves 1 & 2 (pushed/live): W1 = Med/Supp badge + groups on Today cards; W2 = optional dose `unit` + persistent per-item `note` (both optional StackItem fields, NO schema migration — not indexed; shown joined "500 mg" and note under the name on Today + Stack). 133 tests green; lint/format/typecheck/build pass.
-**Confirmed next task:** Wave 3 — composite measurements (user-defined numeric components, e.g. BP 120/80) + a yes/no boolean kind + rename the Metrics tab → "Tracking". Decisions locked: page name "Tracking", boolean INCLUDED, unit field = separate/joined-for-display (done in W2). Likely NO schema migration again (kind/components/values aren't indexed) — confirm during build.
+**Confirmed next task:** Wave 3 (do in a fresh session). Four parts, decisions all locked:
 
-**Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 = composite + boolean + rename (next) · (W4 folded into W3: boolean).
+  A. **Today-card layout cleanup (do FIRST — fixes a live Wave-1 regression).**
+     Bug: on Today, the Med/Supp badge + dose + groups are squished onto one
+     line. Cause: `.today-item-check` (TodayScreen card) is a horizontal flex
+     holding checkbox + name + badge + detail all in a row. Fix: mirror the
+     Stack card — wrap the name(+badge) and the detail line in a vertical text
+     block beside the checkbox, like `.stack-item-info` (StackScreen.tsx:187,
+     `display:flex; flex-direction:column`). Concretely: in TodayScreen.tsx
+     the `<label className="today-item-check">` should contain the checkbox +
+     a new `<span className="today-item-text">` column wrapping the name-row
+     (name + kind badge) and the `today-item-detail` line. Add
+     `.today-item-text { display:flex; flex-direction:column; gap:0.125rem;
+     min-width:0 }` and keep the badge inline with the name (its own row).
+     Goal: Today cards read as cleanly as Stack cards. Add/extend a test.
+  B. **Composite measurements** — new metric kind with user-defined numeric
+     components (name + optional unit each), e.g. Blood Pressure = Systolic
+     (mmHg) + Diastolic (mmHg). MetricEntry needs multiple values (add
+     `values?: number[]` aligned to components; keep `value` for single
+     kinds). Form: define components like the item-form "times" rows. Logger:
+     N number inputs; display "120/80". Graphs: one series per component.
+  C. **Boolean kind** — yes/no tracking (e.g. "Exercised today?"). Store as
+     value 0/1 to reuse the number plumbing; logger = a checkbox/toggle;
+     graph as a 0/1 step series (or markers).
+  D. **Rename Metrics tab → "Tracking"** — LABEL ONLY (NavBar text + screen
+     headings/subtitles + any "metric(s)" user-facing copy). Do NOT rename
+     files/types (MetricsScreen, metricRepository, MetricKind) — keep the diff
+     small and safe.
+
+  Likely **NO schema migration** for B/C: metrics index is `++id,&uid,status`
+  and metricEntries `++id,&uid,date,[metricId+date]` — `kind`, `components`,
+  `values` are NOT indexed, so adding them rides along on writes (same as W2).
+  Confirm before assuming; if true, no v-bump and no backup ritual. Keep the
+  invariant: raw values only, NO normal-range interpretation/coloring.
+  Files: db.ts, metricRepository.ts, metricEntryRepository.ts, MetricForm.tsx,
+  MetricLogger.tsx, MetricsScreen.tsx, graphView.ts, GraphsScreen.tsx, NavBar.
+
+**Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 = A layout fix + B composite + C boolean + D rename "Tracking" (next, fresh session).
 
 **Open watch items:**
-- PUSHED + deploying: rating fix + groups v8 pushed to main 2026-06-16 after
-  the user's Export-JSON backup. CI auto-deploys the app; v8 migration runs
-  on each device on next load (lossless + atomic). Confirm the live app
-  loads existing data correctly after deploy completes.
-- FIXED 2026-06-16: todayScreen "attaches a daily note" flake — test now
-  waits for the saved end-state (findByRole 'Edit note') instead of the
-  ambiguous note text, and confirms typing landed before saving. Stable
-  25/25 + full suite 3/3. (delay:null was tried and reverted — it broke the
-  Save click.) Pushed; confirm CI green.
-- Demo gate still OPEN for item 12 (real cross-device merge).
+- All of 2026-06-16's work is pushed, CI green, and confirmed live on the
+  user's device (rating fix, groups v8 [lossless migration ran fine],
+  Wave 1, Wave 2). The daily-note test flake is fixed (waits for the saved
+  end-state, not the ambiguous note text; delay:null was tried + reverted).
+- KNOWN live cosmetic issue → folded into Wave 3 part A: Today cards squish
+  badge+dose+groups on one line (see Confirmed next task).
+- Demo gate still OPEN for item 12 (real cross-device merge) + item 13e
+  (live two-device sync demo).
 - CI deploys the app but NOT the sync worker (manual redeploy in RUNBOOK).
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders.
