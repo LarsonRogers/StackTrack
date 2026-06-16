@@ -3,20 +3,20 @@
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
 **Last completed:** Events feature COMPLETE (Parts 1–4) + collapsible Today
-sections. New `healthEvents` table (schema v9, additive), repository, Today
-`EventsSection`, color-coded graph markers, `CollapsibleSection` (state in
-localStorage), backlog updated. All committed LOCAL ONLY (4 commits:
-9e471b0 data/repo/UI, 6b9faae graph markers, 7515377 collapsible, + Part-4
-docs). 159 tests green; lint/format/typecheck/build pass.
-**Confirmed next task:** Demo the Events feature on the dev server, then PUSH
-on user go-ahead (CI auto-deploys the app). No further build work queued.
+sections — demoed, user-confirmed, and PUSHED (main → c51e146; CI
+auto-deploys). New `healthEvents` table (schema v9, additive), repository,
+Today `EventsSection`, color-coded graph markers, `CollapsibleSection` (state
+in localStorage), backlog updated. 159 tests green; lint/format/typecheck/
+build pass.
+**Confirmed next task:** None queued. Confirm Events live on the deployed app
+once the Pages build finishes, then pick the next backlog item.
 Full plan: `C:/Users/larso/.claude/plans/abstract-wondering-beacon.md`.
 
 **Open watch items:**
-- **DEMO GATE OPEN** for the Events feature (Today section + graph markers +
-  collapsible sections). Show on the dev server before pushing.
-- Events Parts 1–4 are committed LOCAL ONLY; nothing pushed since `5b49625`
-  (Wave 3 shipped/live). Push only on user go-ahead.
+- **Events feature SHIPPED** (main → c51e146): 9e471b0 data/repo/UI,
+  6b9faae graph markers, 7515377 collapsible, c51e146 backlog docs. Demo gate
+  CLOSED (user confirmed on the dev server). CI auto-deploys the app (NOT the
+  sync worker; manual redeploy in RUNBOOK).
 - Schema now v9 (additive new `healthEvents` table; no migration). Invariant
   kept: raw user data only, NO medical interpretation (categories organize only).
 - Backlog now carries two FUTURE, researched items: **20 push/dose reminders**
