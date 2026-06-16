@@ -711,3 +711,14 @@
 - Verified: previously-flaky test 25/25, full suite 3/3; lint, format,
   typecheck, build all green.
 - State: committed + pushed. Watching CI to confirm green.
+
+## [2026-06-16] Wave 1: Med/Supp badge + groups on Today cards — Claude Code
+- Did: Today checklist cards now show the kind badge (Med/Supp, reusing the
+  Stack screen's kind-badge styling) and the item's groups in the detail
+  line (dose · group1, group2). Display only — no schema change, no new
+  writes. TodayScreen.tsx only. 1 new test (badge + groups render on a
+  card). 130 tests pass; lint/format/typecheck/build green.
+- State: committed + pushed (no migration, safe deploy). First of the
+  feature waves. Next: Wave 2 — persistent per-item note + optional
+  med/supp unit field (user added the unit field to scope; one design
+  question pending on dose↔unit relationship before building).

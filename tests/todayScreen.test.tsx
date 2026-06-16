@@ -36,6 +36,21 @@ describe('Today checklist', () => {
     expect(screen.getByText('0 of 2 taken')).toBeInTheDocument()
   })
 
+  it('shows the med/supp badge and groups on the card', async () => {
+    await addItem({
+      name: 'Testosterone',
+      kind: 'med',
+      dose: '100 mg',
+      times: ['08:00'],
+      groups: ['Hormones', 'Performance'],
+    })
+    render(<App />)
+
+    expect(await screen.findByText('Testosterone')).toBeInTheDocument()
+    expect(screen.getByText('Med')).toBeInTheDocument()
+    expect(screen.getByText(/Hormones, Performance/)).toBeInTheDocument()
+  })
+
   it('marks an item taken on tap and undoes on second tap', async () => {
     await addItem({
       name: 'Zinc',
