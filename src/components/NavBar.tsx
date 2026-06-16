@@ -6,7 +6,7 @@ export type View = 'today' | 'stack' | 'metrics' | 'graphs' | 'sync'
 const TABS: { view: View; label: string }[] = [
   { view: 'today', label: 'Today' },
   { view: 'stack', label: 'Stack' },
-  { view: 'metrics', label: 'Metrics' },
+  { view: 'metrics', label: 'Tracking' },
   { view: 'graphs', label: 'Graphs' },
   { view: 'sync', label: 'Sync' },
 ]

@@ -67,11 +67,11 @@ export default function MetricsScreen() {
   return (
     <main className="screen">
       <header className="screen-header">
-        <h1>Metrics</h1>
+        <h1>Tracking</h1>
         <p className="screen-subtitle">
           {activeMetrics.length === 0
             ? 'Define what to track each day.'
-            : `Tracking ${activeMetrics.length} metric${activeMetrics.length === 1 ? '' : 's'}`}
+            : `${activeMetrics.length} metric${activeMetrics.length === 1 ? '' : 's'}`}
         </p>
       </header>
 

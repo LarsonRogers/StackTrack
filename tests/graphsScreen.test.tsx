@@ -32,10 +32,10 @@ async function openGraphsTab() {
 }
 
 describe('Graphs screen', () => {
-  it('points to the Metrics tab when no metric exists', async () => {
+  it('points to the Tracking tab when no metric exists', async () => {
     await openGraphsTab()
     expect(
-      await screen.findByText(/Define a metric on the Metrics tab/),
+      await screen.findByText(/Define a metric on the Tracking tab/),
     ).toBeInTheDocument()
   })
 

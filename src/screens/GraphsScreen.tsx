@@ -69,7 +69,7 @@ export default function GraphsScreen() {
         <header className="screen-header">
           <h1>Graphs</h1>
           <p className="screen-subtitle">
-            Define a metric on the Metrics tab, log some values, and the graph
+            Define a metric on the Tracking tab, log some values, and the graph
             appears here.
           </p>
         </header>

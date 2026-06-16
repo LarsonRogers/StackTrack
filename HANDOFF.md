@@ -2,32 +2,30 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Wave 3 Part C — boolean (yes/no) metric kind, logged via
-a sliding No/Yes switch; 0/1 step line on graphs. Committed LOCAL ONLY (not
-yet pushed). 146 tests green; lint/format/typecheck/build pass. NO schema
-change (value 0/1 reuses the existing `value` field). Part B (composite) also
-committed local-only earlier this session.
-**Confirmed next task:** Wave 3 Part D — rename Metrics tab → "Tracking"
-(LABEL ONLY). Last of the wave. Sequencing locked: 3 commits B→C→D.
+**Last completed:** Wave 3 COMPLETE (A+B+C+D). D = rename Metrics tab →
+"Tracking" (label only; no file/type/route renames). Earlier this session:
+B = composite measurements (new 'composite' kind), C = boolean (yes/no) kind
+with a sliding switch. All committed LOCAL ONLY — nothing pushed/deployed
+since e287af9. 146 tests green; lint/format/typecheck/build pass. NO schema
+changes anywhere in Wave 3 (new fields/values are unindexed and ride along).
+**Confirmed next task:** None set. Likely next = PUSH Wave 3 to ship it
+(user go-ahead needed — CI auto-deploys the app on push), then pick the next
+backlog item. Backlog 12/13e demo gates remain open.
 
-  D. **Rename Metrics tab → "Tracking"** — LABEL ONLY (NavBar text +
-     MetricsScreen h1/subtitle/"+ Add metric"/"metric(s)" copy + GraphsScreen
-     empty-state "Define a metric on the Metrics tab"). Do NOT rename
-     files/types (MetricsScreen, metricRepository, MetricKind). Update the
-     2 test strings that assert "Metrics" copy (metricLogging.test.tsx:27,
-     graphsScreen.test.tsx empty-state).
-
-  Confirmed: NO schema migration for C (value 0/1 reuses the existing
-  required `value` field). Keep the invariant: raw values only, NO
-  normal-range interpretation/coloring.
-
-**Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 = A ✅ layout · B ✅ composite ·
-C ✅ boolean · D rename "Tracking" (next).
+**Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 ✅ (A layout · B composite ·
+C boolean · D rename "Tracking"). Wave 3 done.
 
 **Open watch items:**
-- Wave 3-B and 3-C are committed LOCAL ONLY. Nothing pushed/deployed since the
-  pre-Wave-3 state (e287af9). When the user is ready to ship B/C/D, push —
-  CI auto-deploys the app (NOT the sync worker; manual redeploy in RUNBOOK).
+- **Wave 3 (A done+pushed earlier; B/C/D committed LOCAL ONLY).** B/C/D are
+  4 local commits (0e30773 composite, 67a22f5 boolean, + D). The live
+  deployed app does NOT yet have composite/boolean/"Tracking". Push when
+  ready — CI auto-deploys the app (NOT the sync worker; manual redeploy in
+  RUNBOOK).
+- Naming locked: the tab/screen title is "Tracking"; individual items stay
+  "metric(s)" in copy (user reverted a tried "tracker" wording).
+- Composite stores Metric.components[] + MetricEntry.values[]; value mirrors
+  values[0]. Boolean stores value 0/1. Components & kind are immutable after
+  creation. Invariant kept: raw values only, NO normal-range coloring.
 - Demo gate still OPEN for item 12 (real cross-device merge) + item 13e
   (live two-device sync demo).
 - `.github/workflows/agent-ci.yml` has intentional failing placeholders.

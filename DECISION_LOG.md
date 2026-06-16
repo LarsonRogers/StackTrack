@@ -804,3 +804,22 @@
   typecheck/build all green.
 - State: committed (local only — not pushed). Next: Wave 3-D rename
   Metrics tab → "Tracking" (label only, no file/type renames).
+
+## [2026-06-16] Wave 3-D: rename Metrics tab → "Tracking" (label only) — Claude Code
+- Did: Renamed the user-facing tab/heading from "Metrics" to "Tracking".
+  LABEL ONLY — no file/type/route renames: MetricsScreen, metricRepository,
+  MetricKind, the `metrics` Dexie table, and the `view: 'metrics'` route key
+  are all unchanged (kept the diff small + safe). Changed: NavBar tab label,
+  MetricsScreen <h1> + subtitle, GraphsScreen empty-state + the visually-
+  hidden metric-selector label, TodayScreen "Daily metrics" section, the
+  import/restore summary count, and MetricForm title/submit. Updated the 2
+  test strings that assert the tab/empty-state copy. No schema, no new writes.
+- Decisions (user): tab/heading = "Tracking", but the per-item noun stays
+  "metric(s)" — user reverted an initial "tracker" wording I tried mid-task
+  ("3 metrics", "+ Add metric", "Add a metric", "Daily metrics" all keep the
+  word "metric"). Only the tab/screen title is "Tracking".
+- Tests: no new tests (pure copy change); 2 existing strings updated. 146
+  tests pass; lint/format/typecheck/build all green.
+- State: committed (local only — not pushed). Wave 3 COMPLETE (A+B+C+D).
+  Whole wave is local-only; nothing deployed since e287af9. Awaiting user
+  go-ahead to push (CI auto-deploys the app on push).
