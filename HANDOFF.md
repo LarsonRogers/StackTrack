@@ -2,8 +2,10 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Item 15 — multiple groups per item (schema v8, lossless migration) + the 1–10 rating-row UI fix + a CI fix (flaky multi-group form test → functional group state, robust waits). Pushed to main; 129 tests green; lint/format/typecheck/build all pass.
-**Confirmed next task:** None set — awaiting user. Open: user's pre-deploy backup + live look at the new build, then push/deploy; item 13e (live two-device sync demo) and item 12's file-merge demo still open.
+**Last completed:** Feature waves 1 & 2 (pushed/live): W1 = Med/Supp badge + groups on Today cards; W2 = optional dose `unit` + persistent per-item `note` (both optional StackItem fields, NO schema migration — not indexed; shown joined "500 mg" and note under the name on Today + Stack). 133 tests green; lint/format/typecheck/build pass.
+**Confirmed next task:** Wave 3 — composite measurements (user-defined numeric components, e.g. BP 120/80) + a yes/no boolean kind + rename the Metrics tab → "Tracking". Decisions locked: page name "Tracking", boolean INCLUDED, unit field = separate/joined-for-display (done in W2). Likely NO schema migration again (kind/components/values aren't indexed) — confirm during build.
+
+**Wave plan (agreed):** W1 ✅ · W2 ✅ · W3 = composite + boolean + rename (next) · (W4 folded into W3: boolean).
 
 **Open watch items:**
 - PUSHED + deploying: rating fix + groups v8 pushed to main 2026-06-16 after
