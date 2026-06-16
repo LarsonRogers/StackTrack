@@ -866,3 +866,20 @@
   same-day events not collapsed); GraphsScreen lists health events with the
   "Symptom: Fever" legend row. 157 tests pass; lint/format/typecheck/build green.
 - State: committed (local only). Next: Part 3 collapsible Today sections.
+
+## [2026-06-16] Events feature — Part 3: collapsible Today sections — Claude Code
+- Did: New CollapsibleSection.tsx — a today-section whose body hides via a
+  heading toggle button (aria-expanded); open/closed persists per section in
+  localStorage (stacktrack:section:<key>). Default OPEN so first-time and
+  screen-reader users always see content; localStorage failures degrade to
+  default (try/catch). Applied to the secondary sections: Events + Journal
+  (refactored those components to render through CollapsibleSection) and the
+  inline "Daily metrics" + "Also recorded this day" sections on TodayScreen.
+  Scoped deliberately: the primary time-grouped checklist stays always-on (you
+  shouldn't be able to hide your main task list). CSS: .section-toggle inherits
+  the muted uppercase h2 look; .section-caret (▾/▸).
+- Tests: +2 — collapse hides the body + flips aria-expanded; collapsed state
+  survives a fresh render (localStorage). 159 tests pass; lint/format/
+  typecheck/build green.
+- State: committed (local only). Next: Part 4 backlog + docs (push reminders +
+  HealthKit as future items), then demo + offer push.

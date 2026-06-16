@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/db'
 import { setDayNote } from '../db/dayNoteRepository'
+import CollapsibleSection from './CollapsibleSection'
 
 interface JournalSectionProps {
   date: string // local 'YYYY-MM-DD'
@@ -34,8 +35,11 @@ export default function JournalSection({ date }: JournalSectionProps) {
   }
 
   return (
-    <section className="today-section journal" aria-label="Journal">
-      <h2 className="today-section-title">Journal</h2>
+    <CollapsibleSection
+      title="Journal"
+      storageKey="journal"
+      className="journal"
+    >
       <label className="visually-hidden" htmlFor="journal-text">
         Note about your day
       </label>
@@ -60,6 +64,6 @@ export default function JournalSection({ date }: JournalSectionProps) {
         </button>
         {justSaved && <span className="metric-number-saved">Saved</span>}
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }

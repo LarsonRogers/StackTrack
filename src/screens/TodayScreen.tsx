@@ -21,6 +21,7 @@ import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
 import MetricLogger from '../components/MetricLogger'
 import EventsSection from '../components/EventsSection'
 import JournalSection from '../components/JournalSection'
+import CollapsibleSection from '../components/CollapsibleSection'
 import DateNav from '../components/DateNav'
 
 export default function TodayScreen() {
@@ -268,8 +269,10 @@ export default function TodayScreen() {
       )}
 
       {orphanedIntakes.length > 0 && (
-        <section className="today-section" aria-label="Also recorded this day">
-          <h2 className="today-section-title">Also recorded this day</h2>
+        <CollapsibleSection
+          title="Also recorded this day"
+          storageKey="also-recorded"
+        >
           <p className="screen-note">
             Taken records from items no longer on this schedule (archived or
             changed since). Unchecking removes the record.
@@ -295,12 +298,11 @@ export default function TodayScreen() {
               </li>
             ))}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
 
       {metrics.length > 0 && (
-        <section className="today-section" aria-label="Daily metrics">
-          <h2 className="today-section-title">Daily metrics</h2>
+        <CollapsibleSection title="Daily metrics" storageKey="daily-metrics">
           <ul className="today-list">
             {metrics
               .toSorted((a, b) => a.name.localeCompare(b.name))
@@ -313,7 +315,7 @@ export default function TodayScreen() {
                 />
               ))}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
 
       <EventsSection key={`events-${selectedDate}`} date={selectedDate} />

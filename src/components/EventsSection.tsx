@@ -7,6 +7,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type EventCategory } from '../db/db'
 import { addHealthEvent, deleteHealthEvent } from '../db/healthEventRepository'
 import { CATEGORY_LABELS, CATEGORY_ORDER } from '../lib/events'
+import CollapsibleSection from './CollapsibleSection'
 
 interface EventsSectionProps {
   date: string // local 'YYYY-MM-DD'
@@ -31,8 +32,7 @@ export default function EventsSection({ date }: EventsSectionProps) {
   }
 
   return (
-    <section className="today-section" aria-label="Events">
-      <h2 className="today-section-title">Events</h2>
+    <CollapsibleSection title="Events" storageKey="events">
       <form className="event-add-row" onSubmit={handleAdd}>
         <label className="visually-hidden" htmlFor="event-label">
           Event
@@ -87,6 +87,6 @@ export default function EventsSection({ date }: EventsSectionProps) {
           ))}
         </ul>
       )}
-    </section>
+    </CollapsibleSection>
   )
 }
