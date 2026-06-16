@@ -6,11 +6,10 @@
 **Confirmed next task:** None set — awaiting user. Open: user's pre-deploy backup + live look at the new build, then push/deploy; item 13e (live two-device sync demo) and item 12's file-merge demo still open.
 
 **Open watch items:**
-- PUSH HELD: two local commits (rating fix + groups v8) are NOT pushed. The
-  v8 schema migration runs on the user's real device on next load — user
-  should Export JSON first (standard backup ritual for schema bumps).
-- Demo gate: groups feature is user-visible — user should see it run before
-  it's considered fully done (offered via `npm run dev`).
+- PUSHED + deploying: rating fix + groups v8 pushed to main 2026-06-16 after
+  the user's Export-JSON backup. CI auto-deploys the app; v8 migration runs
+  on each device on next load (lossless + atomic). Confirm the live app
+  loads existing data correctly after deploy completes.
 - Pre-existing flaky test: todayScreen "attaches a daily note" (environment
   timing, see 2026-06-12 log) — passes in isolation; not a regression.
 - Demo gate still OPEN for item 12 (real cross-device merge).
