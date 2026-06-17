@@ -2,11 +2,15 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-16 · **Pack version:** v12.0 · **Audience mode:** Technical non-dev
-**Last completed:** Today-card note alignment fix — both the persistent and
-the per-day notes now sit inside the text block, flush under name/dose (like
-the Stack card); dropped the 1.875rem magic margin. Pushed. Before that:
-Events feature COMPLETE (Parts 1–4) + collapsible Today sections — demoed,
-user-confirmed, and PUSHED (CI auto-deploys). New `healthEvents` table (schema v9, additive), repository,
+**Last completed:** README refresh (matches shipped app: Tracking, composite/
+boolean trackers, dose unit, persistent note, multi-group items, health events
++ graph markers, collapsible sections, optional E2E sync) + backlog item 22
+(chunk the first sync push). Docs only — COMMITTED LOCAL ONLY, awaiting push.
+Before that: Today-card note alignment fix (pushed); Events feature + collapsible
+sections (shipped/live).
+**Sync scalability (answered):** sync is already incremental (deltas, per-record
+encryption, ~0.5 MB encrypted/year). Real gap = first push isn't chunked vs the
+server's 2000-changes-per-push cap → backlog item 22 (not fixed this session). New `healthEvents` table (schema v9, additive), repository,
 Today `EventsSection`, color-coded graph markers, `CollapsibleSection` (state
 in localStorage), backlog updated. 159 tests green; lint/format/typecheck/
 build pass.

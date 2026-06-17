@@ -908,3 +908,24 @@
 - Tests: none added (pure layout); existing todayScreen note tests assert the
   text is present and still pass. 159 tests pass; lint/format/typecheck/build green.
 - State: committed + pushed (safe deploy — CI auto-deploys the app).
+
+## [2026-06-16] Refresh README + backlog sync first-push fix (docs) — Claude Code
+- Did: (A) Updated README Features/Privacy/Tech-stack to match the shipped app —
+  "Tracking" (not Metrics), composite + boolean trackers, dose unit, persistent
+  per-item note, multiple groups per item, health events + their graph markers,
+  collapsible Today sections, and optional E2E-encrypted cross-device sync (not
+  just file merge); privacy section now explains the optional sync server holds
+  only ciphertext it can't read; tech stack notes the Cloudflare Worker + D1
+  backend. React stays 19 (matches package.json). (B) Backlog: corrected items
+  18/19 to shipped/live; added item 22 (chunk the first sync push — see below).
+- Sync scalability (user question): sync is ALREADY incremental — push sends
+  only records newer than lastPushedAt (syncEngine.ts:122); pull is seq>cursor,
+  paged 1000 (workers/sync). Per-record encryption; ~0.5 MB encrypted/year — a
+  non-issue. No "days at a time" work needed. ONE real gap (backlogged, not
+  fixed): the push sends ALL changed records in one POST (syncEngine.ts:165) and
+  the server rejects >2000/push (logic.ts:37) → a first sync of a large backlog
+  fails. Fix deferred to item 22 (chunk pushes ≤500 + loop). User chose
+  README-now, backlog-the-fix.
+- Tests: none (docs only). format:check clean (prettier covers .md). 159 tests
+  unchanged (no source/test files touched).
+- State: committed (local only — not pushed). Awaiting user go-ahead to push.
