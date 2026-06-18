@@ -29,6 +29,7 @@ import {
 } from '../lib/graphView'
 import { CATEGORY_LABELS } from '../lib/events'
 import { toIsoDate } from '../lib/dates'
+import SettingsMenu from '../components/SettingsMenu'
 
 const RANGES: GraphRange[] = ['30d', '90d', 'all']
 
@@ -80,6 +81,7 @@ export default function GraphsScreen() {
             Define a metric on the Tracking tab, log some values, and the graph
             appears here.
           </p>
+          <SettingsMenu />
         </header>
       </main>
     )
@@ -118,6 +120,7 @@ export default function GraphsScreen() {
     <main className="screen">
       <header className="screen-header">
         <h1>Graphs</h1>
+        <SettingsMenu />
       </header>
 
       <div className="graph-controls">

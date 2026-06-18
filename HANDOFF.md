@@ -2,43 +2,44 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-18 · **Pack version:** v12.16 · **Audience mode:** Technical non-dev
-**Last completed:** Backlog #24 — **Med/supplement frequency**. Items can recur
-on a cadence instead of only every day. Optional `schedule?` on StackItem
-(**absent = every day**, no schema migration / no version bump — non-indexed,
-rides export/import/merge/sync as a plain field). Three kinds:
-`everyNDays{n≥2,startDate}`, `daysOfWeek{0–6}`, `cycle{onWeeks,offWeeks,startDate}`.
-New pure `lib/schedule.ts` (`isDueOn`/`describeSchedule`); `buildTimeSections`
-now filters by date; a frequency change records a StackEvent (graph marker).
-Frequency UI in ItemForm, cadence label on the Stack card. Review nit fixed
-(CSV now JSON-serializes the schedule object). **183 tests green** (was 168);
-lint/format/typecheck/build pass; independent review **zero blockers**.
+**Last completed:** Backlog #26 — **Navigation restructure**. Bottom tab bar now
+holds only the "view" screens (**Today, Graphs**); a top-right **settings cog (⚙)**
+on every screen header opens a dropdown to the "set up" screens (**Stack, Tracking,
+Sync** — Reminders joins in #25). New `NavContext` (App provides `{active, navigate}`)
++ new `SettingsMenu` component; all 5 views still reachable (View type unchanged).
+Today's cog spans title→date-line (flex row, DateNav below); other screens pin it
+top-right. **188 tests green** (was 183); lint/format/typecheck/build pass;
+independent review **zero blockers** (one warning fixed).
 
-**Branch `feature/item-frequency` — committed, NOT merged or pushed.** Awaiting
-user demo confirmation (dev server live at http://localhost:5173/). Merge to
-main + push when happy (CI runs + redeploys then).
+**Branch `feature/nav-restructure` — committed, NOT merged or pushed.** Awaiting
+user demo confirmation (dev server live at http://localhost:5173/ — **hard-refresh**,
+the nav change is structural). Merge to main + push when happy (CI runs + redeploys).
 
-**#23 (metric notes) is already merged to main + pushed (06a330d).** #24 branched
-off that.
+**Done & on main:** #23 metric notes (06a330d), #24 frequency (9a8d956). This nav
+task branched off #24's merge.
 
-**Confirmed next task:** Backlog #25 — **In-app reminders** (last of the three
-requested 2026-06-18). Cycling advisories tied to an item + recurring reminders
-+ one-off dated reminders; surfaced as an in-app advisory section when you open
-the app; shape the data model so OS push (backlog #20) can deliver the same rows
-later. NO push backend in this work. Overlaps #24's cycle concept — keep them
-separate: #24 = is-the-item-due, #25 = the message. Cross-cutting → confirm a
-pre-flight plan first. New `reminders` table (schema bump expected here, unlike
-#24).
+**Confirmed next task:** Backlog #25 — **In-app reminders** (Task B of the agreed
+3-part plan). Adds a `reminders` table; recurrence (once / every-N-days / cycle)
+**+ time-of-day + snooze-by-N-days** (user-requested additions); due/occurrence/
+snooze logic in a new `lib/reminders.ts`; `ReminderForm` + a new `RemindersScreen`
+reached from the cog menu (add a `{ view:'reminders', label:'Reminders' }` entry to
+`SettingsMenu` + a `reminders` view to the `View` type + `App` SCREENS); a Today
+advisory section with **Done + Snooze**; export/import/merge/sync wiring. Then
+**Task C** = per-occurrence history (`reminderEvents` table + history view). Schema
+bump expected in Task B (next is v11). Cross-cutting → confirm a pre-flight plan.
 
 **Open watch items:**
-- Deploy gated on the `security` job (trufflehog + semgrep + production-scoped
-  `npm audit`); dependabot tracks dev-tooling updates non-blocking.
-- Windows line-ending note: `autocrlf=true` + `* text=auto` means a branch
-  checkout re-materializes files as CRLF and `prettier --check` then fails
-  locally even though committed blobs are LF and CI (Linux) passes. Fix if it
-  recurs: `npx prettier --write .` before committing — produces no content diff.
-- Pre-existing: items 12 (cross-device merge) + 13e (two-device sync) demo gates
-  open; backlog FUTURE 20 (push/dose reminders) + 21 (Apple Health) + 22
-  (chunk first sync push) still planned.
+- Adding a `reminders` view: extend `View` in `src/components/NavBar.tsx`, add to
+  `App.SCREENS`, and add the menu entry in `src/components/SettingsMenu.tsx`
+  (`SETTINGS_ITEMS`). The cog menu is the home for it.
+- Nav nits deferred (non-blocking): no focus trap/restore into the dropdown;
+  `aria-haspopup` semantics. Revisit if accessibility work is prioritized.
+- Windows line endings: `autocrlf=true` → run `npx prettier --write .` before
+  committing if `format:check` flags CRLF after a branch checkout (committed
+  blobs are LF; CI passes).
+- Deploy gated on the `security` job; dependabot tracks dev-tooling updates.
+- Pre-existing: items 12 + 13e sync demo gates open; FUTURE 20 (push reminders —
+  #25 lays its data groundwork) + 21 (Apple Health) + 22 (chunk first sync push).
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 
 **Resume prompt (paste into any agent):**

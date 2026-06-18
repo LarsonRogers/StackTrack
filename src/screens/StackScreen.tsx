@@ -27,6 +27,7 @@ import { exportAsCsv, exportAsJson } from '../lib/exportData'
 import { applyBundle, parseBundle } from '../lib/importData'
 import { mergeBundle } from '../lib/mergeData'
 import ItemForm from '../components/ItemForm'
+import SettingsMenu from '../components/SettingsMenu'
 
 // Form state: closed, adding new, or editing a specific item.
 type FormState =
@@ -246,6 +247,7 @@ export default function StackScreen() {
             ? 'Nothing here yet.'
             : `${activeItems.length} item${activeItems.length === 1 ? '' : 's'}`}
         </p>
+        <SettingsMenu />
       </header>
 
       <button

@@ -1085,3 +1085,43 @@
   branch checkout; committed blobs already LF, no content change to #23 files).
 - State: committed on branch feature/item-frequency (NOT merged/pushed —
   awaiting user demo confirmation). Backlog: 24 done; 25 (reminders) next.
+
+## [2026-06-18] Backlog #26: Navigation restructure (bottom bar + settings cog) — Claude Code
+- Trigger: while planning #25 (reminders), the 5-tab bottom bar was already
+  crowded and a 6th tab (Reminders) would worsen it. User chose: bottom bar =
+  the "view" screens (Today, Graphs); a top-right settings cog opens the "set
+  up" screens (Stack, Tracking, Sync — Reminders joins in #25). Split into its
+  own task before the reminders feature (independent, low-risk).
+- Cog placement (per explicit user spec): on the Today header the cog's TOP is
+  flush with the "StackTrack" heading and its BOTTOM flush with the date line,
+  with DateNav below — implemented via a flex row (.today-header-bar:
+  align-items stretch; the date's 1.5rem bottom-margin moved to the row). Other
+  screens (.screen-header) pin the cog top-right at its natural height (review
+  warning: the populated Graphs header has no subtitle, so the original
+  bottom:1rem anchor was inconsistent — changed to top-anchored natural height).
+- Implementation: NavBar tabs reduced to Today+Graphs (View type unchanged —
+  all 5 views still reachable); new NavContext (App provides {active, navigate};
+  avoids prop-drilling) so any screen header can drop in <SettingsMenu/>; new
+  SettingsMenu (cog + dropdown; toggle, navigate-and-close, Escape-close,
+  backdrop-close, active item marked via aria-current). All 5 screens render
+  <SettingsMenu/> in their header (Today restructured; Graphs×2/Sync×2/Stack/
+  Metrics append it inside .screen-header). CSS for the cog/dropdown/backdrop
+  (z-index 10/11 over the fixed navbar).
+- Menu items are plain buttons (role intentionally NOT menuitem) so they stay
+  queryable as buttons and need no roving-tabindex — reasonable for 3 items;
+  arrow-key menu nav is the only thing forgone.
+- Tests: existing flow tests (stackScreen×7, metricLogging×2, syncScreen×1)
+  updated to open the cog (findByRole 'Settings' — the cog lives inside a screen
+  that renders null until live queries resolve, so it's awaited, unlike the old
+  always-present NavBar buttons) before navigating. New settingsMenu.test.tsx
+  (bar/cog split, closed-by-default, open→navigate→close, Escape, backdrop,
+  active-marking) — 5 tests. Full suite 188 green (was 183).
+- Review: independent fresh-context review — ZERO blockers. One warning
+  (subtitle-less Graphs header cog alignment) FIXED. Nits left: no focus
+  trap/restore into the dropdown (acceptable for a small PWA), aria-haspopup
+  semantics — non-blocking follow-ups.
+- Security: N/A — pure navigation/UI; no input/auth/stored-data/secrets.
+- Lint/format/typecheck/build all pass.
+- State: committed on branch feature/nav-restructure (NOT merged/pushed —
+  awaiting user demo confirmation). #26 done; #25 (reminders) next, will add a
+  "Reminders" entry to the cog menu.

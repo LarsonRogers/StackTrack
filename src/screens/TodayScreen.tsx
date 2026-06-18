@@ -19,6 +19,7 @@ import {
 } from '../lib/dates'
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
 import MetricLogger from '../components/MetricLogger'
+import SettingsMenu from '../components/SettingsMenu'
 import EventsSection from '../components/EventsSection'
 import JournalSection from '../components/JournalSection'
 import CollapsibleSection from '../components/CollapsibleSection'
@@ -120,11 +121,16 @@ export default function TodayScreen() {
   return (
     <main className="today">
       <header className="today-header">
-        <h1>StackTrack</h1>
-        <p className="today-date">
-          {formatTodayHeading(parseIsoDate(selectedDate))}
-          {selectedDate === today && ' (today)'}
-        </p>
+        <div className="today-header-bar">
+          <div className="today-header-titles">
+            <h1>StackTrack</h1>
+            <p className="today-date">
+              {formatTodayHeading(parseIsoDate(selectedDate))}
+              {selectedDate === today && ' (today)'}
+            </p>
+          </div>
+          <SettingsMenu />
+        </div>
         <DateNav
           date={selectedDate}
           today={today}

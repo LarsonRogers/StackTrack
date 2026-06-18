@@ -12,6 +12,7 @@ import {
   runSync,
   type SyncStatus,
 } from '../lib/syncEngine'
+import SettingsMenu from '../components/SettingsMenu'
 
 // Suggestion wordlist — memorable four-word passphrases. Entropy comes
 // from random selection (4 of 64 ≈ 24 bits) PLUS the 600k-iteration
@@ -141,6 +142,7 @@ export default function SyncScreen() {
           <p className="screen-subtitle">
             Keep your devices in sync — end-to-end encrypted.
           </p>
+          <SettingsMenu />
         </header>
 
         <p className="screen-note">
@@ -219,6 +221,7 @@ export default function SyncScreen() {
               ? 'Sync problem'
               : 'Connected'}
         </p>
+        <SettingsMenu />
       </header>
 
       <p className="screen-note">

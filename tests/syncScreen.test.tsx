@@ -28,6 +28,7 @@ afterEach(cleanup)
 async function openSyncTab() {
   const user = userEvent.setup()
   render(<App />)
+  await user.click(await screen.findByRole('button', { name: 'Settings' }))
   await user.click(screen.getByRole('button', { name: 'Sync' }))
   return user
 }
