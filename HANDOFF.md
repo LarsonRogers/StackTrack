@@ -3,28 +3,29 @@
 
 **As of:** 2026-06-18 · **Pack version:** v12.16 · **Audience mode:** Technical non-dev
 **Last completed:** Starter-pack upgrade v12.0 → v12.16 (from
-github.com/LarsonRogers/AI_Agent_Starter_Pack) on branch `pack-upgrade/v12.16`.
-Followed protocols/upgrade.md: Part 1 + all 33 protocols replaced from target,
-Part 2 preserved verbatim, two new Part 2 sections filled (Project Stakes =
-Production, Model Tiers = FULL / Opus-Capable + Haiku-Light). Committed on the
-branch — NOT merged to main.
+github.com/LarsonRogers/AI_Agent_Starter_Pack). Followed protocols/upgrade.md:
+Part 1 + all 33 protocols replaced from target, Part 2 preserved verbatim, two
+new Part 2 sections filled (Project Stakes = Production, Model Tiers = FULL /
+Opus-Capable + Haiku-Light). **MERGED to main + pushed** (14401ab), then a CI
+triage fix (b92315c). **CI is fully GREEN** — validate + security + deploy all
+passed; the live app redeployed.
 **Before that:** README refresh + backlog item 22 (chunk first sync push);
 Today-card note alignment (pushed); Events feature + collapsible sections (shipped/live).
 
-**Confirmed next task:** None queued. The pack upgrade awaits your review +
-merge of `pack-upgrade/v12.16` into main. After that, resume normal backlog work.
+**Confirmed next task:** None queued. Pack upgrade is done, merged, pushed, and
+CI-green. Resume normal backlog work.
 
 **Open watch items:**
-- **Pack upgrade is on branch `pack-upgrade/v12.16`, NOT on main.** Review the
-  diff and merge when ready (`git checkout main && git merge pack-upgrade/v12.16`).
-  Nothing was pushed.
-- **NEW: deploy now gated on a security job.** `agent-ci.yml` gained a `security`
-  job (trufflehog secret scan + semgrep SAST + `npm audit --audit-level=high`),
-  and `deploy` now `needs: [validate, security]` — a secret leak or high-sev
-  audit finding will BLOCK the Cloudflare Pages deploy. Watch the first CI run
-  after merge in case semgrep/audit surface anything on the existing code.
-- **NEW: dependabot** (`.github/dependabot.yml`, npm, weekly) will start opening
-  dependency-update PRs once on main.
+- **Deploy is now gated on a `security` job** (trufflehog + semgrep + a
+  PRODUCTION-scoped `npm audit --omit=dev`). A secret leak, SAST finding, or
+  high-sev vuln in *shipped* deps blocks the Cloudflare Pages deploy.
+- **Dependency audit is scoped to production deps on purpose.** The full
+  `npm audit` reports 4 high / 1 low in DEV tooling (wrangler/esbuild/miniflare/
+  undici/ws) — none ship to users; prod deps (react/dexie/recharts) + the
+  workerd worker audit clean. Dependabot (`.github/dependabot.yml`, weekly,
+  npm) now tracks the dev-tooling updates non-blocking; expect PRs. Full
+  rationale: DECISION_LOG 2026-06-18. To tighten later, take a dependabot
+  wrangler-major PR and drop `--omit=dev`.
 - **NEW: opt-in pack-update hook** wired in `.claude/settings.json` (SessionStart
   → `.claude/hooks/check-pack-update.sh`). Notify-only; prints one line when a
   newer pack exists upstream. Never downloads/changes anything. The hook becomes
