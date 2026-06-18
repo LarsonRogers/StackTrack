@@ -970,3 +970,29 @@
   app tests unaffected. CI security job + dependabot will exercise on next push.
 - State: committed on branch pack-upgrade/v12.16 (NOT merged to main — per
   upgrade.md, the user merges when ready). main left untouched.
+
+## [2026-06-18] Triage: scope CI dependency audit to production deps — Claude Code
+- Trigger: first CI run after the pack upgrade (commit 14401ab) FAILED on the
+  new `security` job — specifically `npm audit --audit-level=high`. validate
+  (lint/type/test/build) passed; trufflehog + semgrep passed; deploy correctly
+  SKIPPED (needs:[validate,security]) so the live site was never touched.
+- Findings (5: 1 low, 4 high): esbuild (dev-server file read, Win), undici
+  (TLS bypass / cache disclosure), ws (DoS), miniflare, wrangler. ALL are
+  devDependencies — wrangler (deploy CLI) + its transitive chain, and vite's
+  esbuild. Verified: `npm audit --omit=dev --audit-level=high` → 0 vulns.
+  Production deps (react, react-dom, dexie, dexie-react-hooks, recharts) are
+  clean; the deployed Cloudflare Worker runs on workerd (native fetch), not
+  these packages. Zero production/user exposure.
+- Decision: scope the BLOCKING audit step to `npm audit --omit=dev
+  --audit-level=high` (production deps = what actually ships). Rationale:
+  static client bundle + Cloudflare-runtime worker; dev/deploy-tooling CVEs
+  don't reach users, and a clean full fix would need a breaking wrangler major
+  (`npm audit fix` non-force didn't clear the highs; --force = wrangler major).
+  Dependabot (weekly, added this upgrade) tracks dev-tooling updates
+  non-blocking; trufflehog + semgrep still gate every push. Justification
+  comment added inline in agent-ci.yml.
+- Alternative considered + rejected for now: `npm audit fix --force` to bump
+  wrangler to a non-vulnerable major — deferred (risk to deploy tooling >
+  benefit, since no production exposure). Can revisit via a dependabot PR.
+- Tests: no source/test change. Production audit clean. CI re-run on push.
+- State: committed on main + pushed (CI re-triggers; deploy should now unblock).

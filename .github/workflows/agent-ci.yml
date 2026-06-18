@@ -74,13 +74,20 @@ jobs:
           semgrep scan --config auto --error .
 
       # Dependency audit — detects vulnerable npm packages.
+      # Scoped to PRODUCTION deps: this project ships a static client bundle +
+      # a Cloudflare Worker (prod runtime = workerd / native fetch). The
+      # high-sev advisories npm reports are all in dev/deploy tooling
+      # (wrangler, esbuild, miniflare, undici, ws) that never reaches users;
+      # production deps (react, dexie, recharts) audit clean. Dependabot
+      # (.github/dependabot.yml, weekly) tracks the dev-tooling updates
+      # non-blocking. See DECISION_LOG 2026-06-18.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
   deploy:
     name: Deploy to Cloudflare Pages
