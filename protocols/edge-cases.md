@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/edge-cases.md -->
+<!-- Starter Pack v12.16 — protocols/edge-cases.md -->
 <!-- Load this file when: pack files missing, git unavailable, no file-read, no file-write, placeholder conflicts, DECISION_LOG missing/corrupt -->
 <!-- Do not load unless triggered — see AGENTS.md → Protocol Index -->
 
@@ -65,4 +65,10 @@ If option 3 is chosen, operate in reduced-trust mode:
 
 Reduced-trust mode ends when all pack files are synchronized to the same
 version (user completes option 1 or 2), or when the session ends.
+
+**To migrate a whole project onto a newer pack version rather than just halt
+on a mismatch, see `protocols/upgrade.md`** — it splices in the new pack-owned
+files while preserving the project's Part 2 and logs. This handler detects an
+inconsistency *within* a project; upgrade.md deliberately moves a project
+*between* versions.
 

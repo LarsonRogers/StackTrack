@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/cross-cutting.md -->
+<!-- Starter Pack v12.16 — protocols/cross-cutting.md -->
 <!-- Load this file when: task touches 3+ files, crosses more than one architectural layer, or involves rename/move/structural reorganization -->
 <!-- Does NOT trigger when: changes are purely mechanical in a single layer
      (e.g., a docs-only update across 3 files, a pure rename in one module
@@ -11,6 +11,16 @@
 A task may legitimately span many files — a rename, a new feature that touches
 every layer, a cross-cutting refactor. Size does not disqualify a task from
 being a single logical change. What matters is that scope is agreed upfront.
+
+### Pressure-test the requirement first
+
+This plan is about *mechanics* — which files, in what order. If the brief itself
+is ambiguous or risky (not just large), pressure-test *what is wanted* before
+planning *how*: run the Requirement Pressure-Test (protocols/requirements.md,
+SCOPE & ACCEPTANCE lens) to nail scope edges, acceptance criteria, and failure
+modes, then produce the pre-flight plan below. Requirement first, file-mechanics
+second. A large-but-crisp task (clear scope, no ambiguity) skips straight to the
+plan.
 
 ### When a pre-flight plan is required
 

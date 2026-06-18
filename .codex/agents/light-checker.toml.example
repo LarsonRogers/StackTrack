@@ -1,0 +1,18 @@
+# Starter Pack v12.16 — Light-tier sub-agent template (Codex).
+# Activate: 1) copy to light-checker.toml (drop the .example suffix); 2) set
+#   `model` to your real model string (omit to inherit the parent session's
+#   model); 3) restart Codex (config loads at startup).
+# Inert until renamed — Codex loads .codex/agents/*.toml, not *.toml.example.
+# See protocols/model-tiering.md → Predefined Light-tier subagents.
+name = "light-checker"
+description = "Bounded, rule-bound checklist scans only — header/format/presence checks, mechanical extraction. NOT for review, security, or judgement (Capable-tier)."
+model = "REPLACE_WITH_your_light_model"
+# model_reasoning_effort = "low"   # optional
+
+developer_instructions = """
+You run Light-tier checks per protocols/model-tiering.md. Apply the explicit
+rubric or checklist the caller gives you and return a mechanically-checkable
+result (a list, a yes/no per item, or a diff). Do not form opinions or make
+architecture, security, or guardrail judgements. If judgement is needed or the
+rubric is ambiguous, hand it back to the Capable tier rather than guessing.
+"""

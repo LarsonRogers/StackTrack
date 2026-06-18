@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/environment.md -->
+<!-- Starter Pack v12.16 — protocols/environment.md -->
 <!-- Load this file when: any environment-specific code or config is involved
      (URLs, ports, hostnames, env vars, dev/staging/prod differences) -->
 <!-- Do not load unless triggered — see AGENTS.md → Protocol Index -->
@@ -34,5 +34,15 @@ If a task involves environment-specific behavior, the agent must:
 - New environment variables introduced by the agent must be documented:
   - In the development log (what it is, what it controls, required vs optional)
   - In a `.env.example` file if one exists in the project
+
+### Production observability
+
+When the app runs anywhere the user cannot watch the terminal (deployed,
+scheduled, background):
+- Structured logs (level, timestamp, event) instead of bare prints
+- Errors captured somewhere the user can actually check — the provider's
+  log dashboard at minimum; RUNBOOK.md gains a "where to look when
+  something breaks" line (see protocols/deployment.md Step 3)
+- Never log secrets or PII (hard guardrail)
 
 ---

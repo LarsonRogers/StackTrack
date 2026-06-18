@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/external-research.md -->
+<!-- Starter Pack v12.16 — protocols/external-research.md -->
 <!-- Load this file when: external SDK, API, or platform work; or web access unavailable (Knowledge Gap) -->
 <!-- Do not load unless triggered — see AGENTS.md → Protocol Index -->
 
@@ -191,6 +191,13 @@ When adding or updating any dependency:
 - Document the new dependency in the decision log — name, version, purpose,
   and any security considerations
 - Never introduce a dependency with known high/critical vulnerabilities
+- Check the LICENSE at add time: permissive (MIT/BSD/Apache-2.0/ISC) →
+  proceed; copyleft (GPL/AGPL/SSPL) or unknown → confirm with the user
+  before adding — it constrains what they can do with their own product
+- Update cadence: dependabot is templated in `.github/dependabot.yml`
+  (ecosystem set during enforcement-tooling); where dependabot is
+  unavailable, review outdated/advisory reports monthly and log security
+  advisories on direct dependencies as watch items
 
 When introducing a new external service or API:
 - Document it in the decision log under External Research

@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/code-quality.md -->
+<!-- Starter Pack v12.16 — protocols/code-quality.md -->
 <!-- Load this file when: writing or modifying code — structural rules, comment
      standards, and readability requirements apply to every coding task. -->
 <!-- Does NOT trigger when: the session is read-only/analysis, or the task is
@@ -9,6 +9,14 @@
 
 These apply to every file, every function, every change — regardless of
 language or framework.
+
+> **The project's architecture sketch governs.** The layer table below
+> describes the FULL separation for apps that need it. Which layers exist
+> is decided by the sketch in AGENTS.md → Part 2 (sized S1–S4 at day one —
+> see protocols/product-definition.md Step 3b). Do not manufacture layers
+> a small tool doesn't need, and do not skip layers the sketch mandates.
+> Changing the structure is a logged growth-trigger decision, never silent
+> drift in either direction.
 
 ### Separation of Concerns
 
@@ -88,5 +96,27 @@ Giant catch-all try/catch blocks        Specific error types, contextual logging
 "Clever" one-liners                     Readable multi-line equivalents
 Redundant comments ("// increment i")   Comments explaining WHY
 ```
+
+---
+
+## Accessibility Baseline (any user-facing UI)
+
+Applies to every task that creates or changes UI. This is part of done, not
+optional polish — it is also what scrutiny checks first on user-facing apps:
+
+```
+[ ] Semantic elements: button for actions, a for navigation, label tied to
+    every input — no clickable divs
+[ ] Every image has alt text (empty alt="" if purely decorative)
+[ ] Full keyboard reachability: sane tab order, visible focus, no
+    mouse-only interactions
+[ ] Readable text contrast (~4.5:1 for body text); color is never the
+    ONLY signal for state or meaning
+[ ] Pages and dialogs have meaningful titles
+```
+
+The full demo for UI items includes a keyboard-only pass
+(protocols/run-demo.md) — if the demoed action cannot be completed with
+the keyboard alone, that is a finding, not a footnote.
 
 ---

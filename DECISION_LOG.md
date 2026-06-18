@@ -929,3 +929,44 @@
 - Tests: none (docs only). format:check clean (prettier covers .md). 159 tests
   unchanged (no source/test files touched).
 - State: committed (local only — not pushed). Awaiting user go-ahead to push.
+
+## [2026-06-18] Upgrade starter pack v12.0 → v12.16 — Claude Code
+- Scope: user asked to "update ai starter pack"; source confirmed as GitHub
+  repo LarsonRogers/AI_Agent_Starter_Pack (target v12.16, 2026-06-16). Ran
+  protocols/upgrade.md (from the new pack) on branch pack-upgrade/v12.16.
+  Pack files are restricted — this is the explicit "update the pack" exception.
+- Did (pack-owned, replaced wholesale): CLAUDE.md, TASK_TEMPLATE.md, SETUP.md,
+  all 33 protocols (22 updated + 10 new: enforcement-tooling, model-tiering,
+  project-stakes, requirements, review, secure-coding, session-start,
+  task-workflow, update-check, upgrade). AGENTS.md SPLICED — target Part 1 +
+  preamble, project Part 2 preserved verbatim (verified byte-identical on both
+  preserved chunks). Header bumped to v12.16.
+- Part 2 reconciliation: two NEW sections added and FILLED (per Step 7, not left
+  NOT-SET) — Project Stakes = **Production** (deployed PWA + sensitive health
+  data); Model Tiers = FULL profile, Anthropic via Claude Code, tier map
+  Capable=claude-opus-4-8 / Light=claude-haiku-4-5. Added the "Pack source" row
+  to Related Docs (new in-section field; referent for update-check.md).
+- Decisions (4, user-confirmed): (1) Production stakes; (2) set up Light tier →
+  activated .claude/agents/light-checker.md (model: haiku); (3) adopt security
+  CI gates → grafted security job (trufflehog + semgrep + npm audit) into
+  agent-ci.yml and gated deploy on needs:[validate,security]; added
+  .github/dependabot.yml (npm, weekly); (4) wire the opt-in pack-update notify
+  hook → copied .claude/hooks/check-pack-update.sh + registered SessionStart
+  hook in .claude/settings.json.
+- Config diffs: .claude/settings.json, .codex/config.toml, opencode.json were
+  content-identical (line-endings only) — no change. .gitignore KEPT (project
+  superset: Vite/PWA/.wrangler entries). .gitattributes gained `*.sh text eol=lf`.
+  CI+deploy workflow KEPT (project's configured version; not overwritten with
+  the generic template). Shipped inert light-checker.*.example templates for all
+  three harnesses (tri-harness parity).
+- Self-checks (Step 6): version grep — all root files + 33 protocols at v12.16;
+  ls-vs-index both directions clean; no dangling protocol cross-refs;
+  project-owned files (README/DECISION_LOG/HANDOFF/BACKLOG/RUNBOOK/src/tests)
+  byte-for-byte untouched; settings.json valid JSON, both YAMLs parse.
+- Review (Step 7): independent fresh-context review of the hand-edited surfaces
+  (AGENTS.md splice, CI graft, hook wiring, tier file) — zero blockers; one
+  benign warning ([PROJECT_NAME] H1 placeholder, pre-existing on main).
+- Tests: not applicable — no src/ or tests/ change (pack/config/docs only); 159
+  app tests unaffected. CI security job + dependabot will exercise on next push.
+- State: committed on branch pack-upgrade/v12.16 (NOT merged to main — per
+  upgrade.md, the user merges when ready). main left untouched.

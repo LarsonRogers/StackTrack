@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/placeholder-inference.md -->
+<!-- Starter Pack v12.16 — protocols/placeholder-inference.md -->
 <!-- Load this file when: first session on any project type — fills REQUIRED placeholders -->
 <!-- Does NOT trigger when: a read-only meta-review is active (placeholder inference
      stays suspended until the review is complete and normal session-start resumes). -->
@@ -40,8 +40,6 @@ develops. The agent never halts on these:
 [Related Docs & Projects] — filled if/when relevant
 [Pattern Name]        — Pattern Registry entries, filled as patterns emerge
                         (bounded, cap 40 lines)
-[Key Invariants] / Project-Specific Architecture — filled as architecture
-                        solidifies (bounded, cap 60 lines)
 ```
 
 **Set by other protocols — NOT resolved by inference (do not ask for these):**
@@ -49,6 +47,18 @@ develops. The agent never halts on these:
 Audience Mode         — set by audience detection at session start
                         (protocols/communication.md)
 BACKLOG.md contents   — set by the product-definition protocol
+Project-Specific Architecture / [Key Invariants] — set on DAY ONE by
+                        product-definition Step 3b (new projects, sized
+                        S1–S4) or Inherited Codebase Phase 3 (existing
+                        code); revised only via logged growth triggers
+Model Tiers           — set at stack selection by product-definition Step 3c
+                        or Inherited Codebase Phase 3 step 4c: tier map
+                        (protocols/model-tiering.md) plus Pack profile +
+                        Context budget (protocols/context-window.md).
+                        Single-tier + FULL are the valid defaults
+Project Stakes        — set at setup by product-definition Step 3d or Inherited
+                        Codebase Phase 3 step 4d (protocols/project-stakes.md);
+                        Standard is the valid default
 ```
 
 **The inference flow:**

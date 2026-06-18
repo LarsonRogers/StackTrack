@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/inherited-codebase.md -->
+<!-- Starter Pack v12.16 — protocols/inherited-codebase.md -->
 <!-- Load this file when: no decision log exists and non-pack source files are present -->
 <!-- Does NOT trigger when: first message is a read-only audit or meta-review (load
      protocols/read-only.md instead), or when no non-pack source files are present
@@ -92,6 +92,18 @@ After mapping, the agent must produce a written assessment covering:
 Do not soften the assessment. If the codebase is in poor shape, say so clearly
 and specifically. The developer needs an honest picture before deciding what to do.
 
+#### Phase 2b — Pressure-test the intended change
+
+The assessment maps the code; this establishes what the developer actually wants
+to do with it and what that will cost. Run the **Requirement Pressure-Test**
+(protocols/requirements.md, CHANGE BLAST-RADIUS lens): elicit the goal, then —
+now that you have the map — interrogate the blast radius of touching the relevant
+areas (what could break in code you didn't write, hidden dependencies between the
+modules involved, edge/failure cases the existing code already mishandles, and
+what "done" concretely looks like). Bounded and audience-scaled; do not
+manufacture questions. The resolved goal + risks feed the first-task confirmation
+in Phase 3/4; accepted risks are recorded as watch items in the live log entry.
+
 #### Phase 3 — Build Out Project Docs
 
 After the developer has reviewed the assessment:
@@ -105,6 +117,20 @@ After the developer has reviewed the assessment:
         (bounded living summary, hard cap 40 lines)
 [ ] 3. Fill in AGENTS.md → Part 2 → Tech Stack table
 [ ] 4. Fill in AGENTS.md → Part 2 → File Structure section
+[ ] 4b. Run protocols/enforcement-tooling.md — for existing codebases use
+        baseline/ratchet mode (record current violations, require clean
+        new code, never bulk-fix or disable)
+[ ] 4c. Set the tier map and pack profile in AGENTS.md → Part 2 → Model Tiers:
+        detect the provider/environment, propose a Capable + Light pairing
+        (protocols/model-tiering.md), ask once; single-tier is valid. Also set
+        Pack profile + Context budget (protocols/context-window.md): FULL by
+        default, LEAN for small-context/local targets (≤~16k) — trims resident
+        footprint and checkpoints sooner, relaxes no gate
+[ ] 4d. Set Project Stakes in AGENTS.md → Part 2 (protocols/project-stakes.md):
+        infer from what the project IS (a shipped/shared/data-handling system →
+        Production; an internal tool → Standard; a clearly-throwaway scratch repo
+        → Spike) and confirm. Governs how much enforcement tooling Step 4b sets
+        up and the doc/test/demo scope; never the safety floor
 [ ] 5. Finalize DECISION_LOG.md and create HANDOFF.md:
         - Reconstructed entries (from git history) are already present from Phase 1
         - Append a live first-session entry after them documenting:

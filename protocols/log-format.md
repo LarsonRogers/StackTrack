@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/log-format.md -->
+<!-- Starter Pack v12.16 — protocols/log-format.md -->
 <!-- Load this file when: writing a decision log entry or handoff (every committed
      task, checkpoints), reconstructing history for an inherited codebase, or
      migrating a legacy CAPTAINS_LOG.md. -->

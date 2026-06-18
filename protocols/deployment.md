@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/deployment.md -->
+<!-- Starter Pack v12.16 — protocols/deployment.md -->
 <!-- Load this file when: the user EXPLICITLY asks to deploy, publish, host, or
      share the app by link. OPT-IN ONLY. -->
 <!-- Does NOT trigger when: the user asks to run, demo, or test the app (that is
@@ -70,6 +70,12 @@ explicit confirmation. Record the gate outcome (both signals, what data,
 who reviewed, what was confirmed) in the development log before any deploy
 command runs.
 
+### Step 0b — Independent review of the deployable surface
+
+Before any deploy step: run protocols/review.md over the diff since the
+last review (or the full app if never reviewed). Zero unresolved blockers
+before continuing — deployment publishes the code; review comes first.
+
 ### Step 1 — Choose the simplest viable target
 
 - Prefer: static hosting for static apps; the stack's mainstream
@@ -103,6 +109,8 @@ at deploy time, for the actual provider and project name, e.g.:
 ## Deployed version
 - Live at: https://[project].example.app
 - Redeploy: `[provider] deploy --prod`        (run from the project folder)
+- When something breaks: [where to see logs/errors — exact provider
+  dashboard path or CLI command]
 
 ## Take it down
 1. `[provider] remove [project-name] --yes`   (or the provider's exact

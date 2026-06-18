@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/safe-deletion.md -->
+<!-- Starter Pack v12.16 — protocols/safe-deletion.md -->
 <!-- Load this file when: any file deletion is requested or proposed -->
 <!-- Do not load unless triggered — see AGENTS.md → Protocol Index -->
 

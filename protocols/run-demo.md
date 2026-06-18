@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/run-demo.md -->
+<!-- Starter Pack v12.16 — protocols/run-demo.md -->
 <!-- Load this file when: closing any coding task (the Definition of Done's
      "user has seen it run" gate), completing a backlog item, or whenever the
      way to run the app changes. -->
@@ -48,13 +48,18 @@ The Definition of Done contains: `[ ] User has seen it run — per
 protocols/run-demo.md`. How to satisfy it depends on the task:
 
 **FULL demo — required when either is true:**
-- A backlog item was completed (always, regardless of what changed), OR
+- A backlog item was completed (always, regardless of what changed) —
+  the independent review (protocols/review.md) must pass FIRST: no full
+  demo while review blockers are unresolved, OR
 - The task changed user-visible behavior
 
 Procedure: start the app (or have the user start it via RUNBOOK.md), tell
 the user exactly what to look at and what to try ("open [URL], add a note,
 refresh — it should still be there"), and wait for the user to confirm they
-saw it working. Their confirmation closes the gate.
+saw it working. Their confirmation closes the gate. For UI items the
+walkthrough includes a keyboard-only pass — complete the demoed action with
+Tab/Enter/arrows alone; if that fails, it is an accessibility finding
+(code-quality.md → Accessibility Baseline), not a footnote.
 
 **Quick re-confirm — all other coding tasks:**
 The agent itself verifies the app still starts and reaches its ready state
@@ -71,12 +76,27 @@ the gate on its own initiative, and must not mark it satisfied without
 either user confirmation (full demo) or its own verified start (quick
 re-confirm).
 
+### Scale to Project Stakes
+
+Demo *formality* scales with Project Stakes (protocols/project-stakes.md); the
+*floor* does not — the user must have seen it run at least once before it counts
+as real:
+- **Spike:** the agent-verified start (quick re-confirm) satisfies most steps;
+  RUNBOOK.md is optional (the README/log run steps suffice). A throwaway the
+  builder runs themselves needs no formal walkthrough.
+- **Standard / Production:** FULL demo on backlog-item completion (with the
+  keyboard-only pass for UI), RUNBOOK.md maintained, as below.
+
+A Spike that escalates (project-stakes.md) adopts the fuller demo from then on.
+
 ### Gate evaluation (explicit, not vibes)
 
 When closing a task, evaluate in order:
 
 ```
-1. Did this task complete a backlog item?            → FULL demo required
+1. Did this task complete a backlog item?            → independent review
+                                                       (protocols/review.md)
+                                                       passes, THEN full demo
 2. Else: did user-visible behavior change?           → FULL demo required
 3. Else:                                             → quick re-confirm
 4. Gate satisfied only by: user confirmation (1,2),

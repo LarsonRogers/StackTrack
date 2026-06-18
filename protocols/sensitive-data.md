@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/sensitive-data.md -->
+<!-- Starter Pack v12.16 — protocols/sensitive-data.md -->
 <!-- Load this file when: inherited repos (proactive scan) or sensitive data encountered -->
 <!-- Does NOT trigger when: values are obviously synthetic (e.g., "example.com",
      "YOUR_API_KEY_HERE", "foo@bar.com", hardcoded test fixtures with no real

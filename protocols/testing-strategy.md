@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.0 — protocols/testing-strategy.md -->
+<!-- Starter Pack v12.16 — protocols/testing-strategy.md -->
 <!-- Load this file when: writing or evaluating tests (not: reviewing results or running an existing suite) -->
 <!-- Does NOT trigger when: merely reading CI output, reviewing test results
      without authoring or changing tests, or running an existing test suite
@@ -55,6 +55,28 @@ UI components:                                 smoke tests minimum
 If a codebase has no tests, the agent must flag this before any refactor
 (already in Refactor Protocol) and offer to write a baseline test suite
 as a separate task before structural changes begin.
+
+### Scale test depth to Project Stakes
+
+How much you test scales with Project Stakes (protocols/project-stakes.md):
+- **Spike:** smoke / happy-path is enough — the goal is learning, not a safety net.
+- **Standard:** the failure-mode coverage above + the critical-path floor below.
+- **Production:** + exhaustive failure-mode and edge-case tests.
+
+Exception that overrides the posture: the moment a Spike needs to test a
+**critical path** (auth, payments, data writes/migrations), that is itself an
+escalation signal — the project is no longer a throwaway; escalate its stakes
+(project-stakes.md) and apply the floor below.
+
+### Coverage floor — critical paths get a measured number
+
+"Confidence, not a number" governs in general — EXCEPT for critical paths
+(auth, payments, data writes/migrations). When the first critical path
+appears: configure coverage tooling in Validation Commands, set a floor
+scoped to those modules (not a global vanity number), and record the floor
+and WHY in the decision log. A floor failure fails the Definition of Done
+like any other gate, and lowering the floor is a logged decision, never a
+silent edit.
 
 ### When tests are impractical
 

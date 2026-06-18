@@ -1,5 +1,5 @@
 # AGENTS.md — [PROJECT_NAME]
-<!-- Starter Pack v12.0 — 2026-06-11 -->
+<!-- Starter Pack v12.16 — 2026-06-16 -->
 
 > **Single source of truth for all agents.** Codex and OpenCode read this
 > file automatically. Claude Code reads it through `CLAUDE.md`, which imports
@@ -66,56 +66,37 @@ reliable indicator — use file presence. Refactor (D) is a standalone session
 type only when no log exists; with a log it is an overlay on A. When intent
 is ambiguous between C and D, default to C.
 
-### First Session Protocol (no log, no non-pack files)
+### First Session & Resumption checklists
 
-```
-[ ] 1. Read this file in full (you are doing that now)
-[ ] 1b. If the folder is not a git repository (`git status` fails), run
-        `git init` — this is the agent's job, never the user's — and note
-        it in the first log entry
-[ ] 2. Scan the repo structure (read only, 3 levels deep; exclude
-        node_modules/, vendor/, dist/, build/, out/, .git/, __pycache__/,
-        .venv/, venv/, coverage/, .cache/; note >1MB files, do not read them)
-[ ] 3. Identify entry points, existing patterns, any code already present
-[ ] 4. Detect the audience (one question, second only if ambiguous — script
-        in protocols/communication.md) and write the result to
-        Part 2 → Audience Mode
-[ ] 4b. If the project is an idea rather than a codebase — empty or
-        near-empty folder, or the user cannot answer stack questions —
-        run protocols/product-definition.md (product brief → recommended
-        stack → seeded BACKLOG.md) before continuing. Never assume a stack
-        is inferable from an idea.
-[ ] 5. Run the Placeholder Inference Protocol (protocols/placeholder-inference.md)
-        — infer, present, confirm, then write Part 2. The user never edits
-        pack files manually. (Skip values already set by product definition.)
-[ ] 6. Report findings: what exists, what is wired up, what appears incomplete
-[ ] 7. Create DECISION_LOG.md (first entry) and HANDOFF.md
-        (formats: protocols/log-format.md)
-[ ] 8. Ask the developer to confirm the task before writing any code
-```
+Once the router above has set the type, load **`protocols/session-start.md`**
+for the detailed step-by-step checklist:
+- **Type B (First Session)** — repo scan, audience detection, product
+  definition if idea-stage, placeholder inference, first log + handoff.
+- **Type A (Resumption)** — read handoff + log tail, version check, load
+  triggered protocols, then report unprompted where we left off and wait for
+  confirmation. (This "where did we leave off?" report is delivered
+  automatically — the developer never has to ask.)
 
-### Session Resumption Protocol (log exists)
+The router, this read order, the meta-review preemption, and the version
+check below stay always-on; the checklists load on demand.
 
-```
-[ ] 1. Read this file — Part 2 → Audience Mode is the active communication
-        mode; apply it from your first reply. If it reads [NOT SET], detect
-        it (protocols/communication.md) and write it before proceeding.
-[ ] 2. Read HANDOFF.md — last task, confirmed next task, open watch items.
-        Missing but DECISION_LOG.md exists → regenerate it from the log tail
-        (protocols/log-format.md). Then read DECISION_LOG.md from the bottom
-        only as far as needed.
-[ ] 3. Run the pack version consistency check (below)
-[ ] 4. Load protocols triggered by session context (Protocol Index below).
-        Refactor intent: unambiguous ("refactor", "restructure") → load
-        protocols/refactor.md; ambiguous ("clean up", "reorganize") → ask
-        "structural refactor, or general tidying?" before loading.
-[ ] 5. Report unprompted: (a) where we left off, (b) current codebase state,
-        (c) open watch items, (d) proposed next step
-[ ] 6. Wait for developer confirmation before touching anything
-```
+**Pack profile:** read Part 2 → Model Tiers → Pack profile. On **LEAN**
+(small-context/local), load only the protocol the current step strictly
+needs and checkpoint more often (protocols/context-window.md) — but the
+Protocol Index router still fires for every safety-critical trigger
+(secure-coding, safe-deletion, independent review, sensitive-data). LEAN
+never relaxes a guardrail, the Definition of Done, secure-coding, or the
+independent review — it trims resident footprint, not required discipline.
+Unset = FULL.
 
-This report answers "where did we leave off?" — delivered automatically so
-the developer never has to ask.
+**Tier-map offer (ask once):** while reading that block, if the **Light** row
+still holds a bare `[…]` placeholder (the shipped default, not yet filled), the
+tier map was never resolved — offer **once** to set up lower-tier sub-agents and, if
+accepted, load `protocols/model-tiering.md` and run its setup. A Light row
+holding a real model, or `none — single-tier (decided YYYY-MM-DD)`, is already
+resolved — do **not** re-offer. Skip in read-only sessions (no writes to record
+the decision). Single-tier is always valid; this surfaces the choice without
+nagging.
 
 ### Pack version consistency check
 
@@ -132,9 +113,9 @@ sessions (no writes possible) — report a mismatch in findings, don't halt.
 ## Audience & Communication
 
 The active mode is an always-on fact: **Part 2 → Audience Mode**. It is set
-once (First Session step 4, or Resumption step 1 if unset) and read at the
-start of every session in both harnesses — non-dev behavior must never
-depend on a protocol trigger firing.
+once (session-start.md → First Session step 4, or Resumption step 1 if unset)
+and read at the start of every session in all harnesses — non-dev behavior
+must never depend on a protocol trigger firing.
 
 Three modes: **Developer**, **Technical non-dev**, **Non-dev**. Default when
 detection is ambiguous: Technical non-dev. The user saying "explain less" /
@@ -288,20 +269,18 @@ scope contract — anything outside it is out of scope. Exception: read-only
 sessions (protocols/read-only.md) are exempt — the review request is the
 scope contract.
 
+If the brief is large, ambiguous, or cross-cutting, pressure-test *what is
+wanted* before confirming — protocols/requirements.md (Scope & Acceptance lens).
+A small, clear, low-risk brief needs only the reformulation above.
+
 ### Pre-Edit Protocol (before every coding task)
 
-```
-[ ] 0. Confirm an approved task brief exists — do not proceed without one
-[ ] 1. Read HANDOFF.md — orient to where the last session ended
-[ ] 2. List all files relevant to the task (read only)
-[ ] 3. Identify existing patterns in those files (naming, structure, data flow)
-[ ] 4. Identify where the relevant logic currently lives
-[ ] 5. State the exact scope of the planned change (files, functions)
-[ ] 6. Confirm no existing pattern already solves the problem (Part 2 → Pattern Registry)
-[ ] 7. Identify external systems/SDKs/APIs involved — if any, complete the
-        External Research Protocol first (protocols/external-research.md)
-[ ] 8. Confirm git working tree is clean (git status)
-```
+Before touching code, run the 9-step Pre-Edit checklist in
+**`protocols/task-workflow.md`** — confirm an approved brief exists, read
+HANDOFF.md, list relevant files, identify existing patterns and where logic
+lives, state exact scope, check the Pattern Registry and architecture
+invariants (Part 2), complete the External Research Protocol if external
+systems are involved, and confirm a clean working tree.
 
 ### Scope Control
 
@@ -321,12 +300,9 @@ update, re-confirm. Exception: purely mechanical single-layer changes
 
 ### Checkpoint / Rollback
 
-```bash
-# Before any task:        git status (clean) + git log --oneline -5
-# After each task:        1. tests pass  2. append DECISION_LOG.md entry
-#                         3. overwrite HANDOFF.md  4. git add -A && commit
-# If something breaks:    git reset --hard HEAD
-```
+The before/after-task checkpoint and rollback commands are in
+**`protocols/task-workflow.md`** (clean tree before; tests + log + handoff +
+commit after; `git reset --hard HEAD` if something breaks).
 
 **Definition of Done — a task is not complete until all of these are true:**
 ```
@@ -339,12 +315,24 @@ update, re-confirm. Exception: purely mechanical single-layer changes
     per task
 [ ] If dependencies changed: lockfile committed, dependency audit run
 [ ] If secrets or external services added: documented in the development log
+[ ] Security pass — for tasks touching input, auth, sessions, or stored
+    data: secure-coding self-check recorded (protocols/secure-coding.md)
+[ ] If a backlog item was completed: independent review passed with zero
+    unresolved blockers, verdict recorded (protocols/review.md) — before
+    the full demo
 [ ] User has seen it run — per protocols/run-demo.md (FULL demo on backlog-item
     completion or user-visible change; quick re-confirm otherwise; only the
     user may defer, and the deferral is logged with a watch item)
 [ ] If this is session task 5+: checkpoint triggered (protocols/context-window.md)
 [ ] Commit made with imperative mood message
 ```
+
+The tooling/CI items, test depth, and demo formality above scale with **Project
+Stakes** (Part 2; protocols/project-stakes.md) — a Spike runs a lighter set, a
+Production project the full set. The **safety floor never scales**: secrets +
+the secret hook, the secure-coding self-check, independent review when triggered,
+the day-one architecture sketch, "don't commit broken state," and the log entry
+apply at every stakes level.
 
 If any item fails, roll back — do not accumulate broken state across tasks.
 
@@ -371,40 +359,25 @@ incorrect claim, amend it with a correction note.
 
 ## Standing Rules (one line each — detail in the protocol file)
 
-- **Sensitive data:** proactive scan on inherited repos; flag on encounter;
-  never reproduce in logs or commits. `protocols/sensitive-data.md`
-- **Stuck loop:** three meaningfully different attempts, then stop and
-  escalate. `protocols/stuck-loop.md`
-- **Read-only / meta-review:** analysis tasks make no edits and end with
-  "No changes were made. Want me to act on any of these findings?"
-  `protocols/read-only.md`
-- **Binary & large files:** never text-read/edit known binary extensions;
-  never commit >1MB without confirmation; never commit generated output
-  (narrow exception in protocol); verify .gitignore on first session.
-  `protocols/binary-files.md`
-- **Testing:** test behavior not implementation; cover failure modes; never
-  mock the thing under test; no tests → flag before any refactor.
-  `protocols/testing-strategy.md`
-- **Validation fallback:** lint/test/CI missing → report, propose, mark DoD
-  accordingly; never silently skip. `protocols/validation-fallback.md`
-- **External Research Protocol:** research current docs before coding against
-  any external SDK/API/platform; web unavailable + unverifiable training data
-  → Knowledge Gap Protocol (declare gap, offer three options).
-  `protocols/external-research.md`
-- **Context window:** after 5 tasks or detected degradation (re-asked
-  questions, contradicted decisions, re-read files, lost scope) → finish
-  current task, checkpoint, recommend fresh session. `protocols/context-window.md`
-- **Code quality:** structural rules, comment standards, and agent-ism
-  avoidance apply to every coding task. `protocols/code-quality.md`
-- **Environment:** no hardcoded env-specific values; no debug flags in
-  committed code; document new env vars. `protocols/environment.md`
-- **Run & demo:** maintain RUNBOOK.md from the first runnable state; a task
-  is not done until the user has seen it run (or verifiably could —
-  `protocols/run-demo.md`).
-- **Deployment:** opt-in only — never proposed as the default path; the
-  data-sensitivity gate runs before any deploy step. `protocols/deployment.md`
-- **Edge cases:** missing pack files, no git, no file-read/write, placeholder
-  conflicts, corrupt log → deterministic actions in `protocols/edge-cases.md`
+- **Sensitive data:** scan inherited repos; flag on encounter; never reproduce in logs/commits. `protocols/sensitive-data.md`
+- **Stuck loop:** three different attempts, then stop and escalate. `protocols/stuck-loop.md`
+- **Read-only / meta-review:** no edits; end with "No changes were made. Want me to act on any of these findings?" `protocols/read-only.md`
+- **Binary & large files:** never text-read/edit binaries; no >1MB or generated output without confirmation; verify .gitignore first session. `protocols/binary-files.md`
+- **Testing:** test behavior not implementation; cover failure modes; never mock the thing under test; no tests → flag before refactor. `protocols/testing-strategy.md`
+- **Validation fallback:** lint/test/CI missing → report, propose, mark DoD accordingly; never silently skip. `protocols/validation-fallback.md`
+- **External research:** verify current docs before coding against any external SDK/API/platform; web down + unverifiable → Knowledge Gap (declare, offer three options). `protocols/external-research.md`
+- **Context window:** after 5 tasks or detected degradation → finish task, checkpoint, recommend fresh session. `protocols/context-window.md`
+- **Code quality:** structural rules, comment standards, agent-ism avoidance on every coding task. `protocols/code-quality.md`
+- **Enforcement tooling:** at stack selection, set up strict lint/format/type/boundary checks + secret pre-commit hook + real CI; demonstrate each gate failing before trusting it. `protocols/enforcement-tooling.md`
+- **Secure coding:** input/auth/session/stored-data tasks run the checklist (recorded self-check, floor at every stakes level); SAST in CI per Project Stakes (Production default, pulled forward for auth/payments/sensitive-data); never hand-roll auth/crypto. `protocols/secure-coding.md`
+- **Independent review:** every completed backlog item and deploy gets a fresh-context diff review (correctness/security/architecture/readability); blockers not self-waived. `protocols/review.md`
+- **Model tiering:** route bounded rule-bound sub-agent checks to a cheaper model; judgment/safety-critical work stays on the main model, never downgraded; log the tier. `protocols/model-tiering.md`
+- **Environment:** no hardcoded env values; no debug flags committed; document new env vars. `protocols/environment.md`
+- **Run & demo:** maintain RUNBOOK.md from first runnable state; not done until the user has seen it run (or verifiably could). `protocols/run-demo.md`
+- **Deployment:** opt-in only, never the default path; data-sensitivity gate before any deploy step. `protocols/deployment.md`
+- **Edge cases:** missing pack files, no git, no file-read/write, placeholder conflicts, corrupt log → deterministic actions. `protocols/edge-cases.md`
+- **Pack upgrade:** migrate a project to a newer pack version — replace pack-owned files, preserve project Part 2 + logs verbatim, on a branch. `protocols/upgrade.md`
+- **Update check:** detect-only — compare local vs upstream pack version, offline→skip, behind→hand to upgrade.md; never auto-applies. `protocols/update-check.md`
 
 ---
 
@@ -418,34 +391,42 @@ row. A mismatch in either direction is an error.
 
 | Protocol | Location | When to load |
 |----------|----------|-------------|
-| Session Resumption | AGENTS.md | Every session where DECISION_LOG.md exists |
-| First Session | AGENTS.md | No log, no non-pack source files |
-| Product Definition | `protocols/product-definition.md` | First session type B where the user has an idea, not a codebase (empty folder or stack unknown to user) |
-| Run & Demo | `protocols/run-demo.md` | Closing any coding task (DoD demo gate); backlog item completed; run steps changed |
-| Deployment | `protocols/deployment.md` | User explicitly asks to deploy/publish/share — opt-in only, never default |
+| Session Resumption | `protocols/session-start.md` | Type A — log exists |
+| First Session | `protocols/session-start.md` | Type B — no log, no non-pack source files |
+| Product Definition | `protocols/product-definition.md` | First session, user has an idea not a codebase (empty folder / stack unknown) |
+| Run & Demo | `protocols/run-demo.md` | Closing a coding task (demo gate); backlog item done; run steps changed |
+| Deployment | `protocols/deployment.md` | User asks to deploy/publish/share — opt-in only |
 | Inherited Codebase | `protocols/inherited-codebase.md` | No log, non-pack source files present |
-| Refactor | `protocols/refactor.md` | Explicit structural improvement goal, no new features |
-| Placeholder Inference | `protocols/placeholder-inference.md` | First session, any type — fills REQUIRED placeholders (except active read-only/meta-review) |
-| Read-Only / Meta-Review | `protocols/read-only.md` | Review, audit, analysis — no edits intended |
-| Communication Modes | `protocols/communication.md` | First session (audience detection); any non-dev or technical non-dev session; any error reported to a non-developer |
-| Decision Log & Handoff Format | `protocols/log-format.md` | Writing a log entry or handoff; reconstructing history; migrating a legacy CAPTAINS_LOG.md |
-| Pre-Edit Protocol | AGENTS.md | Before every coding task |
-| Task Brief & Prompt Reformulation | AGENTS.md + TASK_TEMPLATE.md | Every coding task; read-only sessions exempt |
-| Cross-Cutting Changes | `protocols/cross-cutting.md` | Task touches 3+ files, crosses architectural layers, or involves rename/move/structural reorganization |
+| Refactor | `protocols/refactor.md` | Explicit structural goal, no new features |
+| Placeholder Inference | `protocols/placeholder-inference.md` | First session — fills REQUIRED placeholders (not in read-only) |
+| Read-Only / Meta-Review | `protocols/read-only.md` | Review/audit/analysis — no edits intended |
+| Communication Modes | `protocols/communication.md` | Audience detection; any non-dev session; any error shown to a non-dev |
+| Enforcement Tooling | `protocols/enforcement-tooling.md` | Stack chosen / validation commands first set / walking skeleton |
+| Secure Coding | `protocols/secure-coding.md` | Task touching input, authn/authz, sessions, stored data, file/path, or output |
+| Independent Review | `protocols/review.md` | Backlog item done (before demo); before deploy; on request |
+| Model Tiering | `protocols/model-tiering.md` | Deciding which model a delegated sub-agent task runs on |
+| Decision Log & Handoff Format | `protocols/log-format.md` | Writing a log/handoff; reconstructing history; migrating CAPTAINS_LOG.md |
+| Pre-Edit Protocol | `protocols/task-workflow.md` | Before every coding task (9-step checklist + checkpoint/rollback) |
+| Task Brief & Prompt Reformulation | AGENTS.md + TASK_TEMPLATE.md | Every coding task; read-only exempt |
+| Cross-Cutting Changes | `protocols/cross-cutting.md` | Task touches 3+ files, crosses layers, or moves/renames structurally |
+| Requirement Pressure-Test | `protocols/requirements.md` | Idea-stage product definition (always); inherited project after assessment; large/ambiguous/cross-cutting task brief |
 | Safe Deletion | `protocols/safe-deletion.md` | Any file deletion request |
-| Code Quality | `protocols/code-quality.md` | Writing or modifying code (not read-only or docs-only sessions) |
+| Project Stakes | `protocols/project-stakes.md` | Setting how much process ceremony a project warrants (setup); a stakes-scaled step (tooling/docs/tests/demo); a Spike escalation trigger |
+| Code Quality | `protocols/code-quality.md` | Writing/modifying code (not read-only or docs-only) |
 | Environment Awareness | `protocols/environment.md` | Any environment-specific code or config |
-| Context Window Management | `protocols/context-window.md` | 5+ tasks in session or detected degradation |
-| Sensitive Data Handling | `protocols/sensitive-data.md` | Inherited repos (proactive scan) or on encounter |
+| Context Window Management | `protocols/context-window.md` | 5+ tasks in session, or detected degradation |
+| Sensitive Data Handling | `protocols/sensitive-data.md` | Inherited repos (scan) or on encounter |
 | Stuck Loop Circuit Breaker | `protocols/stuck-loop.md` | 3 failed attempts on same problem |
-| Validation Tooling Fallback | `protocols/validation-fallback.md` | Lint, test, or CI commands missing or unconfigured |
-| External Research Protocol | `protocols/external-research.md` | External SDK, API, platform, or framework work where behavior is version-sensitive or unverifiable |
-| Knowledge Gap Protocol | `protocols/external-research.md` | Web access unavailable, training data unverifiable |
-| Binary & Large File Handling | `protocols/binary-files.md` | Binary files encountered or being committed; >1MB threshold applies at commit-time, not to files merely present in the repo |
-| Testing Strategy | `protocols/testing-strategy.md` | Writing or evaluating tests (not: reviewing results or running an existing suite) |
+| Validation Tooling Fallback | `protocols/validation-fallback.md` | Lint/test/CI missing or unconfigured |
+| External Research Protocol | `protocols/external-research.md` | External SDK/API/platform work, version-sensitive or unverifiable |
+| Knowledge Gap Protocol | `protocols/external-research.md` | Web unavailable, training data unverifiable |
+| Binary & Large File Handling | `protocols/binary-files.md` | Binary files, or committing >1MB (threshold at commit-time) |
+| Testing Strategy | `protocols/testing-strategy.md` | Writing/evaluating tests (not running an existing suite) |
 | Conflict Resolution Examples | `protocols/conflict-examples.md` | Surfacing a conflict or verifying conflict behavior |
-| Edge-Case Handling | `protocols/edge-cases.md` | Pack files missing, git unavailable, no file-read, no file-write, placeholder conflicts, DECISION_LOG missing/corrupt, pack version mismatch |
-| Pattern Registry Maintenance | `protocols/pattern-registry.md` | Same structural approach in 2+ files touched this session, or a new approach replaced one causing bugs/confusion — even if used only once so far |
+| Edge-Case Handling | `protocols/edge-cases.md` | Missing pack files, no git, no read/write, placeholder conflicts, corrupt log, version mismatch |
+| Pack Upgrade / Migration | `protocols/upgrade.md` | User asks to upgrade/migrate a project to a newer pack version, or edge-cases version-mismatch handler routes here to migrate |
+| Pack Update Check | `protocols/update-check.md` | User asks whether the pack is up to date, the launch notify-hook reports an update, or confirming the target version before an upgrade |
+| Pattern Registry Maintenance | `protocols/pattern-registry.md` | Same approach in 2+ files this session, or a new approach replaced a buggy one |
 
 ---
 
@@ -499,6 +480,36 @@ tool: no dosage guidance, no interaction checking — ever.
      Update only when the user asks for more or less explanation. -->
 
 **Active mode:** Technical non-dev (set 2026-06-11, first session — user self-identified as "somewhat technical")
+
+## Project Stakes
+<!-- Set at setup (product-definition / inherited-codebase Phase 3), proposed by
+     the agent from the brief and confirmed. Scales process ceremony (tooling
+     bundle, doc set, test depth, demo formality) — NEVER the safety floor.
+     Full posture definitions + escalation trigger: protocols/project-stakes.md. -->
+
+**Stakes:** Production (set 2026-06-18, pack upgrade) — shipped/shared (public Cloudflare Pages URL, installable PWA) and handles sensitive personal health data. Full mechanical rigor: security CI gates (trufflehog + semgrep) + dependabot, failure-mode tests, FULL demo. Local-first single-user keeps blast radius small, but "shipped + sensitive data" sets the floor at Production.
+
+## Model Tiers
+<!-- Set at stack selection (product-definition Step 3c / inherited-codebase
+     Phase 3 step 4c). Read at session start (Pack profile — governs resident
+     footprint + checkpoint cadence, protocols/context-window.md) and when
+     delegating a sub-agent task (tier map — protocols/model-tiering.md).
+     Provider/harness-agnostic. Tier map is single-tier whenever the Light row
+     is "none" (every delegation runs on the Capable/session model). Fill "How
+     to switch" with only the harness in use. Bounded: this block only.
+     Resolved = Light row holds a real model OR "none — single-tier (decided
+     YYYY-MM-DD)". A bare [placeholder] is unresolved → Session Start offers
+     setup once (AGENTS.md Session Start → Tier-map offer). -->
+
+**Pack profile:** FULL
+**Context budget:** ~200k+ (Claude Code, Opus 4.8 1M-context build — large context)
+**Provider / environment:** Anthropic via Claude Code (subscription/login)
+
+| Role | Model | How to switch |
+|------|-------|---------------|
+| Capable (default — never downgraded) | claude-opus-4-8 (session/default model) | session default; per-call `model` via the Agent/Task tool |
+| Light (bounded, rule-bound checks) | claude-haiku-4-5 (`haiku`) | active: `.claude/agents/light-checker.md` `model: haiku`; or per-call `model` |
+| Deterministic | none (script only) | n/a |
 
 ## Quick Constraints
 <!-- Filled in by the agent during Placeholder Inference. -->
@@ -635,6 +646,7 @@ schema or config change.
 | `README.md` | Human-facing pack documentation |
 | `SETUP.md` | Human bootstrap walkthrough |
 | `BACKLOG.md` | Ordered MVP feature list — top item is next work |
+| Pack source | `https://raw.githubusercontent.com/LarsonRogers/AI_Agent_Starter_Pack/main/AGENTS.md` — canonical upstream; the referent for protocols/update-check.md (read by both the on-demand check and the launch hook). A fork or private redistribution changes this one URL. |
 
 ## Pattern Registry
 <!-- Agent-maintained. HARD CAP: 40 lines. Check here before implementing

@@ -1,9 +1,10 @@
 # .github/workflows/agent-ci.yml
 #
 # CI + auto-deploy for StackTrack.
-# Every push and PR: lint, format check, typecheck, tests, build.
-# Pushes to main that pass all checks additionally deploy dist/ to the
-# existing Cloudflare Pages project (same URL as manual deploys:
+# Every push and PR: lint, format check, typecheck, tests, build, and a
+# security scan (secret detection + SAST + dependency audit).
+# Pushes to main that pass validate AND security additionally deploy dist/ to
+# the existing Cloudflare Pages project (same URL as manual deploys:
 # https://stacktrack-ea9.pages.dev).
 #
 # Required repo secrets (Settings → Secrets and variables → Actions):
@@ -45,9 +46,45 @@ jobs:
           name: dist
           path: dist
 
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 — trufflehog needs full history to diff the pushed range
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Secret scanning — detects accidentally committed credentials.
+      # Pinned to a release tag (not @main) so the security job itself is not
+      # an unpinned supply-chain dependency. base/head are deliberately
+      # omitted: the action auto-detects the commit range per event.
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@v3.95.5
+        with:
+          extra_args: --results=verified,unknown
+
+      # Static analysis (SAST) — catches injection, XSS, eval-on-input, and
+      # other dangerous patterns. `--config auto` selects rules for whatever
+      # languages are present. Findings fail the build; triage in the
+      # decision log (fix, or suppress with same-line justification).
+      - name: Static analysis (semgrep)
+        run: |
+          pip install semgrep
+          semgrep scan --config auto --error .
+
+      # Dependency audit — detects vulnerable npm packages.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
   deploy:
     name: Deploy to Cloudflare Pages
-    needs: validate
+    needs: [validate, security]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
