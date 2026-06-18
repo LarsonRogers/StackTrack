@@ -3,12 +3,13 @@
 // clear). Number metrics: type and save (save empty to clear). Persistence
 // goes through metricEntryRepository.
 import { useState } from 'react'
-import type { Metric, MetricEntry } from '../db/db'
+import type { Metric, MetricEntry, MetricNote } from '../db/db'
 import {
   clearMetricEntry,
   setCompositeEntry,
   setMetricEntry,
 } from '../db/metricEntryRepository'
+import { setMetricNote } from '../db/metricNoteRepository'
 
 const RATING_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -18,11 +19,16 @@ interface MetricLoggerProps {
   date: string
 }
 
+interface MetricLoggerRowProps extends MetricLoggerProps {
+  note: MetricNote | undefined // this day's note, if any
+}
+
 export default function MetricLogger({
   metric,
   entry,
   date,
-}: MetricLoggerProps) {
+  note,
+}: MetricLoggerRowProps) {
   return (
     <li className="metric-logger">
       <span className="metric-logger-name">
@@ -31,6 +37,9 @@ export default function MetricLogger({
           <span className="stack-item-detail"> ({metric.unit})</span>
         )}
       </span>
+      {metric.note && (
+        <span className="today-item-pinned-note">{metric.note}</span>
+      )}
       {metric.kind === 'rating' ? (
         <RatingButtons metric={metric} entry={entry} date={date} />
       ) : metric.kind === 'composite' ? (
@@ -40,7 +49,75 @@ export default function MetricLogger({
       ) : (
         <NumberInput metric={metric} entry={entry} date={date} />
       )}
+      <DayNote metric={metric} note={note} date={date} />
     </li>
+  )
+}
+
+// The per-day note for one metric, e.g. "measured after a run". One per
+// (metric, date); empty text clears it. Mirrors the Today item-note editor.
+function DayNote({
+  metric,
+  note,
+  date,
+}: {
+  metric: Metric
+  note: MetricNote | undefined
+  date: string
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
+  function open() {
+    setDraft(note?.text ?? '')
+    setEditing(true)
+  }
+
+  async function save() {
+    await setMetricNote(metric.id, date, draft)
+    setEditing(false)
+  }
+
+  if (!editing) {
+    return (
+      <div className="metric-logger-note">
+        {note && <span className="today-item-note">{note.text}</span>}
+        <button type="button" className="button-subtle" onClick={open}>
+          {note ? 'Edit note' : 'Note'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="today-note-editor">
+      <label className="visually-hidden" htmlFor={`metric-note-${metric.id}`}>
+        Note for {metric.name}
+      </label>
+      <textarea
+        id={`metric-note-${metric.id}`}
+        rows={2}
+        value={draft}
+        placeholder="e.g. measured after a run"
+        onChange={(e) => setDraft(e.target.value)}
+      />
+      <div className="today-note-actions">
+        <button
+          type="button"
+          className="button-primary button-compact"
+          onClick={save}
+        >
+          Save note
+        </button>
+        <button
+          type="button"
+          className="button-subtle"
+          onClick={() => setEditing(false)}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   )
 }
 

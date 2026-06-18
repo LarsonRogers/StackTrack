@@ -996,3 +996,45 @@
   benefit, since no production exposure). Can revisit via a dependabot PR.
 - Tests: no source/test change. Production audit clean. CI re-run on push.
 - State: committed on main + pushed (CI re-triggers; deploy should now unblock).
+
+## [2026-06-18] Backlog #23: Metric notes (persistent + per-day) — Claude Code
+- Trigger: user requested three additions (metric note, med frequency, in-app
+  reminders). Clarified scope via four questions: (#1) metric note = BOTH a
+  persistent definition note AND a per-day note; (#2) frequency = every N days
+  + days-of-week + on/off cycles; (#3) reminders = in-app now / push later,
+  covering cycling advisories + recurring + one-off. Split into three backlog
+  items (23/24/25); built #23 first. Confirmed brief: add a persistent `note?`
+  to Metric (mirrors StackItem.note) + a new per-day `metricNotes` table
+  (mirrors itemNotes, one per metricId+date).
+- Implementation (additive, schema v10 — empty new table, no migration):
+  - db.ts: `Metric.note?`; new `MetricNote` interface + table; `version(10)`
+    with index `++id, &uid, date, [metricId+date]`.
+  - New `metricNoteRepository.setMetricNote` — exact twin of itemNoteRepository
+    (uid+updatedAt on writes, tombstone on clear, [metricId+date] upsert).
+  - metricRepository: `note` on MetricInput/MetricUpdate, persisted on add+update.
+  - UI: MetricForm note textarea (all kinds); MetricsScreen forwards note on
+    edit; MetricLogger shows the persistent note + a per-day note editor;
+    TodayScreen live-queries metricNotes for the date and passes them down.
+  - Carried metricNotes through EVERY data path: exportData (bundle type+read),
+    importData (TABLE_NAMES+tx), mergeData (DATA_TABLES+tx+dependents w/
+    metricUid rewiring + natural key metricUid|date), syncEngine
+    (DATA_TABLES+emptyBundle).
+- Decisions: (1) per-day note placement = under the logging control in
+  MetricLogger, consistent with the Today item-note pattern. (2) Kept the
+  missing-parent fallback (`metricUid: metric?.uid ?? ''`) to mirror the
+  itemNoteRepository precedent the brief specified — UI guarantees the parent
+  exists; an empty ref would be skipped (never mis-wired) on merge. Noted as a
+  symmetry nit, not fixed.
+- Security self-check (touches stored data): free text trimmed, stored in local
+  IndexedDB, rendered via React auto-escaping (no dangerouslySetInnerHTML) — no
+  injection vector; no new secrets/deps; sync is table-agnostic + already
+  E2E-encrypted. PASS.
+- Review: independent fresh-context diff review — ZERO blockers; two nits
+  (missing-parent fallback symmetry; suggested a metricNotes merge-convergence
+  test). Added the merge-convergence test (nit 2); left nit 1 per precedent.
+- Tests: new tests/metricNote.test.ts (persistent note add/update/clear; per-day
+  one-per-day, replace, clear+tombstone, no-op clear) + metricNotes merge
+  convergence + export coverage + schemaVersion 9→10. Full suite 168 green
+  (was 159). Lint/format/typecheck/build all pass.
+- State: committed on branch feature/metric-notes (NOT merged/pushed — awaiting
+  user demo confirmation). Backlog: 23 done; 24 + 25 added as planned.

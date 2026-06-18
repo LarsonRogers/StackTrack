@@ -45,7 +45,11 @@ export default function MetricsScreen() {
 
   async function handleSubmit(input: MetricInput) {
     if (form.mode === 'edit') {
-      await updateMetric(form.metric.id, { name: input.name, unit: input.unit })
+      await updateMetric(form.metric.id, {
+        name: input.name,
+        unit: input.unit,
+        note: input.note,
+      })
     } else {
       await addMetric(input)
     }

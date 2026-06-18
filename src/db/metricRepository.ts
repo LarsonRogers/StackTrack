@@ -10,6 +10,7 @@ export interface MetricInput {
   kind: MetricKind
   unit?: string
   components?: MetricComponent[] // 'composite' only — the ordered parts
+  note?: string // persistent context note shown when logging
 }
 
 // What can change after creation — everything except kind and components
@@ -17,6 +18,7 @@ export interface MetricInput {
 export interface MetricUpdate {
   name: string
   unit?: string
+  note?: string
 }
 
 export async function addMetric(input: MetricInput): Promise<number> {
@@ -33,6 +35,7 @@ export async function addMetric(input: MetricInput): Promise<number> {
             unit: c.unit?.trim() || undefined,
           }))
         : undefined,
+    note: input.note?.trim() || undefined,
     status: 'active',
     createdAt: stamp,
     updatedAt: stamp,
@@ -46,6 +49,7 @@ export async function updateMetric(
   await db.metrics.update(id, {
     name: input.name.trim(),
     unit: input.unit?.trim() || undefined,
+    note: input.note?.trim() || undefined,
     updatedAt: nowIso(),
   })
 }

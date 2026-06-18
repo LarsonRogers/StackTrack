@@ -18,6 +18,7 @@ export interface ExportBundle {
     itemNotes: unknown[]
     metrics: unknown[]
     metricEntries: unknown[]
+    metricNotes: unknown[]
     dayNotes: unknown[]
     healthEvents: unknown[]
     tombstones: unknown[]
@@ -32,6 +33,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
     itemNotes,
     metrics,
     metricEntries,
+    metricNotes,
     dayNotes,
     healthEvents,
     tombstones,
@@ -42,6 +44,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
     db.itemNotes.toArray(),
     db.metrics.toArray(),
     db.metricEntries.toArray(),
+    db.metricNotes.toArray(),
     db.dayNotes.toArray(),
     db.healthEvents.toArray(),
     db.tombstones.toArray(),
@@ -57,6 +60,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       itemNotes,
       metrics,
       metricEntries,
+      metricNotes,
       dayNotes,
       healthEvents,
       tombstones,

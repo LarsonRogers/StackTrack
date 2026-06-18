@@ -81,6 +81,7 @@ export async function mergeBundle(
     'itemNotes',
     'metrics',
     'metricEntries',
+    'metricNotes',
     'dayNotes',
     'healthEvents',
   ] as const
@@ -94,6 +95,7 @@ export async function mergeBundle(
       db.itemNotes,
       db.metrics,
       db.metricEntries,
+      db.metricNotes,
       db.dayNotes,
       db.healthEvents,
       db.tombstones,
@@ -212,6 +214,7 @@ export async function mergeBundle(
           | 'intakes'
           | 'itemNotes'
           | 'metricEntries'
+          | 'metricNotes'
           | 'dayNotes'
           | 'healthEvents'
         refUidField?: 'itemUid' | 'metricUid'
@@ -242,6 +245,13 @@ export async function mergeBundle(
         },
         {
           tableName: 'metricEntries',
+          refUidField: 'metricUid',
+          refIdField: 'metricId',
+          refMap: metricIdByUid,
+          naturalKey: (r) => `${r.metricUid}|${r.date}`,
+        },
+        {
+          tableName: 'metricNotes',
           refUidField: 'metricUid',
           refIdField: 'metricId',
           refMap: metricIdByUid,

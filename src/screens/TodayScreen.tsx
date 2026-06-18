@@ -47,6 +47,10 @@ export default function TodayScreen() {
     () => db.metricEntries.where('date').equals(selectedDate).toArray(),
     [selectedDate],
   )
+  const metricNotes = useLiveQuery(
+    () => db.metricNotes.where('date').equals(selectedDate).toArray(),
+    [selectedDate],
+  )
   // Which item's note is being edited (keyed to the row that opened it,
   // since an item can appear at several times), and the in-progress text
   const [noteEditor, setNoteEditor] = useState<{
@@ -60,7 +64,8 @@ export default function TodayScreen() {
     intakes === undefined ||
     notes === undefined ||
     metrics === undefined ||
-    metricEntries === undefined
+    metricEntries === undefined ||
+    metricNotes === undefined
   )
     return null
 
@@ -311,6 +316,7 @@ export default function TodayScreen() {
                   key={`${metric.id}@${selectedDate}`}
                   metric={metric}
                   entry={metricEntries.find((e) => e.metricId === metric.id)}
+                  note={metricNotes.find((n) => n.metricId === metric.id)}
                   date={selectedDate}
                 />
               ))}

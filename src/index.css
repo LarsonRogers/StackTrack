@@ -612,6 +612,20 @@ body {
   margin-bottom: 0.5rem;
 }
 
+/* Per-day metric note block (text + Note/Edit button) — sits under the
+   logging control, mirroring the Today item note. */
+.metric-logger-note {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.metric-logger-note .today-item-note {
+  flex: 1;
+  margin-top: 0;
+}
+
 .metric-rating {
   display: grid;
   grid-template-columns: repeat(10, 1fr);

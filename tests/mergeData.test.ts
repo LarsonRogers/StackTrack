@@ -7,6 +7,7 @@ import { db } from '../src/db/db'
 import { addItem } from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setItemNote } from '../src/db/itemNoteRepository'
+import { setMetricNote } from '../src/db/metricNoteRepository'
 import { buildExportBundle, type ExportBundle } from '../src/lib/exportData'
 import { mergeBundle } from '../src/lib/mergeData'
 
@@ -17,6 +18,7 @@ async function clearAll() {
   await db.itemNotes.clear()
   await db.metrics.clear()
   await db.metricEntries.clear()
+  await db.metricNotes.clear()
   await db.dayNotes.clear()
 }
 
@@ -35,6 +37,7 @@ function bundleWith(data: Partial<ExportBundle['data']>): ExportBundle {
       itemNotes: [],
       metrics: [],
       metricEntries: [],
+      metricNotes: [],
       dayNotes: [],
       healthEvents: [],
       tombstones: [],
@@ -164,6 +167,34 @@ describe('mergeBundle', () => {
     expect(notes).toHaveLength(1) // converged, not duplicated
     expect(notes[0].text).toBe('phone note, written later')
     expect(notes[0].itemId).toBe(localItem.id) // local wiring preserved
+  })
+
+  it('converges a same metric+date note created independently on two devices', async () => {
+    const metricId = await addMetric({ name: 'Weight', kind: 'number' })
+    await setMetricNote(metricId, '2026-06-11', 'PC note')
+    const localMetric = (await db.metrics.toArray())[0]
+
+    const bundle = bundleWith({
+      metrics: [], // same metric known on phone via earlier sync — not resent
+      metricNotes: [
+        {
+          id: 7,
+          uid: 'phone-metric-note-uid', // DIFFERENT uid — created independently
+          metricId: 99,
+          metricUid: localMetric.uid, // same metric, same date
+          date: '2026-06-11',
+          text: 'phone note, written later',
+          updatedAt: '2099-01-01T00:00:00.000Z',
+        },
+      ],
+    })
+
+    await mergeBundle(bundle, true)
+
+    const notes = await db.metricNotes.toArray()
+    expect(notes).toHaveLength(1) // converged on natural key, not duplicated
+    expect(notes[0].text).toBe('phone note, written later') // newest wins
+    expect(notes[0].metricId).toBe(localMetric.id) // local wiring preserved
   })
 
   it('never deletes local records and skips orphans rather than inventing parents', async () => {
