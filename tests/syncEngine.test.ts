@@ -88,6 +88,7 @@ async function clearAll() {
     'itemNotes',
     'metrics',
     'metricEntries',
+    'metricNotes',
     'dayNotes',
     'tombstones',
     'syncState',

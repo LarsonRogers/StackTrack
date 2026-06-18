@@ -21,6 +21,7 @@ async function clearAll() {
   await db.itemNotes.clear()
   await db.metrics.clear()
   await db.metricEntries.clear()
+  await db.metricNotes.clear()
   await db.dayNotes.clear()
 }
 

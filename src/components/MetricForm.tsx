@@ -22,6 +22,7 @@ export default function MetricForm({
   const [name, setName] = useState(initial?.name ?? '')
   const [kind, setKind] = useState<MetricKind>(initial?.kind ?? 'rating')
   const [unit, setUnit] = useState(initial?.unit ?? '')
+  const [note, setNote] = useState(initial?.note ?? '')
   const [components, setComponents] = useState<MetricComponent[]>(
     initial?.components ?? [{ ...EMPTY_COMPONENT }, { ...EMPTY_COMPONENT }],
   )
@@ -60,6 +61,7 @@ export default function MetricForm({
         kind === 'composite' && !isEdit
           ? components.filter((c) => c.name.trim() !== '')
           : undefined,
+      note,
     })
   }
 
@@ -206,6 +208,15 @@ export default function MetricForm({
           after creation.
         </p>
       )}
+
+      <label htmlFor="metric-note">Note (optional)</label>
+      <textarea
+        id="metric-note"
+        rows={2}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="e.g. measured before coffee"
+      />
 
       {error && (
         <p className="item-form-error" role="alert">

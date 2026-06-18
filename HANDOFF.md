@@ -2,42 +2,38 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-18 · **Pack version:** v12.16 · **Audience mode:** Technical non-dev
-**Last completed:** Starter-pack upgrade v12.0 → v12.16 (from
-github.com/LarsonRogers/AI_Agent_Starter_Pack). Followed protocols/upgrade.md:
-Part 1 + all 33 protocols replaced from target, Part 2 preserved verbatim, two
-new Part 2 sections filled (Project Stakes = Production, Model Tiers = FULL /
-Opus-Capable + Haiku-Light). **MERGED to main + pushed** (14401ab), then a CI
-triage fix (b92315c). **CI is fully GREEN** — validate + security + deploy all
-passed; the live app redeployed.
-**Before that:** README refresh + backlog item 22 (chunk first sync push);
-Today-card note alignment (pushed); Events feature + collapsible sections (shipped/live).
+**Last completed:** Backlog #23 — **Metric notes**. Added a persistent `note?`
+on the Metric definition (mirrors StackItem.note) AND a new per-day `metricNotes`
+table (mirrors itemNotes, one per metricId+date) written only through the new
+`metricNoteRepository`. Schema bumped v9 → **v10** (additive, empty new table,
+no migration). UI: note field in MetricForm, persistent note + per-day note
+editor in MetricLogger, TodayScreen passes the day's note down. Carried
+metricNotes through export/import/merge/sync. Full suite **168 green** (was 159);
+lint/format/typecheck/build pass; independent review **zero blockers**.
 
-**Confirmed next task:** None queued. Pack upgrade is done, merged, pushed, and
-CI-green. Resume normal backlog work.
+**On branch `feature/metric-notes` — committed, NOT merged or pushed.** Awaiting
+user demo confirmation (dev server was started at http://localhost:5173/). Merge
+to main + push when the user is happy (CI will then run + redeploy).
+
+**Confirmed next task:** Backlog #24 — **Med/supplement frequency** (every N days
++ specific days of week + on/off cycles; Today/any dated view shows an item only
+on days it's due). Then #25 — in-app reminders. These three were requested
+together (2026-06-18) and confirmed in scope; building one at a time.
 
 **Open watch items:**
-- **Deploy is now gated on a `security` job** (trufflehog + semgrep + a
-  PRODUCTION-scoped `npm audit --omit=dev`). A secret leak, SAST finding, or
-  high-sev vuln in *shipped* deps blocks the Cloudflare Pages deploy.
-- **Dependency audit is scoped to production deps on purpose.** The full
-  `npm audit` reports 4 high / 1 low in DEV tooling (wrangler/esbuild/miniflare/
-  undici/ws) — none ship to users; prod deps (react/dexie/recharts) + the
-  workerd worker audit clean. Dependabot (`.github/dependabot.yml`, weekly,
-  npm) now tracks the dev-tooling updates non-blocking; expect PRs. Full
-  rationale: DECISION_LOG 2026-06-18. To tighten later, take a dependabot
-  wrangler-major PR and drop `--omit=dev`.
-- **NEW: opt-in pack-update hook** wired in `.claude/settings.json` (SessionStart
-  → `.claude/hooks/check-pack-update.sh`). Notify-only; prints one line when a
-  newer pack exists upstream. Never downloads/changes anything. The hook becomes
-  active in a NEW Claude Code session.
-- **NEW: Light-tier sub-agent** active — `.claude/agents/light-checker.md`
-  (model: haiku) for bounded rubric-bound scans; available in a new session.
-  Project Stakes = Production now governs process ceremony (see AGENTS.md Part 2).
-- Pre-existing app watch items still open: Events SHIPPED (main → c51e146);
-  schema v9; demo gate open for item 12 (cross-device merge) + 13e (two-device
-  sync); backlog FUTURE items 20 (push/dose reminders) + 21 (Apple Health).
+- **#24 frequency** will change `lib/todayView`/`buildTimeSections` (currently
+  shows EVERY active item every day) — add a pure "is due on date" helper
+  (`lib/schedule.ts`) + a `schedule?` field on StackItem. Affects Today + date
+  nav. Cross-cutting → confirm a pre-flight plan first.
+- **#25 reminders** new table; surface as in-app advisory section; shape the
+  rows so OS push (backlog #20) can deliver them later. Overlaps #24's cycle
+  concept (keep frequency=due-or-not vs reminder=message separate).
+- Deploy still gated on the `security` job (trufflehog + semgrep + production-
+  scoped `npm audit`); dependabot tracks dev-tooling updates non-blocking.
+- Pre-existing: items 12 (cross-device merge) + 13e (two-device sync) demo gates
+  open; backlog FUTURE 20 (push/dose reminders) + 21 (Apple Health) + 22
+  (chunk first sync push) still planned.
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
-- 159 app tests green (unaffected by this upgrade — no src/tests change).
 
 **Resume prompt (paste into any agent):**
     Read AGENTS.md, then HANDOFF.md, then the last entries of

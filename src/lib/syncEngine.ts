@@ -31,6 +31,7 @@ const DATA_TABLES = [
   'itemNotes',
   'metrics',
   'metricEntries',
+  'metricNotes',
   'dayNotes',
   'healthEvents',
 ] as const
@@ -261,6 +262,7 @@ function emptyBundle(): ExportBundle {
       itemNotes: [],
       metrics: [],
       metricEntries: [],
+      metricNotes: [],
       dayNotes: [],
       healthEvents: [],
       tombstones: [],

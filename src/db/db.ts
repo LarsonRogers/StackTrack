@@ -93,8 +93,23 @@ export interface Metric {
   kind: MetricKind
   unit?: string // display label for 'number' metrics, e.g. "kg", "hours"
   components?: MetricComponent[] // 'composite' only: the ordered parts (≥2)
+  note?: string // persistent note shown when logging — context about the metric itself, e.g. "measured before coffee". Distinct from the per-day MetricNote.
   status: ItemStatus // archived metrics keep their entries — never deleted
   createdAt: string
+  updatedAt: string
+}
+
+// A short note attached to one metric for one day, e.g. "measured after a
+// run". At most one per (metricId, date) — enforced by metricNoteRepository.
+// The metric-side twin of ItemNote; distinct from Metric.note (which is the
+// persistent context about the metric itself, not about a single day).
+export interface MetricNote {
+  id: number
+  uid: string
+  metricId: number
+  metricUid: string // merge-safe reference to the metric
+  date: string // local calendar date 'YYYY-MM-DD'
+  text: string
   updatedAt: string
 }
 
@@ -168,6 +183,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   itemNotes: EntityTable<ItemNote, 'id'>
   metrics: EntityTable<Metric, 'id'>
   metricEntries: EntityTable<MetricEntry, 'id'>
+  metricNotes: EntityTable<MetricNote, 'id'>
   dayNotes: EntityTable<DayNote, 'id'>
   healthEvents: EntityTable<HealthEvent, 'id'>
   tombstones: EntityTable<Tombstone, 'id'>
@@ -241,6 +257,13 @@ db.version(8)
 // migration. Many per date (indexed by date); &uid for merge-safe sync.
 db.version(9).stores({
   healthEvents: '++id, &uid, date',
+})
+
+// Schema v10 (additive): per-day metric notes — an empty new table; no data
+// migration. One per (metricId, date), mirroring itemNotes; &uid for
+// merge-safe sync.
+db.version(10).stores({
+  metricNotes: '++id, &uid, date, [metricId+date]',
 })
 
 // Minimal table access shared by the live db, a transaction zone, and the

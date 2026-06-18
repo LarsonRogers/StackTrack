@@ -6,6 +6,7 @@ import { db } from '../src/db/db'
 import { addItem } from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setMetricEntry } from '../src/db/metricEntryRepository'
+import { setMetricNote } from '../src/db/metricNoteRepository'
 import { setDayNote } from '../src/db/dayNoteRepository'
 import { addHealthEvent } from '../src/db/healthEventRepository'
 import { markTaken } from '../src/db/intakeRepository'
@@ -22,6 +23,7 @@ beforeEach(async () => {
   await db.itemNotes.clear()
   await db.metrics.clear()
   await db.metricEntries.clear()
+  await db.metricNotes.clear()
   await db.dayNotes.clear()
   await db.healthEvents.clear()
 })
@@ -38,18 +40,20 @@ describe('buildExportBundle', () => {
     await markTaken(itemId, '2026-06-11', '08:00')
     const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
     await setMetricEntry(metricId, '2026-06-11', 7)
+    await setMetricNote(metricId, '2026-06-11', 'felt foggy')
     await setDayNote('2026-06-11', 'long day')
     await addHealthEvent('2026-06-11', 'Fever', 'symptom')
 
     const bundle = await buildExportBundle()
 
     expect(bundle.app).toBe('StackTrack')
-    expect(bundle.schemaVersion).toBe(9)
+    expect(bundle.schemaVersion).toBe(10)
     expect(bundle.data.items).toHaveLength(1)
     expect(bundle.data.stackEvents).toHaveLength(1) // the 'added' event
     expect(bundle.data.intakes).toHaveLength(1)
     expect(bundle.data.metrics).toHaveLength(1)
     expect(bundle.data.metricEntries).toHaveLength(1)
+    expect(bundle.data.metricNotes).toHaveLength(1)
     expect(bundle.data.dayNotes).toHaveLength(1)
     expect(bundle.data.healthEvents).toHaveLength(1)
     expect(bundle.data.itemNotes).toHaveLength(0)
