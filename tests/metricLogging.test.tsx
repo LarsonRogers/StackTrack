@@ -24,6 +24,7 @@ describe('Metrics tab', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Tracking' }))
     await user.click(
       await screen.findByRole('button', { name: '+ Add metric' }),
@@ -39,6 +40,7 @@ describe('Metrics tab', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Tracking' }))
     await user.click(
       await screen.findByRole('button', { name: '+ Add metric' }),

@@ -12,6 +12,7 @@ import {
   type MetricInput,
 } from '../db/metricRepository'
 import MetricForm from '../components/MetricForm'
+import SettingsMenu from '../components/SettingsMenu'
 
 type FormState =
   | { mode: 'closed' }
@@ -77,6 +78,7 @@ export default function MetricsScreen() {
             ? 'Define what to track each day.'
             : `${activeMetrics.length} metric${activeMetrics.length === 1 ? '' : 's'}`}
         </p>
+        <SettingsMenu />
       </header>
 
       <button

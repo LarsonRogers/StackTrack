@@ -1,14 +1,12 @@
-// src/components/NavBar.tsx — bottom tab bar for switching top-level views.
-// Pure presentation: receives the active view and reports taps; App owns
-// which view is shown.
+// src/components/NavBar.tsx — bottom tab bar for the "view" screens. The other
+// screens (Stack, Tracking, Sync — and Reminders later) live behind the
+// settings cog (SettingsMenu) in each screen header, so the bottom bar stays
+// uncluttered. Pure presentation: App owns which view is shown.
 export type View = 'today' | 'stack' | 'metrics' | 'graphs' | 'sync'
 
 const TABS: { view: View; label: string }[] = [
   { view: 'today', label: 'Today' },
-  { view: 'stack', label: 'Stack' },
-  { view: 'metrics', label: 'Tracking' },
   { view: 'graphs', label: 'Graphs' },
-  { view: 'sync', label: 'Sync' },
 ]
 
 interface NavBarProps {

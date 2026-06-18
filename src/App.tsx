@@ -3,6 +3,7 @@
 // own their own content; NavBar reports tab changes.
 import { useState } from 'react'
 import NavBar, { type View } from './components/NavBar'
+import { NavContext } from './NavContext'
 import TodayScreen from './screens/TodayScreen'
 import StackScreen from './screens/StackScreen'
 import MetricsScreen from './screens/MetricsScreen'
@@ -22,11 +23,11 @@ export default function App() {
   const Screen = SCREENS[view]
 
   return (
-    <>
+    <NavContext.Provider value={{ active: view, navigate: setView }}>
       <div className="app-content">
         <Screen />
       </div>
       <NavBar active={view} onChange={setView} />
-    </>
+    </NavContext.Provider>
   )
 }

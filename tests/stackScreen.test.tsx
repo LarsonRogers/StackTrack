@@ -21,6 +21,7 @@ describe('Stack screen', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
 
     expect(await screen.findByText('Nothing here yet.')).toBeInTheDocument()
@@ -30,6 +31,7 @@ describe('Stack screen', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
     await user.click(
       await screen.findByRole('button', {
@@ -56,6 +58,7 @@ describe('Stack screen', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
     await user.click(
       await screen.findByRole('button', {
@@ -93,6 +96,7 @@ describe('Stack screen', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
     await user.click(
       await screen.findByRole('button', {
@@ -115,6 +119,7 @@ describe('Stack screen', () => {
     const user = userEvent.setup()
     render(<App />)
 
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
     await user.click(
       await screen.findByRole('button', {
@@ -145,6 +150,7 @@ describe('Stack screen', () => {
     })
     const user = userEvent.setup()
     render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
 
     // default: grouped sections
@@ -193,6 +199,7 @@ describe('Stack screen', () => {
 
     const user = userEvent.setup()
     render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('button', { name: 'Stack' }))
     await user.upload(await screen.findByLabelText('Sync from file'), file)
 
