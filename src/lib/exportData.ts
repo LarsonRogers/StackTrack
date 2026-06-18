@@ -70,10 +70,16 @@ export async function buildExportBundle(): Promise<ExportBundle> {
 
 // Quotes a CSV field when it contains a comma, quote, or newline
 // (doubling inner quotes per RFC 4180). Arrays (e.g. schedule times)
-// join with "; " so they stay one spreadsheet cell.
+// join with "; " so they stay one spreadsheet cell. Plain objects (e.g. an
+// item's `schedule`) serialize to JSON so the cell stays lossless rather than
+// rendering "[object Object]" — the JSON backup remains the canonical restore.
 export function toCsvValue(value: unknown): string {
   if (value === undefined || value === null) return ''
-  const text = Array.isArray(value) ? value.join('; ') : String(value)
+  const text = Array.isArray(value)
+    ? value.join('; ')
+    : typeof value === 'object'
+      ? JSON.stringify(value)
+      : String(value)
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 

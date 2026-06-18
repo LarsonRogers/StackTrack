@@ -2,34 +2,40 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-18 · **Pack version:** v12.16 · **Audience mode:** Technical non-dev
-**Last completed:** Backlog #23 — **Metric notes**. Added a persistent `note?`
-on the Metric definition (mirrors StackItem.note) AND a new per-day `metricNotes`
-table (mirrors itemNotes, one per metricId+date) written only through the new
-`metricNoteRepository`. Schema bumped v9 → **v10** (additive, empty new table,
-no migration). UI: note field in MetricForm, persistent note + per-day note
-editor in MetricLogger, TodayScreen passes the day's note down. Carried
-metricNotes through export/import/merge/sync. Full suite **168 green** (was 159);
+**Last completed:** Backlog #24 — **Med/supplement frequency**. Items can recur
+on a cadence instead of only every day. Optional `schedule?` on StackItem
+(**absent = every day**, no schema migration / no version bump — non-indexed,
+rides export/import/merge/sync as a plain field). Three kinds:
+`everyNDays{n≥2,startDate}`, `daysOfWeek{0–6}`, `cycle{onWeeks,offWeeks,startDate}`.
+New pure `lib/schedule.ts` (`isDueOn`/`describeSchedule`); `buildTimeSections`
+now filters by date; a frequency change records a StackEvent (graph marker).
+Frequency UI in ItemForm, cadence label on the Stack card. Review nit fixed
+(CSV now JSON-serializes the schedule object). **183 tests green** (was 168);
 lint/format/typecheck/build pass; independent review **zero blockers**.
 
-**On branch `feature/metric-notes` — committed, NOT merged or pushed.** Awaiting
-user demo confirmation (dev server was started at http://localhost:5173/). Merge
-to main + push when the user is happy (CI will then run + redeploy).
+**Branch `feature/item-frequency` — committed, NOT merged or pushed.** Awaiting
+user demo confirmation (dev server live at http://localhost:5173/). Merge to
+main + push when happy (CI runs + redeploys then).
 
-**Confirmed next task:** Backlog #24 — **Med/supplement frequency** (every N days
-+ specific days of week + on/off cycles; Today/any dated view shows an item only
-on days it's due). Then #25 — in-app reminders. These three were requested
-together (2026-06-18) and confirmed in scope; building one at a time.
+**#23 (metric notes) is already merged to main + pushed (06a330d).** #24 branched
+off that.
+
+**Confirmed next task:** Backlog #25 — **In-app reminders** (last of the three
+requested 2026-06-18). Cycling advisories tied to an item + recurring reminders
++ one-off dated reminders; surfaced as an in-app advisory section when you open
+the app; shape the data model so OS push (backlog #20) can deliver the same rows
+later. NO push backend in this work. Overlaps #24's cycle concept — keep them
+separate: #24 = is-the-item-due, #25 = the message. Cross-cutting → confirm a
+pre-flight plan first. New `reminders` table (schema bump expected here, unlike
+#24).
 
 **Open watch items:**
-- **#24 frequency** will change `lib/todayView`/`buildTimeSections` (currently
-  shows EVERY active item every day) — add a pure "is due on date" helper
-  (`lib/schedule.ts`) + a `schedule?` field on StackItem. Affects Today + date
-  nav. Cross-cutting → confirm a pre-flight plan first.
-- **#25 reminders** new table; surface as in-app advisory section; shape the
-  rows so OS push (backlog #20) can deliver them later. Overlaps #24's cycle
-  concept (keep frequency=due-or-not vs reminder=message separate).
-- Deploy still gated on the `security` job (trufflehog + semgrep + production-
-  scoped `npm audit`); dependabot tracks dev-tooling updates non-blocking.
+- Deploy gated on the `security` job (trufflehog + semgrep + production-scoped
+  `npm audit`); dependabot tracks dev-tooling updates non-blocking.
+- Windows line-ending note: `autocrlf=true` + `* text=auto` means a branch
+  checkout re-materializes files as CRLF and `prettier --check` then fails
+  locally even though committed blobs are LF and CI (Linux) passes. Fix if it
+  recurs: `npx prettier --write .` before committing — produces no content diff.
 - Pre-existing: items 12 (cross-device merge) + 13e (two-device sync) demo gates
   open; backlog FUTURE 20 (push/dose reminders) + 21 (Apple Health) + 22
   (chunk first sync push) still planned.

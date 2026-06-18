@@ -2,9 +2,24 @@
 // form state and validation; persistence happens in the onSubmit handler the
 // parent passes in (which calls the repository).
 import { useState } from 'react'
+import type { Schedule } from '../db/db'
 import type { StackItemInput } from '../db/stackRepository'
+import { toIsoDate } from '../lib/dates'
 
 const DEFAULT_TIME = '08:00'
+
+// Frequency UI options. 'daily' maps to no schedule (the every-day default).
+type FreqKind = 'daily' | Schedule['kind']
+
+const WEEKDAYS = [
+  { value: 0, label: 'Sun' },
+  { value: 1, label: 'Mon' },
+  { value: 2, label: 'Tue' },
+  { value: 3, label: 'Wed' },
+  { value: 4, label: 'Thu' },
+  { value: 5, label: 'Fri' },
+  { value: 6, label: 'Sat' },
+]
 
 // Common dose units offered as suggestions (free text — the user may type any).
 const UNIT_SUGGESTIONS = [
@@ -50,6 +65,48 @@ export default function ItemForm({
   const [groupDraft, setGroupDraft] = useState('')
   const [error, setError] = useState<string | null>(null)
   const isEdit = initial !== undefined
+
+  // Frequency controls, seeded from the item's existing schedule (absent =
+  // every day). A start date defaults to today for cadences that need an anchor.
+  const sched = initial?.schedule
+  const today = toIsoDate(new Date())
+  const [freqKind, setFreqKind] = useState<FreqKind>(sched?.kind ?? 'daily')
+  const [everyN, setEveryN] = useState(
+    sched?.kind === 'everyNDays' ? sched.n : 2,
+  )
+  const [weekdays, setWeekdays] = useState<number[]>(
+    sched?.kind === 'daysOfWeek' ? sched.days : [],
+  )
+  const [onWeeks, setOnWeeks] = useState(
+    sched?.kind === 'cycle' ? sched.onWeeks : 3,
+  )
+  const [offWeeks, setOffWeeks] = useState(
+    sched?.kind === 'cycle' ? sched.offWeeks : 1,
+  )
+  const [startDate, setStartDate] = useState(
+    sched?.kind === 'everyNDays' || sched?.kind === 'cycle'
+      ? sched.startDate
+      : today,
+  )
+
+  // Assembles the Schedule object from the frequency controls (undefined =
+  // every day). Validation lives in handleSubmit; the repository re-normalizes.
+  function buildSchedule(): Schedule | undefined {
+    if (freqKind === 'everyNDays')
+      return { kind: 'everyNDays', n: everyN, startDate }
+    if (freqKind === 'daysOfWeek') return { kind: 'daysOfWeek', days: weekdays }
+    if (freqKind === 'cycle')
+      return { kind: 'cycle', onWeeks, offWeeks, startDate }
+    return undefined
+  }
+
+  function toggleWeekday(value: number) {
+    setWeekdays((current) =>
+      current.includes(value)
+        ? current.filter((d) => d !== value)
+        : [...current, value],
+    )
+  }
 
   function setField<Key extends keyof StackItemInput>(
     key: Key,
@@ -110,12 +167,28 @@ export default function ItemForm({
       setError('Please set at least one time of day.')
       return
     }
+    if (
+      freqKind === 'everyNDays' &&
+      (!Number.isInteger(everyN) || everyN < 2)
+    ) {
+      setError('"Every N days" needs a whole number of 2 or more.')
+      return
+    }
+    if (freqKind === 'daysOfWeek' && weekdays.length === 0) {
+      setError('Pick at least one day of the week.')
+      return
+    }
+    if (freqKind === 'cycle' && (onWeeks < 1 || offWeeks < 1)) {
+      setError('A cycle needs at least 1 week on and 1 week off.')
+      return
+    }
     setError(null)
     // Fold any group still typed but not yet committed to a chip.
     await onSubmit({
       ...form,
       groups: withGroup(form.groups, groupDraft),
       times: form.times.filter((time) => time !== ''),
+      schedule: buildSchedule(),
     })
   }
 
@@ -216,6 +289,111 @@ export default function ItemForm({
         >
           + Add another time
         </button>
+      </fieldset>
+
+      <fieldset className="item-form-frequency">
+        <legend>Frequency</legend>
+        <label>
+          <input
+            type="radio"
+            name="frequency"
+            checked={freqKind === 'daily'}
+            onChange={() => setFreqKind('daily')}
+          />
+          Every day
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="frequency"
+            checked={freqKind === 'everyNDays'}
+            onChange={() => setFreqKind('everyNDays')}
+          />
+          Every N days
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="frequency"
+            checked={freqKind === 'daysOfWeek'}
+            onChange={() => setFreqKind('daysOfWeek')}
+          />
+          Specific days of the week
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="frequency"
+            checked={freqKind === 'cycle'}
+            onChange={() => setFreqKind('cycle')}
+          />
+          Cycle (weeks on / off)
+        </label>
+
+        {freqKind === 'everyNDays' && (
+          <div className="item-form-freq-detail">
+            <label htmlFor="freq-n">Every</label>
+            <input
+              id="freq-n"
+              type="number"
+              min={2}
+              step={1}
+              value={everyN}
+              onChange={(e) => setEveryN(Math.floor(Number(e.target.value)))}
+            />
+            <span>days{everyN === 2 ? ' (every other day)' : ''}</span>
+          </div>
+        )}
+
+        {freqKind === 'daysOfWeek' && (
+          <div className="item-form-weekdays">
+            {WEEKDAYS.map((day) => (
+              <label key={day.value} className="item-form-weekday">
+                <input
+                  type="checkbox"
+                  checked={weekdays.includes(day.value)}
+                  onChange={() => toggleWeekday(day.value)}
+                />
+                {day.label}
+              </label>
+            ))}
+          </div>
+        )}
+
+        {freqKind === 'cycle' && (
+          <div className="item-form-freq-detail">
+            <label htmlFor="freq-on">Weeks on</label>
+            <input
+              id="freq-on"
+              type="number"
+              min={1}
+              step={1}
+              value={onWeeks}
+              onChange={(e) => setOnWeeks(Math.floor(Number(e.target.value)))}
+            />
+            <label htmlFor="freq-off">off</label>
+            <input
+              id="freq-off"
+              type="number"
+              min={1}
+              step={1}
+              value={offWeeks}
+              onChange={(e) => setOffWeeks(Math.floor(Number(e.target.value)))}
+            />
+          </div>
+        )}
+
+        {(freqKind === 'everyNDays' || freqKind === 'cycle') && (
+          <div className="item-form-freq-detail">
+            <label htmlFor="freq-start">Starting</label>
+            <input
+              id="freq-start"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+        )}
       </fieldset>
 
       <label htmlFor="item-group">Groups (optional)</label>

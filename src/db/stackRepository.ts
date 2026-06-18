@@ -2,8 +2,9 @@
 // Every mutation runs in one transaction that updates the item AND records
 // its StackEvent, so the change history (and the graph markers built from
 // it) can never silently drift from the data. Reads may query db directly.
-import { db, type ItemKind, type StackItem } from './db'
+import { db, type ItemKind, type Schedule, type StackItem } from './db'
 import { toIsoDate } from '../lib/dates'
+import { describeSchedule } from '../lib/schedule'
 import { newUid, nowIso } from '../lib/identity'
 
 // What the user supplies when creating or editing an item.
@@ -14,7 +15,41 @@ export interface StackItemInput {
   unit?: string // optional dose unit, e.g. "mg"
   times: string[]
   groups: string[] // [] = ungrouped; an item may belong to many groups
+  schedule?: Schedule // recurrence cadence; absent / degenerate = every day
   note?: string // persistent note shown on Today (distinct from per-day notes)
+}
+
+// Collapses a schedule to its canonical form, mapping degenerate cases that
+// mean "every day" back to undefined so the every-day default stays canonical
+// (n:1, no weekdays, or a zero off-period are all just "daily").
+function normalizeSchedule(
+  schedule: Schedule | undefined,
+): Schedule | undefined {
+  if (!schedule) return undefined
+
+  if (schedule.kind === 'everyNDays') {
+    const n = Math.floor(schedule.n)
+    if (!Number.isFinite(n) || n < 2) return undefined
+    return { kind: 'everyNDays', n, startDate: schedule.startDate }
+  }
+
+  if (schedule.kind === 'daysOfWeek') {
+    const days = [...new Set(schedule.days)]
+      .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+      .sort((a, b) => a - b)
+    if (days.length === 0 || days.length === 7) return undefined
+    return { kind: 'daysOfWeek', days }
+  }
+
+  const onWeeks = Math.floor(schedule.onWeeks)
+  const offWeeks = Math.floor(schedule.offWeeks)
+  if (onWeeks < 1 || offWeeks < 1) return undefined // no real off-period ⇒ daily
+  return { kind: 'cycle', onWeeks, offWeeks, startDate: schedule.startDate }
+}
+
+// Stable comparison key for a normalized schedule (undefined = every day).
+function scheduleKey(schedule: Schedule | undefined): string {
+  return JSON.stringify(schedule ?? null)
 }
 
 // Sorted + deduplicated so times compare reliably and display consistently.
@@ -45,6 +80,7 @@ function normalizeInput(input: StackItemInput): StackItemInput {
     unit: input.unit?.trim() || undefined,
     times: normalizeTimes(input.times),
     groups: normalizeGroups(input.groups ?? []),
+    schedule: normalizeSchedule(input.schedule),
     note: input.note?.trim() || undefined,
   }
 }
@@ -73,6 +109,12 @@ export function buildChangeSummary(
   if (beforeGroups !== afterGroups)
     parts.push(
       `groups: ${fmtGroups(before.groups)} → ${fmtGroups(after.groups)}`,
+    )
+  if (scheduleKey(before.schedule) !== scheduleKey(after.schedule))
+    parts.push(
+      `schedule: ${describeSchedule(before.schedule) ?? 'every day'} → ${
+        describeSchedule(after.schedule) ?? 'every day'
+      }`,
     )
   // Persistent note: flag the change without dumping (possibly long) text
   // into the history summary and graph-marker labels.
@@ -118,6 +160,7 @@ export async function updateItem(
       unit: existing.unit,
       times: existing.times,
       groups: existing.groups,
+      schedule: existing.schedule,
       note: existing.note,
     }
     const summary = buildChangeSummary(before, after)
