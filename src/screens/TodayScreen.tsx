@@ -70,7 +70,7 @@ export default function TodayScreen() {
     return null
 
   const activeItems = allItems.filter((item) => item.status === 'active')
-  const sections = buildTimeSections(activeItems)
+  const sections = buildTimeSections(activeItems, selectedDate)
   const takenKeys = new Set(intakes.map((i) => `${i.itemId}@${i.time}`))
   const notesByItem = new Map(notes.map((note) => [note.itemId, note]))
   const totalSlots = sections.reduce((sum, s) => sum + s.entries.length, 0)

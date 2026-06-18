@@ -22,6 +22,7 @@ import {
   sortByRecentlyChanged,
   type StackSortMode,
 } from '../lib/stackView'
+import { describeSchedule } from '../lib/schedule'
 import { exportAsCsv, exportAsJson } from '../lib/exportData'
 import { applyBundle, parseBundle } from '../lib/importData'
 import { mergeBundle } from '../lib/mergeData'
@@ -195,6 +196,7 @@ export default function StackScreen() {
             {[
               [item.dose, item.unit].filter(Boolean).join(' '),
               item.times.join(', '),
+              describeSchedule(item.schedule),
               groupText,
             ]
               .filter(Boolean)

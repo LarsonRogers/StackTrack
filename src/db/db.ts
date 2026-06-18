@@ -13,6 +13,16 @@ import { newUid, nowIso } from '../lib/identity'
 export type ItemKind = 'med' | 'supplement'
 export type ItemStatus = 'active' | 'archived'
 
+// How often an item recurs, day-to-day. ABSENT (undefined) means every day —
+// the default, so all pre-frequency items keep working with no migration.
+// `times` still controls times WITHIN a due day; Schedule controls WHICH days.
+// startDate is the local 'YYYY-MM-DD' the cadence is anchored to and the first
+// day the item can be due (it is not due before then).
+export type Schedule =
+  | { kind: 'everyNDays'; n: number; startDate: string } // n≥2; "every other day" = n:2
+  | { kind: 'daysOfWeek'; days: number[] } // 0=Sun…6=Sat, non-empty
+  | { kind: 'cycle'; onWeeks: number; offWeeks: number; startDate: string } // e.g. 3 on / 1 off
+
 // One medication or supplement in the user's stack.
 export interface StackItem {
   id: number
@@ -23,6 +33,7 @@ export interface StackItem {
   unit?: string // optional dose unit, e.g. "mg"; shown joined with dose ("500 mg")
   times: string[] // scheduled times of day as 'HH:mm', sorted, unique
   groups: string[] // purpose groups, e.g. ["Testosterone Support"]; [] = ungrouped. An item may belong to many.
+  schedule?: Schedule // recurrence cadence; absent = every day. Not indexed — computed at read time.
   note?: string // persistent note shown on Today under the name — distinct from the per-day ItemNote
   status: ItemStatus // archived items are hidden, never deleted — history must survive
   createdAt: string // ISO datetime

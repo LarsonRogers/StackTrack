@@ -129,7 +129,43 @@ describe('buildChangeSummary', () => {
     expect(summary).toBe('unit: none → mcg; note updated')
   })
 
+  it('describes a frequency change in plain English', () => {
+    const summary = buildChangeSummary(ZINC, {
+      ...ZINC,
+      schedule: { kind: 'everyNDays', n: 2, startDate: '2026-06-18' },
+    })
+    expect(summary).toBe('schedule: every day → Every other day')
+  })
+
   it('returns null when nothing changed', () => {
     expect(buildChangeSummary(ZINC, { ...ZINC })).toBeNull()
+  })
+})
+
+describe('schedule normalization', () => {
+  it('collapses degenerate schedules to every-day (undefined)', async () => {
+    // n:1, a full 7-day week, and a zero off-period all mean "every day".
+    const id = await addItem({
+      ...ZINC,
+      schedule: { kind: 'everyNDays', n: 1, startDate: '2026-06-18' },
+    })
+    expect((await db.items.get(id))?.schedule).toBeUndefined()
+
+    await updateItem(id, {
+      ...ZINC,
+      schedule: { kind: 'daysOfWeek', days: [0, 1, 2, 3, 4, 5, 6] },
+    })
+    expect((await db.items.get(id))?.schedule).toBeUndefined()
+  })
+
+  it('persists and dedupes a real schedule', async () => {
+    const id = await addItem({
+      ...ZINC,
+      schedule: { kind: 'daysOfWeek', days: [5, 1, 1, 3] },
+    })
+    expect((await db.items.get(id))?.schedule).toEqual({
+      kind: 'daysOfWeek',
+      days: [1, 3, 5],
+    })
   })
 })

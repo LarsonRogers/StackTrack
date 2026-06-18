@@ -70,6 +70,12 @@ describe('toCsvValue', () => {
     expect(toCsvValue(['08:00', '20:00'])).toBe('08:00; 20:00')
     expect(toCsvValue(undefined)).toBe('')
   })
+
+  it('serializes objects (e.g. a schedule) as JSON, not [object Object]', () => {
+    expect(
+      toCsvValue({ kind: 'everyNDays', n: 2, startDate: '2026-06-18' }),
+    ).toBe('"{""kind"":""everyNDays"",""n"":2,""startDate"":""2026-06-18""}"')
+  })
 })
 
 describe('buildExportCsv', () => {

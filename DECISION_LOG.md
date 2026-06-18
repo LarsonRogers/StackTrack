@@ -1038,3 +1038,50 @@
   (was 159). Lint/format/typecheck/build all pass.
 - State: committed on branch feature/metric-notes (NOT merged/pushed — awaiting
   user demo confirmation). Backlog: 23 done; 24 + 25 added as planned.
+
+## [2026-06-18] Backlog #24: Med/supplement frequency — Claude Code
+- Trigger: 2nd of the three requested additions. Confirmed pre-flight plan
+  (cross-cutting, ~8 files). Scope: items can recur on a cadence; Today + any
+  dated view show an item only on days it's due. Confirmed defaults: cycles in
+  WEEKS; everyNDays/cycle anchor to an editable start date defaulting to today;
+  not due before start.
+- Data model: optional `schedule?` on StackItem — ABSENT = every day (no schema
+  migration, no version bump; non-indexed field rides export/import/merge/sync
+  as a plain field). Discriminated union: everyNDays{n≥2,startDate} |
+  daysOfWeek{days 0-6} | cycle{onWeeks,offWeeks,startDate}.
+- New pure `lib/schedule.ts`: isDueOn/isScheduleDueOn (undefined⇒due daily;
+  offset<0 ⇒ not due before start; everyNDays offset%n===0; daysOfWeek local
+  getDay membership; cycle offset%period < onWeeks*7) + describeSchedule
+  ("Every other day"/"Mon, Wed, Fri"/"3 weeks on, 1 week off"). DST-safe:
+  parseIsoDate anchors at noon, daysBetween uses Math.round on ms delta.
+- stackRepository: `schedule` on StackItemInput; normalizeSchedule collapses
+  degenerate cases (n<2 / 0 or 7 weekdays / on|off<1) to undefined=daily — so
+  NO input can yield a never-due item; scheduleKey (JSON of normalized) drives
+  change-summary equality; a frequency change records a 'changed' StackEvent →
+  graph marker (consistent with "every stack change is recorded"). before-snap
+  includes schedule.
+- buildTimeSections(items, date) now filters by isDueOn; TodayScreen passes
+  selectedDate. Past-day not-due items drop off the checklist but recorded
+  intakes still surface via the existing "Also recorded this day" path. Stack
+  card shows the cadence label.
+- ItemForm: Frequency fieldset (Every day / Every N days / Specific days /
+  Cycle) seeded from the item's schedule, with per-kind validation. CSS added.
+- Review nit fixed: toCsvValue now JSON-serializes plain objects (an item's
+  schedule) instead of "[object Object]" — CSV stays lossless; JSON export
+  remains the canonical restore.
+- Security self-check (input + stored data): schedule is structured data
+  validated at the repo boundary; isDueOn is pure date math; no free-text
+  injection, no auth/secrets; rides existing E2E-encrypted sync. PASS.
+- Review: independent fresh-context diff review — ZERO blockers. Verified date
+  math + cycle boundaries, normalize/build round-trip (no never-due item),
+  change-equality stability, caller updates, data-flow. Three nits: CSV object
+  (FIXED), redundant weekday re-sort in describeSchedule (left — defensive),
+  large-n cap (out of scope).
+- Tests: new schedule.test.ts (every kind + start/cycle boundaries +
+  describeSchedule), todayView.test.ts (date filtering), stackRepository
+  schedule change-summary + normalization, toCsvValue object case. Full suite
+  183 green (was 168). Lint/format/typecheck/build all pass. Line endings:
+  prettier --write normalized working-tree CRLF→LF (autocrlf artifact from the
+  branch checkout; committed blobs already LF, no content change to #23 files).
+- State: committed on branch feature/item-frequency (NOT merged/pushed —
+  awaiting user demo confirmation). Backlog: 24 done; 25 (reminders) next.
