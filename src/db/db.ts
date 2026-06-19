@@ -163,6 +163,32 @@ export interface HealthEvent {
   updatedAt: string
 }
 
+// How a reminder recurs. 'once' fires on a single date; 'everyNDays' repeats
+// from a start date; 'cycle' fires at the START of each off-period (e.g. the
+// "cycle off KSM-66" advisory). startDate is the local 'YYYY-MM-DD' anchor.
+export type ReminderRecurrence =
+  | { kind: 'once'; date: string }
+  | { kind: 'everyNDays'; n: number; startDate: string }
+  | { kind: 'cycle'; onWeeks: number; offWeeks: number; startDate: string }
+
+// A reminder that surfaces in-app when due (an advisory queue), e.g. "Refill
+// prescription" or "Cycle off KSM-66 this week". Declarative recurrence (not
+// materialized occurrences) so a future push backend (backlog #20) can compute
+// fire-times. Archived, never deleted — consistent with items/metrics.
+export interface Reminder {
+  id: number
+  uid: string
+  text: string
+  itemUid?: string // optional link to a stack item — labels the advisory; uid only (merge-safe)
+  recurrence: ReminderRecurrence
+  time?: string // 'HH:mm' optional time-of-day — orders the advisory list; ready for push (#20)
+  lastAckedDate?: string // 'YYYY-MM-DD' of the occurrence the user marked Done
+  snoozedUntil?: string // 'YYYY-MM-DD' — suppressed from the advisory until this date
+  status: ItemStatus // archived reminders keep their history — never deleted
+  createdAt: string
+  updatedAt: string
+}
+
 // Local-only sync configuration: the passphrase-derived credentials and
 // the pull cursor. ONE row at most. Deliberately EXCLUDED from exports —
 // a backup file must never carry sync credentials.
@@ -197,6 +223,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   metricNotes: EntityTable<MetricNote, 'id'>
   dayNotes: EntityTable<DayNote, 'id'>
   healthEvents: EntityTable<HealthEvent, 'id'>
+  reminders: EntityTable<Reminder, 'id'>
   tombstones: EntityTable<Tombstone, 'id'>
   syncState: EntityTable<SyncState, 'id'>
 }
@@ -275,6 +302,12 @@ db.version(9).stores({
 // merge-safe sync.
 db.version(10).stores({
   metricNotes: '++id, &uid, date, [metricId+date]',
+})
+
+// Schema v11 (additive): in-app reminders — an empty new table; no data
+// migration. Queried by status (active vs archived); &uid for merge-safe sync.
+db.version(11).stores({
+  reminders: '++id, &uid, status',
 })
 
 // Minimal table access shared by the live db, a transaction zone, and the

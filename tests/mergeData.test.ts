@@ -40,6 +40,7 @@ function bundleWith(data: Partial<ExportBundle['data']>): ExportBundle {
       metricNotes: [],
       dayNotes: [],
       healthEvents: [],
+      reminders: [],
       tombstones: [],
       ...data,
     },

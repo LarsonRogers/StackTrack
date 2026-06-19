@@ -84,6 +84,7 @@ export async function mergeBundle(
     'metricNotes',
     'dayNotes',
     'healthEvents',
+    'reminders',
   ] as const
 
   await db.transaction(
@@ -98,6 +99,7 @@ export async function mergeBundle(
       db.metricNotes,
       db.dayNotes,
       db.healthEvents,
+      db.reminders,
       db.tombstones,
     ],
     async () => {
@@ -217,6 +219,7 @@ export async function mergeBundle(
           | 'metricNotes'
           | 'dayNotes'
           | 'healthEvents'
+          | 'reminders'
         refUidField?: 'itemUid' | 'metricUid'
         refIdField?: 'itemId' | 'metricId'
         refMap?: Map<unknown, unknown>
@@ -265,6 +268,11 @@ export async function mergeBundle(
         // unique to its device — two identical labels on a day are distinct).
         {
           tableName: 'healthEvents',
+        },
+        // parent-less, uid-only: reminders carry only itemUid (a label, not a
+        // rewired numeric ref), so no parent resolution is needed.
+        {
+          tableName: 'reminders',
         },
       ]
 
