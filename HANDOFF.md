@@ -18,6 +18,13 @@ gained a one-line subtitle for clarity + cog spacing) AND reminders Task B.
 **On main:** #23 metric notes (06a330d), #24 frequency (9a8d956), #26 nav
 restructure (46309e2), #25 Task B reminders + polish (476bc14).
 
+**You are on branch `feature/reminders-history` (the Task C branch).** It already
+holds ONE pending, untested-by-CI change: a one-line Reminders add-button padding
+fix (`RemindersScreen` active list now `stack-list metric-list`, matching the
+1rem spacer Tracking uses). Per the user, it was deliberately NOT separately
+tested/redeployed — validate + ship it together with Task C. `main` does not have
+it yet.
+
 **Confirmed NEXT TASK (fresh session): Backlog #25 Task C — per-occurrence
 history.** Plan agreed with the user:
 - New `reminderEvents` table (schema **v12**): one row per Done/Snooze action —

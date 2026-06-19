@@ -98,7 +98,7 @@ export default function RemindersScreen() {
         + Add reminder
       </button>
 
-      <ul className="stack-list">
+      <ul className="stack-list metric-list">
         {activeReminders
           .toSorted((a, b) => a.text.localeCompare(b.text))
           .map((reminder) => (
