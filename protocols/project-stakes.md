@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/project-stakes.md -->
+<!-- Starter Pack v12.19 — protocols/project-stakes.md -->
 <!-- Load this file when: setting up a project (product-definition or inherited
      onboarding) and choosing how much process ceremony it warrants, or when a
      stakes-scaled step runs (enforcement-tooling bundle, doc set, test depth,

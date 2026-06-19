@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/session-start.md -->
+<!-- Starter Pack v12.19 — protocols/session-start.md -->
 <!-- Load this file when: the AGENTS.md Session Start router has determined the
      session type and you need the detailed checklist — First Session (type B)
      or Session Resumption (type A). -->

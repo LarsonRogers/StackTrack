@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/model-tiering.md -->
+<!-- Starter Pack v12.19 — protocols/model-tiering.md -->
 <!-- Load this file when: you are about to delegate a task to a sub-agent and
      must decide which model it runs on — a governance/watch check, a
      mechanical scan, or template-driven drafting. -->
@@ -169,6 +169,34 @@ wherever the result is recorded. Routing to the Light tier never changes
 executes a downstream-checked scan. It is never license to self-delegate
 guardrail-adjacent work — that is governed by AGENTS.md Part 1, unchanged.
 
+### Surfacing Light-tier use to the user (opt-in)
+
+Logging the tier (above) is the always-on honesty record — it lives in the
+DECISION_LOG and is developer-facing. Separately, the user may opt in to a
+**running, user-facing notice** so they can see how often work is routed to the
+cheaper model.
+
+- **The preference** lives in AGENTS.md → Part 2 → Model Tiers → `Tier-use
+  reporting` (`on` / `off` / `n/a — single-tier`). Default is **off** until set;
+  tier *logging* is unaffected either way.
+- **Ask once, at tier setup** (activation step 2b below) — and only when a Light
+  model is actually configured. A single-tier project never uses a lower tier, so
+  set the field `n/a — single-tier` and ask nothing. The one-line question:
+  "Want me to note in each work summary when I used the cheaper [Light model] for
+  a sub-task, so you can see how often that happens?" Record the answer as
+  `on (decided YYYY-MM-DD)` / `off (decided YYYY-MM-DD)`.
+- **When `on`:** if one or more sub-tasks ran on the Light tier during a prompt,
+  append a single line to that prompt's work summary naming the count and the
+  tasks — e.g. "Model-tier note: 2 sub-task(s) on the Light tier this turn —
+  header-comment scan, HANDOFF draft." If none ran this turn, say nothing
+  (silence = none; do not emit a zero line every turn). Scale wording to the
+  audience mode like any other summary line (protocols/communication.md).
+- **When `off` / `n/a`:** no work-summary note; the DECISION_LOG tier record is
+  the only trace, exactly as before.
+
+This is surfacing only — it never changes which tier a task is routed to, what
+work is done, or which guardrails apply.
+
 ### The switch — harness mechanism
 
 The tier map says *which* model fills each role; this section is *how* you
@@ -253,6 +281,11 @@ action only it can do (restart the harness). Everything between is the agent's:
 [ ] 1. PROMPT for the model — propose a Light + Capable pairing for the detected
         provider and ask once. (Skip/one model available → single-tier; done.)
 [ ] 2. RECORD it in the Part 2 → Model Tiers map.
+[ ] 2b. ASK once whether to report Light-tier use in the work summary (now that a
+        Light tier exists — see "Surfacing Light-tier use to the user" above) and
+        record `Tier-use reporting` in the Model Tiers block. (Single-tier projects
+        never reach this step — their field is set `n/a — single-tier` when the
+        tier map is resolved.)
 [ ] 3. ACTIVATE the template — the agent itself writes the live agent file from
         this harness's light-checker.*.example: copy it to its live name (drop
         `.example`) and set `model` to the chosen string. The user does not open

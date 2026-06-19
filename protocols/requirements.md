@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/requirements.md -->
+<!-- Starter Pack v12.19 — protocols/requirements.md -->
 <!-- Load this file when: about to commit to a build or a change whose
      requirements/goal/scope carry risky unknowns — idea-stage product definition
      (always), an inherited project after its assessment (the intended change), or

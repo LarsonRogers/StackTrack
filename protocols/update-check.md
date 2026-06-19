@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/update-check.md -->
+<!-- Starter Pack v12.19 — protocols/update-check.md -->
 <!-- Load this file when: the user asks "is the pack up to date?" / "check for a
      newer pack version", or the optional launch notify-hook reports an update is
      available, or you are about to run an upgrade and want to confirm the target

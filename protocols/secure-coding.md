@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/secure-coding.md -->
+<!-- Starter Pack v12.19 — protocols/secure-coding.md -->
 <!-- Load this file when: a task touches input handling, authentication or
      authorization, sessions, stored data, file/path handling, output
      rendering (HTML/templates), or anything reachable by untrusted users. -->

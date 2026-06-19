@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/testing-strategy.md -->
+<!-- Starter Pack v12.19 — protocols/testing-strategy.md -->
 <!-- Load this file when: writing or evaluating tests (not: reviewing results or running an existing suite) -->
 <!-- Does NOT trigger when: merely reading CI output, reviewing test results
      without authoring or changing tests, or running an existing test suite
@@ -77,6 +77,23 @@ scoped to those modules (not a global vanity number), and record the floor
 and WHY in the decision log. A floor failure fails the Definition of Done
 like any other gate, and lowering the floor is a logged decision, never a
 silent edit.
+
+### Fast feedback vs the gate — what to run when
+
+Running tests *for speed while iterating* and running them *to certify done*
+are different jobs — scope the run accordingly:
+
+- **During iteration (inner loop):** run the focused subset closest to the
+  change — the affected file/module, a single test, or a runner's changed-only
+  mode (`pytest path::test`, `jest --changed`, `vitest related`). This is for
+  fast feedback, never for proof. Encouraged, especially on a large/slow suite.
+- **At the Definition of Done and in CI:** the **full suite** runs and must pass
+  — that is what catches regressions your change caused *elsewhere*. A passing
+  subset never satisfies the DoD; "tests pass" means the whole suite (the same
+  rule the Refactor Protocol states explicitly). Never skip the gate to save time.
+
+This scales only the cadence of *running*, not coverage or what you author
+(depth still scales to Project Stakes, above).
 
 ### When tests are impractical
 
