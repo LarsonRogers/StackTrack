@@ -11,17 +11,12 @@ with **Done + Snooze**. Rides export/import/merge/sync. **209 tests green** (was
 188); lint/format/typecheck/build pass; independent review **zero blockers**
 (one warning fixed: editing a reminder's recurrence now resets its ack/snooze).
 
-**⚠️ Branch `feature/reminders` — committed, NOT merged or pushed (redeploy held
-per user).** It contains BOTH the cog polish AND Task B. The user is verifying
-visually before merge. Two things to confirm in the live/dev app:
-1. **Cog is a consistent square** on every screen, pinned top-right (agent could
-   not visually verify — only reasoned about the CSS).
-2. **Graphs dropdown** is no longer overlapped by the chart (the `z-index:20` fix).
-When happy: `git checkout main && git merge --no-ff feature/reminders && git push`
-(that triggers CI + the live redeploy).
+**SHIPPED — merged to main + pushed (476bc14); CI redeploying.** Includes the
+cog polish (consistent square; menu raised above the Graphs chart; Graphs header
+gained a one-line subtitle for clarity + cog spacing) AND reminders Task B.
 
 **On main:** #23 metric notes (06a330d), #24 frequency (9a8d956), #26 nav
-restructure (46309e2). Task B branched off main after #26.
+restructure (46309e2), #25 Task B reminders + polish (476bc14).
 
 **Confirmed NEXT TASK (fresh session): Backlog #25 Task C — per-occurrence
 history.** Plan agreed with the user:
