@@ -9,6 +9,7 @@ import { useNav } from '../NavContext'
 const SETTINGS_ITEMS: { view: View; label: string }[] = [
   { view: 'stack', label: 'Stack' },
   { view: 'metrics', label: 'Tracking' },
+  { view: 'reminders', label: 'Reminders' },
   { view: 'sync', label: 'Sync' },
 ]
 

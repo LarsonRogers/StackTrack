@@ -1125,3 +1125,53 @@
 - State: committed on branch feature/nav-restructure (NOT merged/pushed —
   awaiting user demo confirmation). #26 done; #25 (reminders) next, will add a
   "Reminders" entry to the cog menu.
+
+## [2026-06-18] Backlog #25 Task B: In-app reminders (core) + nav cog polish — Claude Code
+- Scope: 3rd requested addition (reminders), built as Task B of the agreed
+  3-part plan (A nav = #26 done; B core = this; C per-occurrence history =
+  fresh session). User folded a nav-cog polish into this branch and asked NOT
+  to redeploy yet.
+- Nav cog polish (CSS only): cog is now a fixed 2.75rem padded SQUARE on every
+  screen (was stretching to the title block on Today); align-items flex-start on
+  .today-header-bar + .settings-menu so it pins top-right; .settings-menu gains
+  z-index:20 so the dropdown floats above page content (Graphs chart was
+  overlapping it). NOT yet visually verified by the agent — user to confirm.
+- Reminders data model (schema v11, additive new `reminders` table): Reminder
+  { text, itemUid?, recurrence: once|everyNDays|cycle, time?, lastAckedDate?,
+  snoozedUntil?, status }. Recurrence is DECLARATIVE (occurrences computed, not
+  materialized) so a future push backend (#20) can reuse the logic. Reminders
+  archive (never hard-delete); ride export/import/merge/sync as a parentless
+  uid-only table (like healthEvents — itemUid is a label, no numeric ref).
+- Pure lib/reminders.ts: currentOccurrence (most recent occurrence ≤ today;
+  cycle fires at each off-period start = startDate + onWeeks*7 + k*period),
+  isReminderDue (active + occurrence + not-acked + not-snoozed), describeRecurrence.
+  DST-safe (noon-anchored parseIsoDate + Math.round).
+- reminderRepository: add/update/archive/unarchive + acknowledgeReminder (sets
+  lastAckedDate to the dismissed occurrence, clears snooze, auto-archives a
+  'once') + snoozeReminder (snoozedUntil = today + N days, floor 1). normalize
+  floors counts ≥1.
+- Decisions (recommended defaults, user approved "proceed"): snooze = inline
+  N-days input default 1; time-of-day NOT clock-gated in-app (orders the list +
+  ready for push); 'once' auto-archives on Done; linked item prefixes the
+  advisory ("KSM-66 — …").
+- UI: View += 'reminders'; App.SCREENS + SettingsMenu menu entry; new
+  RemindersScreen (CRUD, cog menu) + ReminderForm (text/kind/time/linked item)
+  + RemindersSection (Today advisory, due-only, Done + Snooze). Advisory mounts
+  on Today only when selectedDate === today.
+- Review fix (independent review, ZERO blockers, 1 warning FIXED): updateReminder
+  now CLEARS lastAckedDate/snoozedUntil when the recurrence changes (the grid
+  shifts, so a stale ack would wrongly suppress the edited reminder); preserves
+  them for text/time-only edits. Added a test. Nits (dead isInteger guard,
+  fire-and-forget repo calls per codebase pattern, sort sentinel) left as-is.
+- Security self-check (input + stored data): text trimmed + React auto-escaped;
+  counts validated at the boundary; dates/time pure math; itemUid is a Map-key
+  not a query; no secrets; rides E2E-encrypted sync. PASS.
+- Tests: reminders.test.ts (occurrence/due/snooze/ack boundaries +
+  describeRecurrence), reminderRepository.test.ts (CRUD + ack auto-archive +
+  snooze + recurrence-change ack-reset), remindersSection.test.tsx (Today Done
+  + Snooze end-to-end), exportData schemaVersion 10→11. Full suite 209 green
+  (was 188). Lint/format/typecheck/build pass.
+- State: committed on branch feature/reminders (CSS polish + Task B together).
+  NOT merged/pushed — per user, hold the redeploy; user verifies the cog/dropdown
+  polish + reminders visually, then merges. Backlog: #25 Task B done; Task C next
+  session. #26 (nav) already on main.

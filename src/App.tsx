@@ -9,6 +9,7 @@ import StackScreen from './screens/StackScreen'
 import MetricsScreen from './screens/MetricsScreen'
 import GraphsScreen from './screens/GraphsScreen'
 import SyncScreen from './screens/SyncScreen'
+import RemindersScreen from './screens/RemindersScreen'
 
 const SCREENS: Record<View, React.ComponentType> = {
   today: TodayScreen,
@@ -16,6 +17,7 @@ const SCREENS: Record<View, React.ComponentType> = {
   metrics: MetricsScreen,
   graphs: GraphsScreen,
   sync: SyncScreen,
+  reminders: RemindersScreen,
 }
 
 export default function App() {

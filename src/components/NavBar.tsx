@@ -2,7 +2,13 @@
 // screens (Stack, Tracking, Sync — and Reminders later) live behind the
 // settings cog (SettingsMenu) in each screen header, so the bottom bar stays
 // uncluttered. Pure presentation: App owns which view is shown.
-export type View = 'today' | 'stack' | 'metrics' | 'graphs' | 'sync'
+export type View =
+  | 'today'
+  | 'stack'
+  | 'metrics'
+  | 'graphs'
+  | 'sync'
+  | 'reminders'
 
 const TABS: { view: View; label: string }[] = [
   { view: 'today', label: 'Today' },

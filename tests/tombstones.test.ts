@@ -51,6 +51,7 @@ function emptyBundle(): ExportBundle {
       metricNotes: [],
       dayNotes: [],
       healthEvents: [],
+      reminders: [],
       tombstones: [],
     },
   }

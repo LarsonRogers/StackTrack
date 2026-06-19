@@ -20,6 +20,7 @@ import {
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
 import MetricLogger from '../components/MetricLogger'
 import SettingsMenu from '../components/SettingsMenu'
+import RemindersSection from '../components/RemindersSection'
 import EventsSection from '../components/EventsSection'
 import JournalSection from '../components/JournalSection'
 import CollapsibleSection from '../components/CollapsibleSection'
@@ -140,6 +141,8 @@ export default function TodayScreen() {
           }}
         />
       </header>
+
+      {selectedDate === today && <RemindersSection date={today} />}
 
       {totalSlots === 0 ? (
         <section className="today-empty" aria-label="Today's checklist">
