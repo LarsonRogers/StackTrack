@@ -35,6 +35,14 @@ export interface StackItem {
   groups: string[] // purpose groups, e.g. ["Testosterone Support"]; [] = ungrouped. An item may belong to many.
   schedule?: Schedule // recurrence cadence; absent = every day. Not indexed — computed at read time.
   note?: string // persistent note shown on Today under the name — distinct from the per-day ItemNote
+  // Refill runway (backlog #27): inventory metadata, NOT a stack change — edits
+  // to these record no StackEvent/graph marker (like intakes). quantityOnHand is
+  // the count on hand as of quantityAsOf (the projection anchor); unitsPerDose
+  // (default 1) lets "2 caps per dose" deplete correctly. All optional/absent
+  // until the user opts an item in. Non-indexed — no schema version bump.
+  quantityOnHand?: number // units on hand as of quantityAsOf; absent = runway not tracked
+  quantityAsOf?: string // local 'YYYY-MM-DD' the count was accurate; stamped by the repository
+  unitsPerDose?: number // units consumed per scheduled time; absent = 1
   status: ItemStatus // archived items are hidden, never deleted — history must survive
   createdAt: string // ISO datetime
   updatedAt: string // ISO datetime of last change (merge: newest wins)

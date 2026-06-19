@@ -1269,3 +1269,54 @@
   to that turn's work summary (count + tasks); silent on turns with none.
 - State: committed on branch pack-upgrade/v12.19. NOT merged to main — per
   upgrade.md the user reviews the full diff and merges when ready.
+
+## [2026-06-19] Backlog #27: Refill runway — Claude Code
+- Goal: record a count on hand per item and show "≈N days left", projected from
+  the schedule. Confirmed forks (asked): project-from-schedule (not per-intake);
+  optional units-per-dose (default 1); refill reminder DEFERRED to a follow-up;
+  display on Stack. Two additions folded in mid-build at the user's request:
+  a settable "as of" date, and showing days-left on the Today card too.
+- Data model: 3 new OPTIONAL, NON-INDEXED fields on StackItem — quantityOnHand,
+  quantityAsOf ('YYYY-MM-DD' anchor), unitsPerDose. NO schema version bump / no
+  migration (Dexie stores non-indexed fields freely); they ride export/import/
+  merge/sync automatically because items already does (verified: whole-row copy,
+  no field allowlist; payloadOf strips only id/uid/itemId/metricId).
+- Projection (pure lib/runway.ts): consumption/due-day = times.length ×
+  (unitsPerDose ?? 1); walk forward from quantityAsOf via the existing
+  schedule.isDueOn, depleting on due days until stock can't cover the next dose
+  → run-out date; daysLeft = daysBetween(today, runOut), ≤0 ⇒ "Refill now".
+  MAX_HORIZON_DAYS=3650 bounds the loop (sparse schedules / future anchors).
+  Null when no count/anchor or rate 0 → label hidden.
+- "As of" date (the edge cases the user raised — mid-bottle, mid-subscription):
+  the count is "how many right now", anchored to quantityAsOf. Default today;
+  user may back-date to a past refill ("28 as of 2 weeks ago → ~14 left now").
+  Form supplies it (date input, max=today, round-trips existing in edit mode);
+  repository defaults to today only when a count exists with no date, clears it
+  when the count is removed. normalizeInput stays pure (returns the date or
+  undefined); add/update apply the today fallback.
+- Graph-marker decision: inventory fields (quantity/asOf/unitsPerDose) are NOT a
+  stack change — like intakes they persist but record NO StackEvent/marker.
+  updateItem reworked so an inventory-only edit saves WITHOUT a marker (the old
+  buildChangeSummary===null early-return would have dropped it), while a real
+  field change still records its event. inventoryChanged also watches quantityAsOf.
+- UI: ItemForm gains a "Refill tracking (optional)" fieldset (quantity / as-of /
+  units). StackScreen + TodayScreen show "≈N days left" under the item (Today
+  relative to the viewed selectedDate); ≤7 days or "Refill now" renders red+bold.
+- Security self-check (input + stored data): numeric inputs validated at the
+  boundary (quantity ≥0 finite; units floored ≥2 else default; asOf must match
+  /^\d{4}-\d{2}-\d{2}$/); runway label is computed, not user text; React escapes;
+  no secrets; rides E2E sync as plain fields. PASS.
+- Tests: runway.test.ts (10 — each schedule kind, units-per-dose, elapsed days,
+  back-dated subscription, refill/singular labels, not-tracked/zero-rate);
+  stackRepository (+7 — stamping, units collapse, inventory-only no-marker,
+  marker-with-real-change, clear-anchor, preserve past anchor, back-date no-marker);
+  stackScreen render. Full suite 232 green (was 217 pre-#27 baseline 214→+18).
+- Review: two independent fresh-context reviews (core, then the as-of/Today
+  delta) — both CLEAN, ZERO blockers. NITs (DRY daysBetween, inclusive loop
+  bound, per-row recompute) acknowledged, left as-is per scope + the v12.19
+  "appropriate efficiency, not premature optimization" guidance.
+- Also queued backlog #36 (multi-ingredient items) per user (commit 74f5511).
+- Lint/format/typecheck/build all pass. Out of scope: auto refill reminder,
+  barcode pack-size pre-fill (#31), decrement-on-intake.
+- State: committed on branch feature/refill-runway. NOT merged — awaiting user
+  demo confirmation + merge decision. Backlog #27 done pending merge.

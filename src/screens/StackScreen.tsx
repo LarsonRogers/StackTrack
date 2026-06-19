@@ -23,6 +23,8 @@ import {
   type StackSortMode,
 } from '../lib/stackView'
 import { describeSchedule } from '../lib/schedule'
+import { describeRunway, daysOfSupplyLeft } from '../lib/runway'
+import { toIsoDate } from '../lib/dates'
 import { exportAsCsv, exportAsJson } from '../lib/exportData'
 import { applyBundle, parseBundle } from '../lib/importData'
 import { mergeBundle } from '../lib/mergeData'
@@ -184,6 +186,11 @@ export default function StackScreen() {
         : groupHint === 'count' && item.groups.length > 1
           ? `in ${item.groups.length} groups`
           : null
+    // Refill runway (#27): null when the item isn't tracked. ≤7 days flags low.
+    const today = toIsoDate(new Date())
+    const runwayLabel = describeRunway(item, today)
+    const runwayDays = daysOfSupplyLeft(item, today)
+    const runwayLow = runwayDays !== null && runwayDays <= 7
     return (
       <li key={item.id} className="stack-item">
         <div className="stack-item-info">
@@ -204,6 +211,13 @@ export default function StackScreen() {
               .join(' · ')}
           </span>
           {item.note && <span className="stack-item-note">{item.note}</span>}
+          {runwayLabel && (
+            <span
+              className={`stack-item-runway${runwayLow ? ' stack-item-runway-low' : ''}`}
+            >
+              {runwayLabel}
+            </span>
+          )}
         </div>
         <div className="stack-item-actions">
           <button

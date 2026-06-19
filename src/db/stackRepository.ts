@@ -17,6 +17,9 @@ export interface StackItemInput {
   groups: string[] // [] = ungrouped; an item may belong to many groups
   schedule?: Schedule // recurrence cadence; absent / degenerate = every day
   note?: string // persistent note shown on Today (distinct from per-day notes)
+  quantityOnHand?: number // refill runway (#27): units on hand; absent = not tracked
+  quantityAsOf?: string // local 'YYYY-MM-DD' the count was accurate; default today
+  unitsPerDose?: number // units consumed per scheduled time; absent = 1
 }
 
 // Collapses a schedule to its canonical form, mapping degenerate cases that
@@ -72,7 +75,31 @@ function normalizeGroups(groups: string[]): string[] {
   return out
 }
 
+// A non-negative finite count, else undefined (absent = runway not tracked).
+// Zero is valid — it means "you're out, refill".
+function normalizeQuantity(value: number | undefined): number | undefined {
+  if (value === undefined || !Number.isFinite(value) || value < 0)
+    return undefined
+  return value
+}
+
+// Units consumed per scheduled dose — a whole number ≥ 2 is stored; 1 (the
+// default) and anything invalid collapse to undefined so "absent = 1" stays
+// the single canonical form.
+function normalizeUnitsPerDose(value: number | undefined): number | undefined {
+  if (value === undefined) return undefined
+  const n = Math.floor(value)
+  return Number.isFinite(n) && n >= 2 ? n : undefined
+}
+
+// Accepts only a 'YYYY-MM-DD' string; anything else is undefined (callers
+// default the runway anchor to today when a count is present).
+function normalizeIsoDate(value: string | undefined): string | undefined {
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined
+}
+
 function normalizeInput(input: StackItemInput): StackItemInput {
+  const quantityOnHand = normalizeQuantity(input.quantityOnHand)
   return {
     name: input.name.trim(),
     kind: input.kind,
@@ -82,6 +109,14 @@ function normalizeInput(input: StackItemInput): StackItemInput {
     groups: normalizeGroups(input.groups ?? []),
     schedule: normalizeSchedule(input.schedule),
     note: input.note?.trim() || undefined,
+    quantityOnHand,
+    // Anchor only matters when a count exists; left undefined here and defaulted
+    // to today by add/update when the user supplied none.
+    quantityAsOf:
+      quantityOnHand === undefined
+        ? undefined
+        : normalizeIsoDate(input.quantityAsOf),
+    unitsPerDose: normalizeUnitsPerDose(input.unitsPerDose),
   }
 }
 
@@ -129,11 +164,17 @@ function fmtGroups(groups: string[] | undefined): string {
 // Adds an item and records its 'added' event. Returns the new item id.
 export async function addItem(input: StackItemInput): Promise<number> {
   const item = normalizeInput(input)
+  // Anchor the runway projection (#27): use the date the user gave, else today.
+  const quantityAsOf =
+    item.quantityOnHand === undefined
+      ? undefined
+      : (item.quantityAsOf ?? toIsoDate(new Date()))
   return db.transaction('rw', db.items, db.stackEvents, async () => {
     const uid = newUid()
     const stamp = nowIso()
     const id = await db.items.add({
       ...item,
+      quantityAsOf,
       uid,
       status: 'active',
       createdAt: stamp,
@@ -144,8 +185,10 @@ export async function addItem(input: StackItemInput): Promise<number> {
   })
 }
 
-// Applies edits and records one 'changed' event describing them.
-// A no-op edit (same values) records nothing.
+// Applies edits and records one 'changed' event describing them. A no-op edit
+// (same values) records nothing. Inventory fields (quantityOnHand/unitsPerDose,
+// #27) are NOT stack changes — like intakes they persist but record no event /
+// graph marker; only marker-worthy fields drive buildChangeSummary.
 export async function updateItem(
   id: number,
   input: StackItemInput,
@@ -164,11 +207,34 @@ export async function updateItem(
       note: existing.note,
     }
     const summary = buildChangeSummary(before, after)
-    if (summary === null) return
+
+    // Runway anchor (#27): the form round-trips the existing date, so the
+    // user controls it — use what they submitted, defaulting to today only
+    // when a count exists with no date. Cleared when the count is removed.
+    const quantityAsOf =
+      after.quantityOnHand === undefined
+        ? undefined
+        : (after.quantityAsOf ?? toIsoDate(new Date()))
+    const inventoryChanged =
+      after.quantityOnHand !== existing.quantityOnHand ||
+      after.unitsPerDose !== existing.unitsPerDose ||
+      quantityAsOf !== existing.quantityAsOf
+
+    // Nothing marker-worthy AND no inventory change ⇒ a true no-op.
+    if (summary === null && !inventoryChanged) return
+
     // put (full replace) instead of update: Dexie's UpdateSpec typing does
     // not accept plain array properties like `times`
-    await db.items.put({ ...existing, ...after, updatedAt: nowIso() })
-    await recordEvent(id, existing.uid, after, 'changed', summary)
+    await db.items.put({
+      ...existing,
+      ...after,
+      quantityAsOf,
+      updatedAt: nowIso(),
+    })
+    // Inventory-only edits save without a history event/marker (see above).
+    if (summary !== null) {
+      await recordEvent(id, existing.uid, after, 'changed', summary)
+    }
   })
 }
 

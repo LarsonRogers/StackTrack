@@ -348,6 +348,18 @@ body {
   font-style: italic;
 }
 
+/* Refill runway (#27): muted by default; red + bold when ≤7 days or out. */
+.stack-item-runway {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stack-item-runway-low {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
 .stack-item-actions {
   display: flex;
   flex-shrink: 0;
@@ -493,6 +505,19 @@ body {
   margin: 0 0 0.25rem;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
+}
+
+/* Refill tracking inputs (#27): quantity + units-per-dose side by side. */
+.item-form-refill-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.item-form-refill-field {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .group-chips {
@@ -707,6 +732,19 @@ body {
   margin-top: 0.125rem;
   font-size: 0.875rem;
   color: var(--color-text);
+}
+
+/* Refill runway (#27) on the Today card — mirrors .stack-item-runway. */
+.today-item-runway {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.today-item-runway-low {
+  color: #b91c1c;
+  font-weight: 600;
 }
 
 .today-note-editor {
