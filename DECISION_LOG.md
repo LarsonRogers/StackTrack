@@ -1228,3 +1228,44 @@
 - State: committed on branch feature/reminders-history (also carries the earlier
   Reminders add-button spacing fix 1f8a6ee). Merged to main + pushed. Backlog
   #25 (in-app reminders, Tasks A/B/C) COMPLETE.
+
+## [2026-06-18] Upgrade starter pack v12.16 → v12.19 — Claude Code
+- Trigger: user explicitly asked to upgrade the pack (the one case pack-owned
+  files may be edited). Launch hook had reported v12.18, but the actual upstream
+  main reads v12.19 (dated today) — reported the real version and targeted it.
+  Ran protocols/upgrade.md by hand, source v12.16 → target v12.19, on branch
+  pack-upgrade/v12.19. Upstream cloned to a temp dir as the copy source (not
+  reconstructed from memory).
+- Pack-owned replaced wholesale: all 33 protocols/*.md, CLAUDE.md, TASK_TEMPLATE.md.
+  30 protocols were header-only bumps; 3 substantive (additive) changes:
+  code-quality.md gains a "Right-sized & Resilient" section (lightweight + robust,
+  scaled to Project Stakes, never below the safety floor); model-tiering.md gains
+  "Surfacing Light-tier use to the user (opt-in)" + activation step 2b;
+  testing-strategy.md gains "Fast feedback vs the gate" (focused subset while
+  iterating, full suite at DoD/CI).
+- AGENTS.md splice: Part 1 + preamble taken from upstream (header bump + the two
+  matching standing-rule one-liners for code-quality and model-tiering); Part 2
+  preserved verbatim. One NEW Part 2 field reconciled in: Model Tiers →
+  "Tier-use reporting". Project has a real Light tier (haiku), so it is a live
+  setup field — asked the user once; user chose ON → recorded
+  "on (decided 2026-06-18)" (note Light-tier use in each work summary; tier use
+  is logged in DECISION_LOG either way). No Part 2 values dropped; no new section
+  left NOT-SET.
+- Config files (diff-and-confirm): all preserved as deliberate project
+  customizations / EOL-only — .claude/settings.json (project's pack-update
+  SessionStart hook), opencode.json + .codex/config.toml (EOL-only), the
+  customized .github/workflows/agent-ci.yml (scoped prod-dep audit + Cloudflare
+  deploy job — upstream baseline would REGRESS it), .gitignore (project's
+  Vite/PWA entries). dependabot.yml identical. Only .gitattributes changed:
+  applied upstream's one-word comment clarification (no project customization to
+  lose, behavior identical — active rule *.sh text eol=lf unchanged).
+- Self-checks: all 36 pack headers = v12.19; Protocol Index ↔ protocols/ match
+  both directions; no project-owned file (DECISION_LOG/HANDOFF/BACKLOG/RUNBOOK/
+  README/src/tests) in the diff. Independent fresh-context splice review: CLEAN,
+  zero blockers (Part 2 byte-identical to the pre-splice backup except the one
+  added Tier-use reporting line).
+- Behavior change to honor going forward: Tier-use reporting is ON — when any
+  sub-task runs on the Light tier (haiku) during a turn, append a one-line note
+  to that turn's work summary (count + tasks); silent on turns with none.
+- State: committed on branch pack-upgrade/v12.19. NOT merged to main — per
+  upgrade.md the user reviews the full diff and merges when ready.

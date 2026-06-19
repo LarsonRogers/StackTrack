@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/upgrade.md -->
+<!-- Starter Pack v12.19 — protocols/upgrade.md -->
 <!-- Load this file when: the user asks to upgrade/migrate an existing project to a
      newer pack version, OR the edge-cases version-mismatch handler points here to
      migrate rather than just halt. -->

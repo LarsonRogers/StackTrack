@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/pattern-registry.md -->
+<!-- Starter Pack v12.19 — protocols/pattern-registry.md -->
 <!-- Load this file when: documenting a new reusable pattern before committing -->
 <!-- Concrete trigger: same structural approach appears in 2+ files touched this session,
      OR a new approach replaced a previous one that was causing bugs -->

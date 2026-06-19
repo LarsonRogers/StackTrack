@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/binary-files.md -->
+<!-- Starter Pack v12.19 — protocols/binary-files.md -->
 <!-- Load this file when: binary or large files (>1MB) encountered or committed -->
 <!-- Does NOT trigger when: listing or displaying filenames/paths only (no content
      read or edit attempted), reading directory trees, or checking file sizes

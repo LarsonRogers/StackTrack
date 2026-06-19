@@ -1,5 +1,5 @@
 # AGENTS.md — [PROJECT_NAME]
-<!-- Starter Pack v12.16 — 2026-06-16 -->
+<!-- Starter Pack v12.19 — 2026-06-18 -->
 
 > **Single source of truth for all agents.** Codex and OpenCode read this
 > file automatically. Claude Code reads it through `CLAUDE.md`, which imports
@@ -367,11 +367,11 @@ incorrect claim, amend it with a correction note.
 - **Validation fallback:** lint/test/CI missing → report, propose, mark DoD accordingly; never silently skip. `protocols/validation-fallback.md`
 - **External research:** verify current docs before coding against any external SDK/API/platform; web down + unverifiable → Knowledge Gap (declare, offer three options). `protocols/external-research.md`
 - **Context window:** after 5 tasks or detected degradation → finish task, checkpoint, recommend fresh session. `protocols/context-window.md`
-- **Code quality:** structural rules, comment standards, agent-ism avoidance on every coding task. `protocols/code-quality.md`
+- **Code quality:** structural rules, comment standards, agent-ism avoidance, right-sized & resilient output (lightweight + robust, scaled to stakes; never below the safety floor) on every coding task. `protocols/code-quality.md`
 - **Enforcement tooling:** at stack selection, set up strict lint/format/type/boundary checks + secret pre-commit hook + real CI; demonstrate each gate failing before trusting it. `protocols/enforcement-tooling.md`
 - **Secure coding:** input/auth/session/stored-data tasks run the checklist (recorded self-check, floor at every stakes level); SAST in CI per Project Stakes (Production default, pulled forward for auth/payments/sensitive-data); never hand-roll auth/crypto. `protocols/secure-coding.md`
 - **Independent review:** every completed backlog item and deploy gets a fresh-context diff review (correctness/security/architecture/readability); blockers not self-waived. `protocols/review.md`
-- **Model tiering:** route bounded rule-bound sub-agent checks to a cheaper model; judgment/safety-critical work stays on the main model, never downgraded; log the tier. `protocols/model-tiering.md`
+- **Model tiering:** route bounded rule-bound sub-agent checks to a cheaper model; judgment/safety-critical work stays on the main model, never downgraded; log the tier; optionally surface Light-tier use in the work summary (opt-in, asked once at tier setup). `protocols/model-tiering.md`
 - **Environment:** no hardcoded env values; no debug flags committed; document new env vars. `protocols/environment.md`
 - **Run & demo:** maintain RUNBOOK.md from first runnable state; not done until the user has seen it run (or verifiably could). `protocols/run-demo.md`
 - **Deployment:** opt-in only, never the default path; data-sensitivity gate before any deploy step. `protocols/deployment.md`
@@ -504,6 +504,7 @@ tool: no dosage guidance, no interaction checking — ever.
 **Pack profile:** FULL
 **Context budget:** ~200k+ (Claude Code, Opus 4.8 1M-context build — large context)
 **Provider / environment:** Anthropic via Claude Code (subscription/login)
+**Tier-use reporting:** on (decided 2026-06-18) — note Light-tier (haiku) use in each work summary so the user sees how often sub-tasks run on the cheaper model; tier use is logged in DECISION_LOG either way. See protocols/model-tiering.md.
 
 | Role | Model | How to switch |
 |------|-------|---------------|

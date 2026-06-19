@@ -3,5 +3,5 @@
 * text=auto
 
 # Shell scripts must keep LF on every platform — a CRLF shebang (#!/usr/bin/env
-# bash) fails to execute on Unix. Forces LF checkout even on Windows.
+# bash\r) fails to execute on Unix. Forces LF checkout even on Windows.
 *.sh text eol=lf

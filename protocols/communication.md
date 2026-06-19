@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/communication.md -->
+<!-- Starter Pack v12.19 — protocols/communication.md -->
 <!-- Load this file when: first session (audience detection needed); any session where
      audience mode is Non-dev or Technical non-dev; or any error/progress report must
      be delivered to a non-developer. -->

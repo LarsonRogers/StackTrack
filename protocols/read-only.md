@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/read-only.md -->
+<!-- Starter Pack v12.19 — protocols/read-only.md -->
 <!-- Load this file when: review, audit, analysis, or any task with no intended edits -->
 <!-- Does NOT trigger when: user explicitly authorizes edits in the same message
      (e.g., "review this and fix any issues you find" — that is an edit session

@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/code-quality.md -->
+<!-- Starter Pack v12.19 — protocols/code-quality.md -->
 <!-- Load this file when: writing or modifying code — structural rules, comment
      standards, and readability requirements apply to every coding task. -->
 <!-- Does NOT trigger when: the session is read-only/analysis, or the task is
@@ -56,6 +56,47 @@ helper first.
 - Errors propagate up — they are not silently swallowed at lower layers.
 - Each layer handles only the errors it can meaningfully act on.
 - Logging happens at the boundary where the error is caught, with context.
+
+---
+
+## Right-sized & Resilient
+
+Code should be as **lightweight and robust as the project's stakes warrant** —
+*fit, not maximal*. The two pull against each other (resilience adds checks;
+leanness removes code), so neither is maximized in isolation, and neither
+overrides the rules already stated here, in secure-coding.md, or the safety
+floor. Both scale with **Project Stakes** (protocols/project-stakes.md): a Spike
+leans lighter, a Production system leans more resilient — the floor never scales.
+
+### Lightweight (no bloat)
+- **Fewest adequate dependencies.** Prefer the standard library or the lightest
+  tool that does the job; a new dependency is the existing default-policy
+  confirm-gate AND must justify its weight (size, transitive deps, maintenance).
+  Don't pull a framework for what a function solves.
+- **No speculative abstraction (YAGNI).** Build for the requirement in hand, not
+  an imagined future one — no layers, config, or indirection the architecture
+  sketch (Part 2, sized S1–S4) doesn't call for.
+- **Remove dead weight** *within the change's scope* — no unused deps, dead code,
+  or commented-out blocks left behind. Out-of-scope cruft is noted, not fixed
+  (Scope Control).
+- **Appropriate efficiency, not premature optimization.** Don't ship the
+  accidentally-quadratic loop or N+1 query over data that grows; equally, don't
+  contort readable code for micro-gains that don't matter. Optimize what the data
+  size / stakes justify, and comment the WHY when you do.
+
+### Robust (stable under stress)
+- **Validate at the boundaries.** Untrusted input is checked where it enters
+  (ties to secure-coding.md); inner layers may then trust it.
+- **Handle the real failure modes** surfaced by requirements.md — empty / huge /
+  malformed / concurrent / offline inputs, and the steps that can fail (I/O,
+  network, parsing). Handle what you can act on; no catch-all (Error Handling
+  above).
+- **Fail loudly, not silently.** A swallowed error that corrupts state later is
+  worse than a clear failure now — surface it with context.
+- **Degrade gracefully where it matters.** At stakes that warrant it, a failed
+  non-critical part should not take the whole app down.
+
+This names a quality bar; it does not widen scope — Scope Control still governs.
 
 ---
 

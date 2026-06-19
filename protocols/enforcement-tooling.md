@@ -1,4 +1,4 @@
-<!-- Starter Pack v12.16 — protocols/enforcement-tooling.md -->
+<!-- Starter Pack v12.19 — protocols/enforcement-tooling.md -->
 <!-- Load this file when: the stack is chosen (product definition step 3, or
      inherited codebase Phase 3), validation commands are being set for the
      first time, or the walking skeleton is being built while CI still has
