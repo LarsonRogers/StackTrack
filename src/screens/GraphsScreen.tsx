@@ -120,6 +120,9 @@ export default function GraphsScreen() {
     <main className="screen">
       <header className="screen-header">
         <h1>Graphs</h1>
+        <p className="screen-subtitle">
+          Track any metric over time, with markers for stack changes and events.
+        </p>
         <SettingsMenu />
       </header>
 
