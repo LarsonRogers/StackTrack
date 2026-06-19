@@ -85,6 +85,7 @@ export async function mergeBundle(
     'dayNotes',
     'healthEvents',
     'reminders',
+    'reminderEvents',
   ] as const
 
   await db.transaction(
@@ -100,6 +101,7 @@ export async function mergeBundle(
       db.dayNotes,
       db.healthEvents,
       db.reminders,
+      db.reminderEvents,
       db.tombstones,
     ],
     async () => {
@@ -220,6 +222,7 @@ export async function mergeBundle(
           | 'dayNotes'
           | 'healthEvents'
           | 'reminders'
+          | 'reminderEvents'
         refUidField?: 'itemUid' | 'metricUid'
         refIdField?: 'itemId' | 'metricId'
         refMap?: Map<unknown, unknown>
@@ -273,6 +276,11 @@ export async function mergeBundle(
         // rewired numeric ref), so no parent resolution is needed.
         {
           tableName: 'reminders',
+        },
+        // parent-less, uid-only: reminderEvents carry only reminderUid (a label,
+        // not a rewired numeric ref); append-only history, so uid match suffices.
+        {
+          tableName: 'reminderEvents',
         },
       ]
 

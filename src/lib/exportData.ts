@@ -22,6 +22,7 @@ export interface ExportBundle {
     dayNotes: unknown[]
     healthEvents: unknown[]
     reminders: unknown[]
+    reminderEvents: unknown[]
     tombstones: unknown[]
   }
 }
@@ -38,6 +39,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
     dayNotes,
     healthEvents,
     reminders,
+    reminderEvents,
     tombstones,
   ] = await Promise.all([
     db.items.toArray(),
@@ -50,6 +52,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
     db.dayNotes.toArray(),
     db.healthEvents.toArray(),
     db.reminders.toArray(),
+    db.reminderEvents.toArray(),
     db.tombstones.toArray(),
   ])
   return {
@@ -67,6 +70,7 @@ export async function buildExportBundle(): Promise<ExportBundle> {
       dayNotes,
       healthEvents,
       reminders,
+      reminderEvents,
       tombstones,
     },
   }

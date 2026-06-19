@@ -15,6 +15,7 @@ const TODAY = '2026-06-18'
 
 beforeEach(async () => {
   await db.reminders.clear()
+  await db.reminderEvents.clear()
 })
 
 describe('addReminder', () => {
@@ -130,6 +131,65 @@ describe('snoozeReminder', () => {
     })
     await snoozeReminder(id, TODAY, 2)
     expect((await db.reminders.get(id))?.snoozedUntil).toBe('2026-06-20')
+  })
+})
+
+describe('per-occurrence history (reminderEvents)', () => {
+  it('appends a "done" event tied to the reminder and occurrence', async () => {
+    const id = await addReminder({
+      text: 'Weekly',
+      recurrence: { kind: 'everyNDays', n: 7, startDate: '2026-06-01' },
+    })
+    const reminder = await db.reminders.get(id)
+    await acknowledgeReminder(id, TODAY)
+
+    const events = await db.reminderEvents.toArray()
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({
+      reminderUid: reminder?.uid,
+      occurrenceDate: '2026-06-15', // the current occurrence, not raw today
+      action: 'done',
+    })
+    expect(events[0].snoozedUntil).toBeUndefined()
+    expect(events[0].uid).toBeTruthy()
+    expect(events[0].at).toBeTruthy()
+  })
+
+  it('appends a "snoozed" event carrying the snooze target', async () => {
+    const id = await addReminder({
+      text: 'Weekly',
+      recurrence: { kind: 'everyNDays', n: 7, startDate: '2026-06-01' },
+    })
+    const reminder = await db.reminders.get(id)
+    await snoozeReminder(id, TODAY, 2)
+
+    const events = await db.reminderEvents.toArray()
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({
+      reminderUid: reminder?.uid,
+      occurrenceDate: '2026-06-15',
+      action: 'snoozed',
+      snoozedUntil: '2026-06-20',
+    })
+  })
+
+  it('accumulates one row per action across occurrences', async () => {
+    const id = await addReminder({
+      text: 'Weekly',
+      recurrence: { kind: 'everyNDays', n: 7, startDate: '2026-06-01' },
+    })
+    await snoozeReminder(id, TODAY, 1)
+    await acknowledgeReminder(id, TODAY)
+    await acknowledgeReminder(id, '2026-06-22') // next occurrence
+
+    const events = await db.reminderEvents.toArray()
+    expect(events).toHaveLength(3)
+    expect(events.map((e) => e.action)).toEqual(['snoozed', 'done', 'done'])
+    expect(events.map((e) => e.occurrenceDate)).toEqual([
+      '2026-06-15',
+      '2026-06-15',
+      '2026-06-22',
+    ])
   })
 })
 

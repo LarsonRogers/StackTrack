@@ -41,6 +41,7 @@ function bundleWith(data: Partial<ExportBundle['data']>): ExportBundle {
       dayNotes: [],
       healthEvents: [],
       reminders: [],
+      reminderEvents: [],
       tombstones: [],
       ...data,
     },

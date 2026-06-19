@@ -1,7 +1,12 @@
 // src/db/reminderRepository.ts — the only write path for reminders. Reminders
 // archive (never hard-delete), mirroring items/metrics. Acknowledging records
 // which occurrence was dismissed; snoozing suppresses the advisory for N days.
-import { db, type Reminder, type ReminderRecurrence } from './db'
+import {
+  db,
+  type Reminder,
+  type ReminderEventAction,
+  type ReminderRecurrence,
+} from './db'
 import { addDays, toIsoDate } from '../lib/dates'
 import { currentOccurrence } from '../lib/reminders'
 import { newUid, nowIso } from '../lib/identity'
@@ -91,32 +96,67 @@ export async function unarchiveReminder(id: number): Promise<void> {
   await db.reminders.update(id, { status: 'active', updatedAt: nowIso() })
 }
 
+// Appends one immutable row to the per-occurrence reminder history (#25 Task C).
+// Caller supplies the surrounding transaction so the event lands atomically
+// with the reminder update it records.
+async function recordEvent(
+  reminderUid: string,
+  occurrenceDate: string,
+  action: ReminderEventAction,
+  stamp: string,
+  snoozedUntil?: string,
+): Promise<void> {
+  await db.reminderEvents.add({
+    uid: newUid(),
+    reminderUid,
+    occurrenceDate,
+    action,
+    snoozedUntil,
+    at: stamp,
+    updatedAt: stamp,
+  })
+}
+
 // Marks the occurrence due on `today` as done so it leaves the advisory. A
 // 'once' reminder is finished, so it auto-archives; recurring/cycle reminders
-// stay active and reappear at their next occurrence. Clears any snooze.
+// stay active and reappear at their next occurrence. Clears any snooze. Records
+// a 'done' history row in the same transaction.
 export async function acknowledgeReminder(
   id: number,
   today: string,
 ): Promise<void> {
-  const reminder = await mustGet(id)
-  const occurrence = currentOccurrence(reminder.recurrence, today) ?? today
-  await db.reminders.update(id, {
-    lastAckedDate: occurrence,
-    snoozedUntil: undefined,
-    status: reminder.recurrence.kind === 'once' ? 'archived' : reminder.status,
-    updatedAt: nowIso(),
+  await db.transaction('rw', db.reminders, db.reminderEvents, async () => {
+    const reminder = await mustGet(id)
+    const occurrence = currentOccurrence(reminder.recurrence, today) ?? today
+    const stamp = nowIso()
+    await db.reminders.update(id, {
+      lastAckedDate: occurrence,
+      snoozedUntil: undefined,
+      status:
+        reminder.recurrence.kind === 'once' ? 'archived' : reminder.status,
+      updatedAt: stamp,
+    })
+    await recordEvent(reminder.uid, occurrence, 'done', stamp)
   })
 }
 
-// Hides the reminder from the advisory until `days` from today.
+// Hides the reminder from the advisory until `days` from today. Records a
+// 'snoozed' history row in the same transaction.
 export async function snoozeReminder(
   id: number,
   today: string,
   days: number,
 ): Promise<void> {
-  await db.reminders.update(id, {
-    snoozedUntil: addDays(today, Math.max(1, Math.floor(days))),
-    updatedAt: nowIso(),
+  await db.transaction('rw', db.reminders, db.reminderEvents, async () => {
+    const reminder = await mustGet(id)
+    const occurrence = currentOccurrence(reminder.recurrence, today) ?? today
+    const snoozedUntil = addDays(today, Math.max(1, Math.floor(days)))
+    const stamp = nowIso()
+    await db.reminders.update(id, {
+      snoozedUntil,
+      updatedAt: stamp,
+    })
+    await recordEvent(reminder.uid, occurrence, 'snoozed', stamp, snoozedUntil)
   })
 }
 

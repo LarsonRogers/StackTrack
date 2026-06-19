@@ -189,6 +189,24 @@ export interface Reminder {
   updatedAt: string
 }
 
+export type ReminderEventAction = 'done' | 'snoozed'
+
+// One logged action on one reminder occurrence — the per-occurrence history
+// behind a reminder (backlog #25 Task C). Appended whenever the user marks a
+// due reminder Done or snoozes it. Parentless and uid-only: reminderUid is a
+// label (like Reminder.itemUid), never a rewired numeric reference. Append-only
+// history — rows are never edited or deleted.
+export interface ReminderEvent {
+  id: number
+  uid: string
+  reminderUid: string // which reminder this action belongs to (merge-safe)
+  occurrenceDate: string // local 'YYYY-MM-DD' of the occurrence acted on
+  action: ReminderEventAction
+  snoozedUntil?: string // 'YYYY-MM-DD' the snooze runs to — 'snoozed' only
+  at: string // ISO datetime of the actual tap
+  updatedAt: string // ISO datetime (merge: newest wins; rows are immutable in practice)
+}
+
 // Local-only sync configuration: the passphrase-derived credentials and
 // the pull cursor. ONE row at most. Deliberately EXCLUDED from exports —
 // a backup file must never carry sync credentials.
@@ -224,6 +242,7 @@ export const db = new Dexie('stacktrack') as Dexie & {
   dayNotes: EntityTable<DayNote, 'id'>
   healthEvents: EntityTable<HealthEvent, 'id'>
   reminders: EntityTable<Reminder, 'id'>
+  reminderEvents: EntityTable<ReminderEvent, 'id'>
   tombstones: EntityTable<Tombstone, 'id'>
   syncState: EntityTable<SyncState, 'id'>
 }
@@ -308,6 +327,13 @@ db.version(10).stores({
 // migration. Queried by status (active vs archived); &uid for merge-safe sync.
 db.version(11).stores({
   reminders: '++id, &uid, status',
+})
+
+// Schema v12 (additive): per-occurrence reminder history — an empty new table;
+// no data migration. Queried by reminderUid (a reminder's past actions);
+// &uid for merge-safe sync.
+db.version(12).stores({
+  reminderEvents: '++id, &uid, reminderUid',
 })
 
 // Minimal table access shared by the live db, a transaction zone, and the

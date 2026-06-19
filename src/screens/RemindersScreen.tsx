@@ -3,7 +3,7 @@
 // Snooze) happens on the Today screen. Writes go through reminderRepository.
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Reminder } from '../db/db'
+import { db, type Reminder, type ReminderEvent } from '../db/db'
 import {
   addReminder,
   archiveReminder,
@@ -33,15 +33,37 @@ export default function RemindersScreen() {
     () => db.items.where('status').equals('active').toArray(),
     [],
   )
+  const reminderEvents = useLiveQuery(() => db.reminderEvents.toArray(), [])
   const [form, setForm] = useState<FormState>({ mode: 'closed' })
   const [showArchived, setShowArchived] = useState(false)
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null)
 
   if (
     activeReminders === undefined ||
     archivedReminders === undefined ||
-    activeItems === undefined
+    activeItems === undefined ||
+    reminderEvents === undefined
   )
     return null
+
+  // Past actions grouped by reminder, newest first — the per-occurrence history.
+  const historyByReminderUid = new Map<string, ReminderEvent[]>()
+  for (const event of reminderEvents) {
+    const list = historyByReminderUid.get(event.reminderUid) ?? []
+    list.push(event)
+    historyByReminderUid.set(event.reminderUid, list)
+  }
+  for (const list of historyByReminderUid.values())
+    list.sort((a, b) => b.at.localeCompare(a.at))
+
+  function describeEvent(event: ReminderEvent): string {
+    if (event.action === 'snoozed') {
+      return event.snoozedUntil
+        ? `Snoozed until ${event.snoozedUntil}`
+        : 'Snoozed'
+    }
+    return 'Done'
+  }
 
   const itemOptions = activeItems
     .map((item) => ({ uid: item.uid, name: item.name }))
@@ -101,30 +123,66 @@ export default function RemindersScreen() {
       <ul className="stack-list metric-list">
         {activeReminders
           .toSorted((a, b) => a.text.localeCompare(b.text))
-          .map((reminder) => (
-            <li key={reminder.id} className="stack-item">
-              <div className="stack-item-info">
-                <span className="stack-item-name">{reminder.text}</span>
-                <span className="stack-item-detail">{detail(reminder)}</span>
-              </div>
-              <div className="stack-item-actions">
-                <button
-                  type="button"
-                  className="button-subtle"
-                  onClick={() => setForm({ mode: 'edit', reminder })}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="button-subtle"
-                  onClick={() => archiveReminder(reminder.id)}
-                >
-                  Archive
-                </button>
-              </div>
-            </li>
-          ))}
+          .map((reminder) => {
+            const history = historyByReminderUid.get(reminder.uid) ?? []
+            const isExpanded = expandedHistory === reminder.uid
+            return (
+              <li key={reminder.id} className="stack-item reminder-item">
+                <div className="stack-item-info">
+                  <span className="stack-item-name">{reminder.text}</span>
+                  <span className="stack-item-detail">{detail(reminder)}</span>
+                </div>
+                <div className="stack-item-actions">
+                  {history.length > 0 && (
+                    <button
+                      type="button"
+                      className="button-subtle"
+                      aria-expanded={isExpanded}
+                      aria-controls={`reminder-history-${reminder.id}`}
+                      onClick={() =>
+                        setExpandedHistory(isExpanded ? null : reminder.uid)
+                      }
+                    >
+                      {isExpanded
+                        ? 'Hide history'
+                        : `History (${history.length})`}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="button-subtle"
+                    onClick={() => setForm({ mode: 'edit', reminder })}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="button-subtle"
+                    onClick={() => archiveReminder(reminder.id)}
+                  >
+                    Archive
+                  </button>
+                </div>
+                {isExpanded && history.length > 0 && (
+                  <ul
+                    className="reminder-history"
+                    id={`reminder-history-${reminder.id}`}
+                  >
+                    {history.map((event) => (
+                      <li key={event.uid} className="reminder-history-row">
+                        <span className="reminder-history-action">
+                          {describeEvent(event)}
+                        </span>
+                        <span className="reminder-history-date">
+                          {event.occurrenceDate}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            )
+          })}
       </ul>
 
       {archivedReminders.length > 0 && (
