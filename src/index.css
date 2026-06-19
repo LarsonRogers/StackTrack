@@ -1177,6 +1177,13 @@ body {
   color: var(--color-text-muted);
 }
 
+/* Today within-section sort (#37): sits under the collapsible header, above
+   the first time section. */
+.today-sort {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
 .stack-sort select {
   flex: 1;
   padding: 0.375rem 0.5rem;

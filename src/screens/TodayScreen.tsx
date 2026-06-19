@@ -17,7 +17,12 @@ import {
   parseIsoDate,
   toIsoDate,
 } from '../lib/dates'
-import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
+import {
+  buildTimeSections,
+  TODAY_SORT_LABELS,
+  type ChecklistEntry,
+  type TodaySortMode,
+} from '../lib/todayView'
 import { describeRunway, daysOfSupplyLeft } from '../lib/runway'
 import MetricLogger from '../components/MetricLogger'
 import SettingsMenu from '../components/SettingsMenu'
@@ -27,9 +32,21 @@ import JournalSection from '../components/JournalSection'
 import CollapsibleSection from '../components/CollapsibleSection'
 import DateNav from '../components/DateNav'
 
+// Within-section card order (#37) — a UI preference, kept in localStorage
+// alongside the other Today layout prefs, never in the synced db.
+const TODAY_SORT_KEY = 'stacktrack.todaySortMode'
+
+function readTodaySort(): TodaySortMode {
+  const saved = localStorage.getItem(TODAY_SORT_KEY)
+  return saved !== null && saved in TODAY_SORT_LABELS
+    ? (saved as TodaySortMode)
+    : 'name'
+}
+
 export default function TodayScreen() {
   const today = toIsoDate(new Date())
   const [selectedDate, setSelectedDate] = useState(today)
+  const [sortMode, setSortMode] = useState<TodaySortMode>(readTodaySort)
 
   // All items (not just active): names/doses of archived items are still
   // needed to label historical records on past days.
@@ -73,7 +90,7 @@ export default function TodayScreen() {
     return null
 
   const activeItems = allItems.filter((item) => item.status === 'active')
-  const sections = buildTimeSections(activeItems, selectedDate)
+  const sections = buildTimeSections(activeItems, selectedDate, sortMode)
   const takenKeys = new Set(intakes.map((i) => `${i.itemId}@${i.time}`))
   const notesByItem = new Map(notes.map((note) => [note.itemId, note]))
   const totalSlots = sections.reduce((sum, s) => sum + s.entries.length, 0)
@@ -163,134 +180,169 @@ export default function TodayScreen() {
               : `${takenCount} of ${totalSlots} taken`}
           </p>
 
-          {sections.map((section) => (
-            <section key={section.time} className="today-section">
-              <h2 className="today-section-title">
-                {formatTime(section.time)}
-              </h2>
-              <ul className="today-list">
-                {section.entries.map((entry) => {
-                  const taken = takenKeys.has(`${entry.item.id}@${entry.time}`)
-                  const note = notesByItem.get(entry.item.id)
-                  const isEditingNote =
-                    noteEditor?.itemId === entry.item.id &&
-                    noteEditor.time === entry.time
-                  // Refill runway (#27), relative to the day being viewed.
-                  const runwayLabel = describeRunway(entry.item, selectedDate)
-                  const runwayDays = daysOfSupplyLeft(entry.item, selectedDate)
-                  const runwayLow = runwayDays !== null && runwayDays <= 7
-                  return (
-                    <li
-                      key={`${entry.item.id}@${entry.time}`}
-                      className="today-item"
-                    >
-                      <div className="today-item-row">
-                        <label className="today-item-check">
-                          <input
-                            type="checkbox"
-                            checked={taken}
-                            onChange={() => toggleTaken(entry, taken)}
-                          />
-                          <span className="today-item-text">
-                            <span className="today-item-name-row">
-                              <span
-                                className={
-                                  taken
-                                    ? 'today-item-name today-item-taken'
-                                    : 'today-item-name'
-                                }
-                              >
-                                {entry.item.name}
+          <CollapsibleSection
+            title="Medications & supplements"
+            storageKey="checklist"
+          >
+            {totalSlots > 1 && (
+              <div className="stack-sort today-sort">
+                <label htmlFor="today-sort">Sort by</label>
+                <select
+                  id="today-sort"
+                  value={sortMode}
+                  onChange={(e) => {
+                    const mode = e.target.value as TodaySortMode
+                    setSortMode(mode)
+                    localStorage.setItem(TODAY_SORT_KEY, mode)
+                  }}
+                >
+                  {(
+                    Object.entries(TODAY_SORT_LABELS) as [
+                      TodaySortMode,
+                      string,
+                    ][]
+                  ).map(([mode, label]) => (
+                    <option key={mode} value={mode}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {sections.map((section) => (
+              <section key={section.time} className="today-section">
+                <h2 className="today-section-title">
+                  {formatTime(section.time)}
+                </h2>
+                <ul className="today-list">
+                  {section.entries.map((entry) => {
+                    const taken = takenKeys.has(
+                      `${entry.item.id}@${entry.time}`,
+                    )
+                    const note = notesByItem.get(entry.item.id)
+                    const isEditingNote =
+                      noteEditor?.itemId === entry.item.id &&
+                      noteEditor.time === entry.time
+                    // Refill runway (#27), relative to the day being viewed.
+                    const runwayLabel = describeRunway(entry.item, selectedDate)
+                    const runwayDays = daysOfSupplyLeft(
+                      entry.item,
+                      selectedDate,
+                    )
+                    const runwayLow = runwayDays !== null && runwayDays <= 7
+                    return (
+                      <li
+                        key={`${entry.item.id}@${entry.time}`}
+                        className="today-item"
+                      >
+                        <div className="today-item-row">
+                          <label className="today-item-check">
+                            <input
+                              type="checkbox"
+                              checked={taken}
+                              onChange={() => toggleTaken(entry, taken)}
+                            />
+                            <span className="today-item-text">
+                              <span className="today-item-name-row">
+                                <span
+                                  className={
+                                    taken
+                                      ? 'today-item-name today-item-taken'
+                                      : 'today-item-name'
+                                  }
+                                >
+                                  {entry.item.name}
+                                </span>
+                                <span
+                                  className={`kind-badge kind-badge-${entry.item.kind}`}
+                                >
+                                  {entry.item.kind === 'med' ? 'Med' : 'Supp'}
+                                </span>
                               </span>
-                              <span
-                                className={`kind-badge kind-badge-${entry.item.kind}`}
-                              >
-                                {entry.item.kind === 'med' ? 'Med' : 'Supp'}
-                              </span>
-                            </span>
-                            <span className="today-item-detail">
-                              {[
-                                [entry.item.dose, entry.item.unit]
+                              <span className="today-item-detail">
+                                {[
+                                  [entry.item.dose, entry.item.unit]
+                                    .filter(Boolean)
+                                    .join(' '),
+                                  entry.item.groups.join(', '),
+                                ]
                                   .filter(Boolean)
-                                  .join(' '),
-                                entry.item.groups.join(', '),
-                              ]
-                                .filter(Boolean)
-                                .join(' · ')}
+                                  .join(' · ')}
+                              </span>
+                              {entry.item.note && (
+                                <span className="today-item-pinned-note">
+                                  {entry.item.note}
+                                </span>
+                              )}
+                              {runwayLabel && (
+                                <span
+                                  className={`today-item-runway${runwayLow ? ' today-item-runway-low' : ''}`}
+                                >
+                                  {runwayLabel}
+                                </span>
+                              )}
+                              {note && !isEditingNote && (
+                                <span className="today-item-note">
+                                  {note.text}
+                                </span>
+                              )}
                             </span>
-                            {entry.item.note && (
-                              <span className="today-item-pinned-note">
-                                {entry.item.note}
-                              </span>
-                            )}
-                            {runwayLabel && (
-                              <span
-                                className={`today-item-runway${runwayLow ? ' today-item-runway-low' : ''}`}
-                              >
-                                {runwayLabel}
-                              </span>
-                            )}
-                            {note && !isEditingNote && (
-                              <span className="today-item-note">
-                                {note.text}
-                              </span>
-                            )}
-                          </span>
-                        </label>
-                        <button
-                          type="button"
-                          className="button-subtle"
-                          onClick={() => openNoteEditor(entry, note)}
-                        >
-                          {note ? 'Edit note' : 'Note'}
-                        </button>
-                      </div>
-
-                      {isEditingNote && (
-                        <div className="today-note-editor">
-                          <label
-                            className="visually-hidden"
-                            htmlFor={`note-${entry.item.id}`}
-                          >
-                            Note for {entry.item.name}
                           </label>
-                          <textarea
-                            id={`note-${entry.item.id}`}
-                            rows={2}
-                            value={noteEditor.draft}
-                            placeholder="e.g. ran out of pills"
-                            onChange={(e) =>
-                              setNoteEditor({
-                                itemId: entry.item.id,
-                                time: entry.time,
-                                draft: e.target.value,
-                              })
-                            }
-                          />
-                          <div className="today-note-actions">
-                            <button
-                              type="button"
-                              className="button-primary button-compact"
-                              onClick={saveNote}
-                            >
-                              Save note
-                            </button>
-                            <button
-                              type="button"
-                              className="button-subtle"
-                              onClick={() => setNoteEditor(null)}
-                            >
-                              Cancel
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            className="button-subtle"
+                            onClick={() => openNoteEditor(entry, note)}
+                          >
+                            {note ? 'Edit note' : 'Note'}
+                          </button>
                         </div>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          ))}
+
+                        {isEditingNote && (
+                          <div className="today-note-editor">
+                            <label
+                              className="visually-hidden"
+                              htmlFor={`note-${entry.item.id}`}
+                            >
+                              Note for {entry.item.name}
+                            </label>
+                            <textarea
+                              id={`note-${entry.item.id}`}
+                              rows={2}
+                              value={noteEditor.draft}
+                              placeholder="e.g. ran out of pills"
+                              onChange={(e) =>
+                                setNoteEditor({
+                                  itemId: entry.item.id,
+                                  time: entry.time,
+                                  draft: e.target.value,
+                                })
+                              }
+                            />
+                            <div className="today-note-actions">
+                              <button
+                                type="button"
+                                className="button-primary button-compact"
+                                onClick={saveNote}
+                              >
+                                Save note
+                              </button>
+                              <button
+                                type="button"
+                                className="button-subtle"
+                                onClick={() => setNoteEditor(null)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            ))}
+          </CollapsibleSection>
         </>
       )}
 

@@ -124,6 +124,52 @@ describe('Today checklist', () => {
   })
 })
 
+describe('Checklist sorting & collapse (#37)', () => {
+  it('collapses the meds/supps section', async () => {
+    localStorage.clear()
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+      groups: [],
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(await screen.findByText('Zinc')).toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: /Medications & supplements/ }),
+    )
+    await waitFor(() =>
+      expect(screen.queryByText('Zinc')).not.toBeInTheDocument(),
+    )
+  })
+
+  it('reorders cards within a time section by the sort control', async () => {
+    localStorage.clear()
+    for (const name of ['Banana', 'Apple']) {
+      await addItem({
+        name,
+        kind: 'supplement',
+        dose: '1',
+        times: ['08:00'],
+        groups: [],
+      })
+    }
+    const user = userEvent.setup()
+    const { container } = render(<App />)
+    await screen.findByText('Apple')
+
+    const firstName = () =>
+      container.querySelector('.today-item-name')?.textContent ?? ''
+    expect(firstName()).toMatch(/^Apple/) // default A→Z
+
+    await user.selectOptions(screen.getByLabelText('Sort by'), 'nameDesc')
+    await waitFor(() => expect(firstName()).toMatch(/^Banana/))
+  })
+})
+
 describe('Date navigation', () => {
   it('cannot navigate into the future', async () => {
     await addItem({
