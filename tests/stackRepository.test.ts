@@ -107,6 +107,79 @@ describe('archiveItem / unarchiveItem', () => {
   })
 })
 
+describe('refill runway inventory (#27)', () => {
+  const today = toIsoDate(new Date())
+
+  it('stamps quantityAsOf and normalizes units on add', async () => {
+    const id = await addItem({
+      ...ZINC,
+      quantityOnHand: 60,
+      unitsPerDose: 2,
+    })
+    expect(await db.items.get(id)).toMatchObject({
+      quantityOnHand: 60,
+      quantityAsOf: today,
+      unitsPerDose: 2,
+    })
+  })
+
+  it('collapses a units-per-dose of 1 to undefined (the default)', async () => {
+    const id = await addItem({ ...ZINC, quantityOnHand: 30, unitsPerDose: 1 })
+    expect((await db.items.get(id))?.unitsPerDose).toBeUndefined()
+  })
+
+  it('preserves a user-supplied past anchor instead of stamping today', async () => {
+    const id = await addItem({
+      ...ZINC,
+      quantityOnHand: 28,
+      quantityAsOf: '2026-06-05',
+    })
+    expect((await db.items.get(id))?.quantityAsOf).toBe('2026-06-05')
+  })
+
+  it('treats back-dating an existing count as an inventory edit (no marker)', async () => {
+    const id = await addItem({ ...ZINC, quantityOnHand: 28 })
+    await updateItem(id, {
+      ...ZINC,
+      quantityOnHand: 28,
+      quantityAsOf: '2026-06-05',
+    })
+    expect((await db.items.get(id))?.quantityAsOf).toBe('2026-06-05')
+    expect(await db.stackEvents.count()).toBe(1) // only the original 'added'
+  })
+
+  it('persists an inventory-only edit WITHOUT a stack event/marker', async () => {
+    const id = await addItem(ZINC)
+    await updateItem(id, { ...ZINC, quantityOnHand: 90 })
+
+    expect((await db.items.get(id))?.quantityOnHand).toBe(90)
+    expect((await db.items.get(id))?.quantityAsOf).toBe(today)
+    // no 'changed' event — refilling is inventory, not a stack change
+    expect(await db.stackEvents.count()).toBe(1) // only the original 'added'
+  })
+
+  it('still records a marker when a real field changes alongside the count', async () => {
+    const id = await addItem(ZINC)
+    await updateItem(id, { ...ZINC, dose: '50 mg', quantityOnHand: 90 })
+
+    expect((await db.items.get(id))?.quantityOnHand).toBe(90)
+    const changed = await db.stackEvents
+      .where('type')
+      .equals('changed')
+      .toArray()
+    expect(changed).toHaveLength(1)
+    expect(changed[0].summary).toBe('dose: 25 mg → 50 mg')
+  })
+
+  it('clears the anchor when the count is removed', async () => {
+    const id = await addItem({ ...ZINC, quantityOnHand: 30 })
+    await updateItem(id, { ...ZINC, quantityOnHand: undefined })
+    const item = await db.items.get(id)
+    expect(item?.quantityOnHand).toBeUndefined()
+    expect(item?.quantityAsOf).toBeUndefined()
+  })
+})
+
 describe('buildChangeSummary', () => {
   it('lists every changed field', () => {
     const summary = buildChangeSummary(ZINC, {

@@ -54,6 +54,24 @@ describe('Stack screen', () => {
     expect(screen.getByText(/25 mg/)).toBeInTheDocument()
   })
 
+  it('shows refill runway for an item with a tracked count', async () => {
+    const user = userEvent.setup()
+    await addItem({
+      name: 'Magnesium',
+      kind: 'supplement',
+      dose: '200 mg',
+      times: ['08:00'],
+      groups: [],
+      quantityOnHand: 10, // 1/day from today → 10 days left
+    })
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
+    await user.click(screen.getByRole('button', { name: 'Stack' }))
+
+    expect(await screen.findByText('≈10 days left')).toBeInTheDocument()
+  })
+
   it('puts an item in multiple groups and marks it across sections', async () => {
     const user = userEvent.setup()
     render(<App />)

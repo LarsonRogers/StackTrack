@@ -18,6 +18,7 @@ import {
   toIsoDate,
 } from '../lib/dates'
 import { buildTimeSections, type ChecklistEntry } from '../lib/todayView'
+import { describeRunway, daysOfSupplyLeft } from '../lib/runway'
 import MetricLogger from '../components/MetricLogger'
 import SettingsMenu from '../components/SettingsMenu'
 import RemindersSection from '../components/RemindersSection'
@@ -174,6 +175,10 @@ export default function TodayScreen() {
                   const isEditingNote =
                     noteEditor?.itemId === entry.item.id &&
                     noteEditor.time === entry.time
+                  // Refill runway (#27), relative to the day being viewed.
+                  const runwayLabel = describeRunway(entry.item, selectedDate)
+                  const runwayDays = daysOfSupplyLeft(entry.item, selectedDate)
+                  const runwayLow = runwayDays !== null && runwayDays <= 7
                   return (
                     <li
                       key={`${entry.item.id}@${entry.time}`}
@@ -216,6 +221,13 @@ export default function TodayScreen() {
                             {entry.item.note && (
                               <span className="today-item-pinned-note">
                                 {entry.item.note}
+                              </span>
+                            )}
+                            {runwayLabel && (
+                              <span
+                                className={`today-item-runway${runwayLow ? ' today-item-runway-low' : ''}`}
+                              >
+                                {runwayLabel}
                               </span>
                             )}
                             {note && !isEditingNote && (

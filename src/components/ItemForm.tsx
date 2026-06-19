@@ -441,6 +441,65 @@ export default function ItemForm({
         placeholder="e.g. take with food"
       />
 
+      <fieldset className="item-form-refill">
+        <legend>Refill tracking (optional)</legend>
+        <p className="item-form-hint">
+          Enter how many you have and the days left show on Today and Stack,
+          estimated from your schedule. Set "as of" to an earlier date to record
+          a past refill.
+        </p>
+        <div className="item-form-refill-row">
+          <div className="item-form-refill-field">
+            <label htmlFor="item-qty">Quantity on hand</label>
+            <input
+              id="item-qty"
+              type="number"
+              min={0}
+              step="any"
+              value={form.quantityOnHand ?? ''}
+              onChange={(e) =>
+                setField(
+                  'quantityOnHand',
+                  e.target.value === '' ? undefined : Number(e.target.value),
+                )
+              }
+              placeholder="e.g. 60"
+            />
+          </div>
+          <div className="item-form-refill-field">
+            <label htmlFor="item-qty-asof">As of</label>
+            <input
+              id="item-qty-asof"
+              type="date"
+              max={today}
+              value={form.quantityAsOf ?? today}
+              onChange={(e) =>
+                setField('quantityAsOf', e.target.value || undefined)
+              }
+            />
+          </div>
+          <div className="item-form-refill-field">
+            <label htmlFor="item-units">Units per dose</label>
+            <input
+              id="item-units"
+              type="number"
+              min={1}
+              step={1}
+              value={form.unitsPerDose ?? ''}
+              onChange={(e) =>
+                setField(
+                  'unitsPerDose',
+                  e.target.value === ''
+                    ? undefined
+                    : Math.floor(Number(e.target.value)),
+                )
+              }
+              placeholder="1"
+            />
+          </div>
+        </div>
+      </fieldset>
+
       {error && (
         <p className="item-form-error" role="alert">
           {error}
