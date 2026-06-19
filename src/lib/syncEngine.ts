@@ -35,6 +35,7 @@ const DATA_TABLES = [
   'dayNotes',
   'healthEvents',
   'reminders',
+  'reminderEvents',
 ] as const
 
 export interface SyncStatus {
@@ -267,6 +268,7 @@ function emptyBundle(): ExportBundle {
       dayNotes: [],
       healthEvents: [],
       reminders: [],
+      reminderEvents: [],
       tombstones: [],
     },
   }

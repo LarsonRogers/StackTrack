@@ -1175,3 +1175,56 @@
   NOT merged/pushed — per user, hold the redeploy; user verifies the cog/dropdown
   polish + reminders visually, then merges. Backlog: #25 Task B done; Task C next
   session. #26 (nav) already on main.
+
+## [2026-06-18] Backlog #25 Task C: Per-occurrence reminder history — Claude Code
+- Scope: final part of the agreed 3-part reminders plan (A nav = #26; B core
+  = Task B; C = this). One logical change: record each Done/Snooze action and
+  surface a per-reminder history view. Cross-cutting (new table through the 4
+  sync libs + UI + tests); short pre-flight plan confirmed with the user first.
+- Data model (schema v12, additive empty table — no migration, mirrors v9/v11):
+  ReminderEvent { id, uid, reminderUid, occurrenceDate, action: 'done'|'snoozed',
+  snoozedUntil?, at, updatedAt }. Index '++id, &uid, reminderUid'. Parentless
+  uid-only: reminderUid is a LABEL (like Reminder.itemUid), never a rewired
+  numeric ref — modeled exactly like healthEvents in merge. Append-only history;
+  rows never edited/deleted.
+- Repository: acknowledgeReminder + snoozeReminder now wrap the reminder update
+  AND the event-append in ONE db.transaction('rw', reminders, reminderEvents).
+  Both compute occurrenceDate identically (currentOccurrence ?? today) so the
+  recorded occurrence matches what isReminderDue suppresses; snooze now reads
+  the reminder (mustGet) to get its uid + recurrence. A single nowIso() stamp is
+  shared by the reminder's updatedAt and the event's at/updatedAt (sync sees one
+  moment). Call sites (Today's RemindersSection) unchanged.
+- Sync wiring (the critical risk — verified complete in all four): exportData
+  (bundle type + read + assembly), importData (TABLE_NAMES + tx scope), mergeData
+  (DATA_TABLES + tx scope + dependents union + uid-only dependent entry, no
+  refMap), syncEngine (DATA_TABLES — also drives gather/push/pull allow-list/
+  write-hook triggers — + emptyBundle). Merge convergence: each device mints its
+  own uid per action, uid-only match → identical taps on two devices are two
+  distinct rows (intended append-only semantics, same as healthEvents).
+- UI (RemindersScreen): active reminders with ≥1 event show a "History (N)"
+  toggle (hidden at 0); expand shows each action newest-first (sorted by tap
+  time `at`, not occurrenceDate, to distinguish multiple actions on one
+  occurrence) as "Done" / "Snoozed until YYYY-MM-DD" + the occurrence date.
+  One panel open at a time (expandedHistory = reminder.uid). aria-expanded +
+  aria-controls→panel id (review nit, fixed). New .reminder-item flex-wrap +
+  .reminder-history styles so the panel wraps to a full-width row below.
+- Tests: reminderRepository.test.ts +3 (done event tied to reminder+occurrence;
+  snoozed event carries snoozedUntil; accumulates one row per action across
+  occurrences). New remindersScreen.test.tsx (toggle hidden until events;
+  expand shows actions newest-first + collapse). Fixtures: exportData
+  schemaVersion 11→12; mergeData bundleWith + tombstones emptyBundle add
+  reminderEvents: []. Full suite 214 green (was 209).
+- Review: independent fresh-context review — ZERO blockers. Nits: aria-controls
+  (FIXED); raw ISO date display (deliberate app-wide convention, left).
+- Security self-check (stored data): event rows carry only generated uid, a
+  reminderUid from an existing record, computed local dates, an enum-literal
+  action, and timestamps — no new free-text input surface (reminder text already
+  trimmed/escaped upstream; React auto-escapes the render). Dexie key queries,
+  not string-built. No secrets; rides E2E-encrypted sync. PASS.
+- Note: Windows autocrlf — `prettier --write .` rewrote EOL on ~10 untouched
+  files; reverted those (EOL-only, LF blob unchanged) to keep the diff scoped to
+  the 8 source + 5 test files actually changed.
+- Lint/format/typecheck/build all pass. User confirmed the live demo.
+- State: committed on branch feature/reminders-history (also carries the earlier
+  Reminders add-button spacing fix 1f8a6ee). Merged to main + pushed. Backlog
+  #25 (in-app reminders, Tasks A/B/C) COMPLETE.

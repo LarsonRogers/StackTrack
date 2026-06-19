@@ -296,6 +296,36 @@ body {
   opacity: 0.6;
 }
 
+/* Reminders: let the per-occurrence history panel wrap to a full-width row
+   below the reminder's name/actions instead of squeezing onto the flex row. */
+.reminder-item {
+  flex-wrap: wrap;
+}
+
+.reminder-history {
+  flex-basis: 100%;
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0.5rem 0 0;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.reminder-history-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.reminder-history-date {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
 .stack-item-info {
   display: flex;
   flex-direction: column;
