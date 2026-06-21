@@ -5,7 +5,12 @@ import type { Schedule, StackItem } from '../src/db/db'
 import { buildTimeSections } from '../src/lib/todayView'
 
 let nextId = 1
-function item(name: string, times: string[], schedule?: Schedule): StackItem {
+function item(
+  name: string,
+  times: string[],
+  schedule?: Schedule,
+  createdAt = '2026-06-01T08:00:00.000Z',
+): StackItem {
   const id = nextId++
   return {
     id,
@@ -17,8 +22,8 @@ function item(name: string, times: string[], schedule?: Schedule): StackItem {
     groups: [],
     schedule,
     status: 'active',
-    createdAt: '2026-06-01T08:00:00.000Z',
-    updatedAt: '2026-06-01T08:00:00.000Z',
+    createdAt,
+    updatedAt: createdAt,
   }
 }
 
@@ -51,5 +56,41 @@ describe('buildTimeSections', () => {
 
     const offDay = buildTimeSections(items, '2026-06-02')
     expect(offDay[0].entries.map((e) => e.item.name)).toEqual(['Daily'])
+  })
+})
+
+describe('within-section sorting (#37)', () => {
+  // All at one time so only the within-section order varies.
+  const items = [
+    item('Banana', ['08:00'], undefined, '2026-06-01T00:00:00.000Z'),
+    item('Apple', ['08:00'], undefined, '2026-06-03T00:00:00.000Z'),
+    item('Cherry', ['08:00'], undefined, '2026-06-02T00:00:00.000Z'),
+  ]
+
+  it('defaults to name A→Z', () => {
+    const [section] = buildTimeSections(items, '2026-06-18')
+    expect(section.entries.map((e) => e.item.name)).toEqual([
+      'Apple',
+      'Banana',
+      'Cherry',
+    ])
+  })
+
+  it('sorts name Z→A', () => {
+    const [section] = buildTimeSections(items, '2026-06-18', 'nameDesc')
+    expect(section.entries.map((e) => e.item.name)).toEqual([
+      'Cherry',
+      'Banana',
+      'Apple',
+    ])
+  })
+
+  it('sorts recently added first (by createdAt)', () => {
+    const [section] = buildTimeSections(items, '2026-06-18', 'added')
+    expect(section.entries.map((e) => e.item.name)).toEqual([
+      'Apple', // 06-03
+      'Cherry', // 06-02
+      'Banana', // 06-01
+    ])
   })
 })

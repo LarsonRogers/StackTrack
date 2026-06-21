@@ -14,13 +14,42 @@ export interface TimeSection {
   entries: ChecklistEntry[]
 }
 
+// How cards are ordered WITHIN each time section (#37). Time-of-day grouping
+// is fixed; this only reorders entries inside a section.
+export type TodaySortMode = 'name' | 'nameDesc' | 'added'
+
+export const TODAY_SORT_LABELS: Record<TodaySortMode, string> = {
+  name: 'Name (A→Z)',
+  nameDesc: 'Name (Z→A)',
+  added: 'Recently added',
+}
+
+// Comparator for entries sharing a time section. 'added' is newest-first by
+// createdAt (ISO strings compare correctly), ties broken by name.
+function compareEntries(
+  a: ChecklistEntry,
+  b: ChecklistEntry,
+  mode: TodaySortMode,
+): number {
+  if (mode === 'nameDesc') return b.item.name.localeCompare(a.item.name)
+  if (mode === 'added') {
+    return (
+      b.item.createdAt.localeCompare(a.item.createdAt) ||
+      a.item.name.localeCompare(b.item.name)
+    )
+  }
+  return a.item.name.localeCompare(b.item.name)
+}
+
 // Expands active items into time-of-day sections for `date`: an item
 // scheduled at 08:00 and 20:00 appears in both. Items not due on `date`
 // (per their recurrence schedule) are excluded. Sections chronological
-// ('HH:mm' strings sort correctly); items alphabetical within a section.
+// ('HH:mm' strings sort correctly); entries ordered within a section by
+// `sortMode` (default A→Z).
 export function buildTimeSections(
   items: StackItem[],
   date: string,
+  sortMode: TodaySortMode = 'name',
 ): TimeSection[] {
   const byTime = new Map<string, ChecklistEntry[]>()
   for (const item of items) {
@@ -35,9 +64,7 @@ export function buildTimeSections(
   return [...byTime.entries()]
     .map(([time, entries]) => ({
       time,
-      entries: entries.toSorted((a, b) =>
-        a.item.name.localeCompare(b.item.name),
-      ),
+      entries: entries.toSorted((a, b) => compareEntries(a, b, sortMode)),
     }))
     .toSorted((a, b) => a.time.localeCompare(b.time))
 }

@@ -1320,3 +1320,34 @@
   barcode pack-size pre-fill (#31), decrement-on-intake.
 - State: committed on branch feature/refill-runway. NOT merged — awaiting user
   demo confirmation + merge decision. Backlog #27 done pending merge.
+  [Later merged to main 9845c84 + pushed; branch deleted.]
+
+## [2026-06-19] Backlog #37: Today sorting + collapsible meds/supps section — Claude Code
+- Goal: collapse the Today meds/supps checklist, and sort cards WITHIN each time
+  section. Small, single-layer, low-risk brief (stated + proceeded). Custom
+  drag-sort is the separate #38; not here.
+- Collapse: wrapped the time-section list in the existing CollapsibleSection
+  (title "Medications & supplements", storageKey "checklist", default open,
+  localStorage-remembered like the #19 sections). The progress line stays ABOVE
+  the collapsible, so collapsed = a glanceable "3 of 8 taken". (.today-section is
+  just margin, not a card, so nesting is clean.)
+- Sort: new TodaySortMode ('name' | 'nameDesc' | 'added') + TODAY_SORT_LABELS +
+  a sortMode param on buildTimeSections (pure, lib/todayView.ts) ordering entries
+  WITHIN each section; time-of-day grouping unchanged. 'added' = newest createdAt
+  first (ISO string compare), name tiebreak. Default 'name' = byte-identical to
+  the prior A→Z behavior. A <select> (shown only when >1 slot) persists the choice
+  to localStorage (stacktrack.todaySortMode) — mirrors StackScreen's sort pattern
+  exactly (same key/read-validate/onChange shape).
+- Files: lib/todayView.ts, screens/TodayScreen.tsx (mostly prettier re-indent from
+  the wrap), index.css (.today-sort spacing), tests. UI-only — no schema/sync/db
+  change; sort+collapse are localStorage prefs, never synced.
+- Security: N/A — pure UI/view; no input/auth/stored-data/secrets/external.
+- Tests: todayView.test.ts +3 (A→Z default, Z→A, recently-added by createdAt);
+  todayScreen.test.tsx +2 (collapse hides the section; sort control flips order
+  A→Z→Z→A). Full suite 237 green (was 232).
+- Review: independent fresh-context review — CLEAN, ZERO blockers. NITs
+  (unguarded localStorage matching the existing StackScreen pattern; optional
+  extra coverage) left as-is, out of scope.
+- Lint/format/typecheck/build all pass.
+- State: committed on branch feature/today-sort-collapse. NOT merged — awaiting
+  user demo confirmation + merge decision. Backlog #37 done pending merge.
