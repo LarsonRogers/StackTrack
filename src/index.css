@@ -1121,10 +1121,11 @@ body {
   font-size: 0.875rem;
 }
 
-/* The "why" note under a stack-change row — indented past the dot + date so it
-   aligns under the change label. */
+/* The "why" note under a stack-change row — indented to line up under the
+   change title: dot (0.625) + gap (0.5) + date (3.5) + gap (0.5) = 5.125rem,
+   matching the flex columns of .graph-change above it. */
 .stack-change-note {
-  margin-left: 4rem;
+  margin-left: 5.125rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
