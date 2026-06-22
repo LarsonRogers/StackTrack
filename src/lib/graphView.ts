@@ -105,6 +105,8 @@ export interface ChangeMarker {
   type: StackEventType
   label: string
   color: string
+  eventIds: number[] // underlying stack-event ids this row represents — the write target for its shared note
+  note?: string // the row's shared "why" note, if any underlying event carries one
 }
 
 // Human verb per event type, used for solo and group labels alike.
@@ -167,6 +169,10 @@ export function collapseEvents(
       type,
       label,
       color: EVENT_COLORS[type],
+      eventIds: events.map((event) => event.id),
+      // The row shares one note (setEventNote writes it to every event in the
+      // row), so the first non-empty one is the row's note.
+      note: events.map((event) => event.note).find((n) => n && n.trim()),
     })
   }
 

@@ -2,11 +2,13 @@
 // selection, the collapsed stack-change legend, and empty states. Chart
 // pixel output isn't asserted (jsdom has no layout); the shaping logic is
 // covered by graphView.test.ts and the visual result by the demo gate.
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
+import StackChangeNote from '../src/components/StackChangeNote'
+import * as stackRepo from '../src/db/stackRepository'
 import { addItem } from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setMetricEntry } from '../src/db/metricEntryRepository'
@@ -68,6 +70,58 @@ describe('Graphs screen', () => {
     expect(
       screen.getByRole('region', { name: 'Stack changes' }),
     ).toBeInTheDocument()
+  })
+
+  it('attaches a note to a stack change from the change list', async () => {
+    const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
+    await setMetricEntry(metricId, toIsoDate(new Date()), 7)
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+      groups: [],
+    })
+
+    const user = await openGraphsTab()
+    await user.click(await screen.findByRole('button', { name: 'Add note' }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Note for Started Zinc' }),
+      'started after bloodwork',
+    )
+    await user.click(screen.getByRole('button', { name: 'Save note' }))
+
+    // The editor closes and the row now shows the saved note + an Edit control
+    // (the live query re-emits, so the note flows back down from the parent).
+    expect(
+      await screen.findByRole('button', { name: 'Edit note' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('started after bloodwork')).toBeInTheDocument()
+    // ...and it persisted on the underlying event.
+    await waitFor(async () =>
+      expect((await db.stackEvents.toArray())[0].note).toBe(
+        'started after bloodwork',
+      ),
+    )
+  })
+
+  it('keeps the editor open and shows an error when the save fails', async () => {
+    const spy = vi
+      .spyOn(stackRepo, 'setEventNote')
+      .mockRejectedValueOnce(new Error('storage unavailable'))
+    const user = userEvent.setup()
+    render(<StackChangeNote eventIds={[1]} label="Started Zinc" />)
+
+    await user.click(screen.getByRole('button', { name: 'Add note' }))
+    await user.type(screen.getByRole('textbox'), 'after bloodwork')
+    await user.click(screen.getByRole('button', { name: 'Save note' }))
+
+    // Failure must NOT look like success: error shown, editor + draft intact,
+    // no "Saved" flash.
+    expect(await screen.findByRole('alert')).toHaveTextContent(/try again/)
+    expect(screen.getByRole('textbox')).toHaveValue('after bloodwork')
+    expect(screen.queryByText('Saved')).not.toBeInTheDocument()
+    spy.mockRestore()
   })
 
   it('shows the no-values note for a metric without entries', async () => {

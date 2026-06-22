@@ -63,6 +63,7 @@ export interface StackEvent {
   itemName: string
   groups: string[] // snapshot of the item's groups at event time; [] = ungrouped
   summary: string // human-readable, e.g. "dose: 25 mg → 50 mg"
+  note?: string // optional user "why" for this change — the reasoning behind it. Editable, unlike the itemName/groups/summary snapshot fields; shown and edited on the Graphs change list. Not indexed (no schema bump); rides export/sync as a plain field.
   updatedAt: string
 }
 

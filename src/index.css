@@ -1108,11 +1108,40 @@ body {
   gap: 0.375rem;
 }
 
+.graph-change-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .graph-change {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
   font-size: 0.875rem;
+}
+
+/* The "why" note under a stack-change row — indented past the dot + date so it
+   aligns under the change label. */
+.stack-change-note {
+  margin-left: 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
+}
+
+.stack-change-note-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  white-space: pre-wrap;
+}
+
+.stack-change-note-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #b91c1c;
 }
 
 .graph-change-dot {

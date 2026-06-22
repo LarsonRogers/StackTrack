@@ -256,6 +256,29 @@ export async function unarchiveItem(id: number): Promise<void> {
   })
 }
 
+// Attaches (or clears) the user's "why" note on stack-change events. The
+// Graphs list edits a whole row at once and a row may collapse several
+// same-day changes into one (e.g. "Started Testosterone Support (2 items)"),
+// so the note is shared: every underlying event id is written together. Empty
+// text clears the note. Refreshes updatedAt so the edit propagates — stackEvents
+// are otherwise append-only history, and merge takes the newest copy per uid.
+// This is NOT a stack change itself: it edits existing events, records no new
+// StackEvent, and never touches the immutable snapshot fields.
+export async function setEventNote(
+  eventIds: number[],
+  note: string,
+): Promise<void> {
+  const value = note.trim() || undefined
+  const stamp = nowIso()
+  await db.transaction('rw', db.stackEvents, async () => {
+    for (const id of eventIds) {
+      const event = await db.stackEvents.get(id)
+      if (!event) continue
+      await db.stackEvents.put({ ...event, note: value, updatedAt: stamp })
+    }
+  })
+}
+
 async function mustGetItem(id: number): Promise<StackItem> {
   const item = await db.items.get(id)
   if (!item) throw new Error(`Stack item ${id} not found`)

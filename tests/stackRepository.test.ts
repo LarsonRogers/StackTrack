@@ -8,6 +8,7 @@ import {
   addItem,
   archiveItem,
   buildChangeSummary,
+  setEventNote,
   unarchiveItem,
   updateItem,
   type StackItemInput,
@@ -240,5 +241,45 @@ describe('schedule normalization', () => {
       kind: 'daysOfWeek',
       days: [1, 3, 5],
     })
+  })
+})
+
+describe('setEventNote', () => {
+  it('attaches a note and refreshes updatedAt without a new event', async () => {
+    await addItem(ZINC)
+    const event = (await db.stackEvents.toArray())[0]
+    const before = event.updatedAt
+
+    await setEventNote([event.id], '  after bloodwork  ')
+
+    const updated = await db.stackEvents.get(event.id)
+    if (!updated) throw new Error('event missing after note write')
+    expect(updated.note).toBe('after bloodwork') // trimmed
+    expect(updated.updatedAt >= before).toBe(true) // bumped for sync
+    expect(await db.stackEvents.count()).toBe(1) // edits an event, adds none
+  })
+
+  it('shares one note across every event id in a collapsed row', async () => {
+    await addItem(ZINC) // Testosterone Support
+    await addItem({ ...ZINC, name: 'Magnesium' }) // same group, same day
+    const ids = (await db.stackEvents.toArray()).map((e) => e.id)
+
+    await setEventNote(ids, 'started the stack')
+
+    const notes = (await db.stackEvents.toArray()).map((e) => e.note)
+    expect(notes).toEqual(['started the stack', 'started the stack'])
+  })
+
+  it('clears the note when given empty (or whitespace) text', async () => {
+    await addItem(ZINC)
+    const id = (await db.stackEvents.toArray())[0].id
+    await setEventNote([id], 'temporary')
+    await setEventNote([id], '   ')
+    expect((await db.stackEvents.get(id))?.note).toBeUndefined()
+  })
+
+  it('ignores ids with no matching event', async () => {
+    await expect(setEventNote([9999], 'orphan')).resolves.toBeUndefined()
+    expect(await db.stackEvents.count()).toBe(0)
   })
 })

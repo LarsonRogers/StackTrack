@@ -257,4 +257,50 @@ describe('collapseEvents', () => {
     expect(markers).toHaveLength(1)
     expect(markers[0].label).toBe('Started Iron')
   })
+
+  it('carries the underlying event ids on each marker (the note write target)', () => {
+    const markers = collapseEvents(
+      [
+        {
+          ...event('2026-06-01', 'added', 'Zinc', 'Testosterone Support'),
+          id: 1,
+        },
+        {
+          ...event('2026-06-01', 'added', 'Magnesium', 'Testosterone Support'),
+          id: 2,
+        },
+      ],
+      null,
+    )
+    expect(markers).toHaveLength(1)
+    expect(markers[0].eventIds.toSorted()).toEqual([1, 2])
+  })
+
+  it('surfaces a shared note from the events in a collapsed row', () => {
+    const markers = collapseEvents(
+      [
+        {
+          ...event('2026-06-01', 'added', 'Zinc', 'Testosterone Support'),
+          id: 1,
+          note: 'after bloodwork',
+        },
+        {
+          ...event('2026-06-01', 'added', 'Magnesium', 'Testosterone Support'),
+          id: 2,
+          note: 'after bloodwork',
+        },
+      ],
+      null,
+    )
+    expect(markers[0].note).toBe('after bloodwork')
+  })
+
+  it('leaves a marker note undefined when no event carries one', () => {
+    const markers = collapseEvents(
+      [{ ...event('2026-06-01', 'added', 'Zinc'), id: 7 }],
+      null,
+    )
+    expect(markers[0].note).toBeUndefined()
+    expect(markers[0].eventIds).toEqual([7])
+  })
 })
