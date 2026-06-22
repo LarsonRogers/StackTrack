@@ -32,8 +32,22 @@ body {
 .today {
   max-width: 480px;
   margin: 0 auto;
-  padding: 1rem;
+  /* Top padding lives on the sticky .today-header (see .screen). */
+  padding: 0 1rem 1rem;
   min-height: 100dvh;
+}
+
+/* Freeze the Today top bar (title, date, date-nav, settings cog) so it stays
+   visible while the checklist scrolls — mirrors .screen-header and the fixed
+   bottom navbar. padding-bottom gives the date-nav room above the divider. */
+.today-header {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  padding-top: 1rem; /* breathing room above the title, kept while stuck */
+  padding-bottom: 0.75rem;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .today-header h1 {
@@ -105,7 +119,9 @@ body {
 .screen {
   max-width: 480px;
   margin: 0 auto;
-  padding: 1rem;
+  /* Top padding lives on the sticky .screen-header instead, so the gap above
+     the title travels with the header when it sticks. */
+  padding: 0 1rem 1rem;
 }
 
 .screen-header h1 {
@@ -142,15 +158,24 @@ body {
 
 /* Other screens: no date line, so pin the cog to the top-right of the header,
    top-aligned with the heading. Natural height (its own min-height) keeps it
-   consistent whether or not the header carries a subtitle. */
+   consistent whether or not the header carries a subtitle.
+   Frozen (sticky) so the title/subtitle/cog stay visible while the page
+   scrolls — mirrors the fixed bottom navbar. sticky keeps it the containing
+   block for the absolute cog, so cog alignment is unchanged. The opaque
+   background + z-index let content scroll cleanly underneath. */
 .screen-header {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  padding-top: 1rem; /* breathing room above the title, kept while stuck */
   padding-right: 3.5rem;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .screen-header > .settings-menu {
   position: absolute;
-  top: 0;
+  top: 1rem; /* matches the header's padding-top so the cog stays title-aligned */
   right: 0;
 }
 
