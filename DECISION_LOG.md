@@ -1408,3 +1408,9 @@
   work — not downgraded); no Light-tier (haiku) sub-tasks this task.
 - State: committed on branch feature/stack-change-notes. NOT merged — awaiting
   user demo confirmation + merge decision. Backlog #41 done pending merge.
+- Follow-up (same task, user request): aligned the Add/Edit-note control + note
+  text under the change TITLE — `.stack-change-note` margin-left 4rem → 5.125rem
+  (dot 0.625 + gap 0.5 + date 3.5 + gap 0.5, matching the .graph-change columns).
+  CSS-only; 247 tests still green; build/format pass.
+  [Merged to main 7ee3a86 + pushed; feature branch deleted. CI/Pages deploy runs
+  on push.]

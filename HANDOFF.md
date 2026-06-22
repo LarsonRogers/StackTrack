@@ -11,21 +11,14 @@ something and shows on the row under the change. Stored on the `StackEvent`
 multi-change row (e.g. "Started Testosterone Support (2 items)") shares one note
 across its underlying events. UI-only data: rides export/import/merge/sync as a
 plain field with no change to the 4 sync libs.
+A follow-up tweak aligned the Add/Edit-note control + note text under the change
+**title** (`.stack-change-note` margin-left 5.125rem).
 **247 tests green**; lint/format/typecheck/build pass; independent review
 **zero blockers** (acted on 2 IMPORTANT findings — see below).
 
-**On branch `feature/stack-change-notes`, committed but NOT merged** — awaiting
-your merge decision. Dev server at http://localhost:5173 has it live via HMR.
-
-**To finish — demo, then merge:**
-1. Open Graphs, pick a metric that has a logged value (so the chart renders),
-   make sure there's at least one stack change in the range.
-2. On a row under "Stack changes in this period", click **Add note**, type a
-   reason (e.g. "after bloodwork"), **Save note** → the note appears on the row
-   and the button becomes **Edit note**. Re-open the app / another device after
-   sync to confirm it persisted.
-3. Merge: `git checkout main && git merge --no-ff feature/stack-change-notes`.
-   Nothing pushed yet.
+**MERGED to `main` (7ee3a86) and PUSHED** — CI (lint/tests) + Cloudflare Pages
+auto-deploy run on the push. Feature branch deleted. Confirm CI is green and the
+live app updated; if CI fails, investigate before further work.
 
 **Up next (BACKLOG.md):** #38 custom drag-sort (persisted order + touch DnD,
 needs a dep like dnd-kit), #28 adherence, #29 correlation, #30 consent framework
