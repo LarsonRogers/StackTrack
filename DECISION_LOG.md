@@ -1414,3 +1414,26 @@
   CSS-only; 247 tests still green; build/format pass.
   [Merged to main 7ee3a86 + pushed; feature branch deleted. CI/Pages deploy runs
   on push.]
+
+## [2026-06-22] Freeze the top bar (sticky screen header) — Claude Code
+- Brief (user request, UI polish — not a backlog item): freeze the top bar
+  (title, subtitle/date, settings cog) so it stays visible while the page
+  scrolls, like the fixed bottom navbar.
+- Approach: `.screen-header` and `.today-header` → position:sticky top:0,
+  z-index 15, opaque background (--color-bg), bottom divider. Chose sticky over
+  fixed: sticky stays in flow, so no per-screen compensating padding-top and it
+  adapts to the two header heights (Today's date-nav vs the others' subtitle).
+- Follow-up (same request): the title scrolled flush to the very top before
+  sticking because the 1rem gap lived on the .screen/.today scroll CONTAINER
+  (above the sticky boundary). Moved that top padding INTO the headers'
+  padding-top so the gap travels with the sticky box; shifted the absolute
+  settings cog top 0 → 1rem to stay title-aligned (it pins to the header's
+  padding box).
+- Scope: CSS-only (src/index.css). All 6 screens covered (5 use .screen-header,
+  Today uses .today-header). Divider is content-width (inset), matching the
+  app's inset/card aesthetic — user confirmed inset is fine. No JS/logic/schema
+  change; no security surface.
+- Tests: 247 green (unchanged — no test asserts pixel layout, per the
+  graphsScreen test's own note). Lint/typecheck/format/build pass.
+- State: committed on branch fix/freeze-top-bar, merged to main cacbd2e + pushed,
+  branch deleted. CI/Pages deploy runs on push.

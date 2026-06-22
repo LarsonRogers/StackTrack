@@ -2,23 +2,22 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-22 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
-**Last completed:** Backlog **#41 — Stack-change notes**. You can now attach an
-optional free-text "why" note to a stack change from the **Graphs** screen's
-"Stack changes in this period" list — each row has an **Add note / Edit note**
-control. The note records your reasoning for starting/changing/stopping
-something and shows on the row under the change. Stored on the `StackEvent`
-(new unindexed `note?` field — **no schema-version bump**); a collapsed
-multi-change row (e.g. "Started Testosterone Support (2 items)") shares one note
-across its underlying events. UI-only data: rides export/import/merge/sync as a
-plain field with no change to the 4 sync libs.
-A follow-up tweak aligned the Add/Edit-note control + note text under the change
-**title** (`.stack-change-note` margin-left 5.125rem).
-**247 tests green**; lint/format/typecheck/build pass; independent review
-**zero blockers** (acted on 2 IMPORTANT findings — see below).
+**Last completed:** **Frozen top bar** (UI polish, not a backlog item) — the
+screen header (title, subtitle/date, date-nav, settings cog) is now
+**position:sticky** so it stays visible while the page scrolls, like the fixed
+bottom navbar. The 1rem gap above the title lives on the header's own
+`padding-top` (not the scroll container) so the breathing room is kept when the
+header sticks; the absolute cog shifted `top: 1rem` to stay title-aligned.
+CSS-only (`src/index.css`); covers all 6 screens (`.screen-header` + Today's
+`.today-header`). Divider is content-width (inset) — user OK'd inset.
+**Just before that:** Backlog **#41 — Stack-change notes** (attach a "why" note
+to a stack change from the Graphs change list; new unindexed `StackEvent.note`,
+no schema bump; rides export/sync). See the prior log entries.
+**247 tests green**; lint/typecheck/format/build pass.
 
-**MERGED to `main` (7ee3a86) and PUSHED** — CI (lint/tests) + Cloudflare Pages
-auto-deploy run on the push. Feature branch deleted. Confirm CI is green and the
-live app updated; if CI fails, investigate before further work.
+**MERGED to `main` (cacbd2e) and PUSHED** — CI (lint/tests) + Cloudflare Pages
+auto-deploy run on the push. Branches deleted. Confirm CI is green and the live
+app updated; if CI fails, investigate before further work.
 
 **Up next (BACKLOG.md):** #38 custom drag-sort (persisted order + touch DnD,
 needs a dep like dnd-kit), #28 adherence, #29 correlation, #30 consent framework
