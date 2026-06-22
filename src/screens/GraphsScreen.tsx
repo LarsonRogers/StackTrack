@@ -30,6 +30,7 @@ import {
 import { CATEGORY_LABELS } from '../lib/events'
 import { toIsoDate } from '../lib/dates'
 import SettingsMenu from '../components/SettingsMenu'
+import StackChangeNote from '../components/StackChangeNote'
 
 const RANGES: GraphRange[] = ['30d', '90d', 'all']
 
@@ -266,15 +267,24 @@ export default function GraphsScreen() {
             {markers.map((marker) => (
               <li
                 key={`${marker.date}-${marker.label}`}
-                className="graph-change"
+                className="graph-change-item"
               >
-                <span
-                  className="graph-change-dot"
-                  style={{ backgroundColor: marker.color }}
-                  aria-hidden="true"
+                <div className="graph-change">
+                  <span
+                    className="graph-change-dot"
+                    style={{ backgroundColor: marker.color }}
+                    aria-hidden="true"
+                  />
+                  <span className="graph-change-date">
+                    {formatTs(marker.ts)}
+                  </span>
+                  <span>{marker.label}</span>
+                </div>
+                <StackChangeNote
+                  eventIds={marker.eventIds}
+                  note={marker.note}
+                  label={marker.label}
                 />
-                <span className="graph-change-date">{formatTs(marker.ts)}</span>
-                <span>{marker.label}</span>
               </li>
             ))}
           </ul>

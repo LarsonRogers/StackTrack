@@ -1351,3 +1351,60 @@
 - Lint/format/typecheck/build all pass.
 - State: committed on branch feature/today-sort-collapse. NOT merged — awaiting
   user demo confirmation + merge decision. Backlog #37 done pending merge.
+
+## [2026-06-22] Stack-change notes — reasoning on a change — Claude Code
+- Brief (confirmed): let the user attach an optional free-text "why" note to a
+  stack change, written/viewed from the "Stack changes in this period" list on
+  the Graphs screen, persisted on the StackEvent. Ad-hoc user request (not a
+  prior backlog item) — added as backlog #41, done pending merge.
+- Design decision (asked the user): the Graphs list shows COLLAPSED rows
+  (date+type+group merge, e.g. "Started Testosterone Support (2 items)"). Chose
+  ONE SHARED NOTE PER ROW — the note writes to every underlying StackEvent in
+  the row. WHY (user pick): matches the "a row = a change" mental model and
+  needs no expand/collapse UI; merged rows are the less common case.
+- Data model: new optional `note?: string` on StackEvent (db.ts). UNINDEXED, so
+  NO Dexie schema-version bump (mirrors how StackItem.note was added). Confirmed
+  by reading exportData/importData/mergeData/syncEngine that whole-row copy
+  carries the field automatically — no change to the 4 sync libs, no
+  schemaVersion fixture bump. (Matches the standing watch item: new FIELD on an
+  existing table needs none of the new-TABLE plumbing.)
+- Write path: setEventNote(eventIds, note) in stackRepository (the only writer).
+  Trims; empty clears; writes the shared note to every id in the row; refreshes
+  updatedAt so the edit propagates through merge/sync. Records NO new StackEvent
+  and never touches the immutable snapshot fields (itemName/groups/summary) — a
+  note edit is NOT a stack change (no graph marker), like intakes/inventory.
+- View shaping: collapseEvents (graphView.ts) now carries `eventIds: number[]`
+  and a shared `note?` on each ChangeMarker (first non-empty among the row's
+  events; the trim guard is defensive against hand-edited import bundles).
+- UI: new StackChangeNote.tsx — inline per-row editor mirroring JournalSection
+  (local draft + "Saved" flash; live query is the single source of truth for
+  the saved value). Each row in the Graphs change list gets Add/Edit note; the
+  health-events list is untouched (kept on `.graph-change`; stack rows use a new
+  `.graph-change-item` column wrapper so health events don't change).
+- Security self-check (input + stored data): note is free text → stored trimmed
+  via the repository → rendered by React in a <p>/textarea value (auto-escaped;
+  no dangerouslySetInnerHTML, no markdown/HTML). No length cap (matches
+  dayNote/itemNote). Rides the existing E2E-encrypted sync as a plain field; no
+  new external transmission, no secrets, no auth/permissions change. PASS.
+- Independent review (fresh-context subagent, Opus): ZERO blockers. Confirmed
+  every invariant (no new event on edit; snapshots untouched; updatedAt bumped;
+  export/merge/sync ride automatically; key stability; a11y via useId label).
+  Acted on 2 IMPORTANT findings: (1) handleSave showed "Saved" even on a failed
+  write of sensitive reasoning — added try/catch that keeps the editor open with
+  the draft intact and shows an inline error; (2) double-tap could race two
+  writes — added a `saving` guard + disabled Save during the write. NIT (note
+  divergence after a cross-device merge — events in a row could hold different
+  notes; editing then overwrites with the first non-empty) accepted as a KNOWN
+  LIMITATION, documented here, not fixed: rare (needs merge + diverged notes +
+  edit), deterministic, non-corrupting single-device (the dominant case);
+  parallels the documented "deletions don't propagate in file sync" limitation.
+- Tests: graphView.test.ts (+3: eventIds carried, shared note surfaced, note
+  undefined when none); stackRepository.test.ts (+4: set/trim + updatedAt bump +
+  no new event, shared across a collapsed row, clear on empty, ignore unknown
+  id); exportData.test.ts (+1: note rides the bundle, schemaVersion stays 12);
+  graphsScreen.test.tsx (+2: add-note flow end-to-end; save-failure keeps editor
+  open + error, no "Saved"). Full suite 247 green (was 237).
+- Lint/format/typecheck/build all pass. Tier use: review ran on Opus (judgment
+  work — not downgraded); no Light-tier (haiku) sub-tasks this task.
+- State: committed on branch feature/stack-change-notes. NOT merged — awaiting
+  user demo confirmation + merge decision. Backlog #41 done pending merge.

@@ -3,7 +3,7 @@
 // handles quoting, arrays, and optional columns correctly.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../src/db/db'
-import { addItem } from '../src/db/stackRepository'
+import { addItem, setEventNote } from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setMetricEntry } from '../src/db/metricEntryRepository'
 import { setMetricNote } from '../src/db/metricNoteRepository'
@@ -57,6 +57,27 @@ describe('buildExportBundle', () => {
     expect(bundle.data.dayNotes).toHaveLength(1)
     expect(bundle.data.healthEvents).toHaveLength(1)
     expect(bundle.data.itemNotes).toHaveLength(0)
+  })
+
+  it('carries a stack-change note in the bundle without a schema bump', async () => {
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+      groups: [],
+    })
+    const eventId = (await db.stackEvents.toArray())[0].id
+    await setEventNote([eventId], 'started after bloodwork')
+
+    const bundle = await buildExportBundle()
+    // The note is an unindexed field on an existing table — it rides the
+    // whole-row export with no schemaVersion change (still 12).
+    expect(bundle.schemaVersion).toBe(12)
+    expect(bundle.data.stackEvents).toHaveLength(1)
+    expect((bundle.data.stackEvents[0] as { note?: string }).note).toBe(
+      'started after bloodwork',
+    )
   })
 })
 
