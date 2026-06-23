@@ -390,6 +390,41 @@ body {
   flex-shrink: 0;
 }
 
+/* Custom sort (#38): a draggable row gains a leading drag handle. Left-align so
+   it reads handle | info … actions, with the info pushing the actions to the
+   right edge (replacing the default space-between). */
+.stack-item-draggable {
+  justify-content: flex-start;
+}
+
+.stack-item-draggable .stack-item-info {
+  margin-right: auto;
+}
+
+.stack-drag-handle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none; /* let dnd-kit's PointerSensor own the touch gesture */
+}
+
+.stack-drag-handle:active {
+  cursor: grabbing;
+}
+
+.stack-sort-hint {
+  margin: 1rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
 .kind-badge {
   font-size: 0.6875rem;
   font-weight: 600;

@@ -1437,3 +1437,58 @@
   graphsScreen test's own note). Lint/typecheck/format/build pass.
 - State: committed on branch fix/freeze-top-bar, merged to main cacbd2e + pushed,
   branch deleted. CI/Pages deploy runs on push.
+
+## [2026-06-23] Backlog #38a: Custom drag-to-reorder (Stack screen) — Claude Code
+- Brief (confirmed): add a "Custom" sort mode where the user drags item cards
+  into an explicit order that persists and rides sync. Split #38 → #38a (Stack,
+  this task) + #38b (Today within time sections, deferred). User picked Stack
+  first + the dnd-kit library via AskUserQuestion.
+- DEPENDENCY DECISION (default policy — adding a third-party dep — confirmed by
+  user this task, recorded per Instruction Precedence): added @dnd-kit/core
+  ^6.3.1 + @dnd-kit/sortable ^10.0.0 + @dnd-kit/utilities ^3.2.2. WHY: HTML5
+  drag doesn't work on touch (the installed PWA's primary surface); hand-rolling
+  pointer-based touch DnD well is far more fragile. dnd-kit is touch + keyboard
+  accessible. Peer dep react>=16.8 covers the project's React 19. Dependency
+  audit: dnd-kit added 4 clean packages, 0 new vulns; the 5 pre-existing audit
+  findings are dev-tooling only (esbuild/Vite, undici+ws via miniflare/wrangler)
+  — not shipped, out of scope, left as-is.
+- Persistence model: a single unindexed `order?: number` per StackItem. WHY:
+  lightest path that rides sync — unindexed ⇒ NO schema-version bump, rides
+  export/import/merge/sync via the existing whole-row copy, ZERO changes to the
+  4 sync libs (confirmed by review). reorderItems(orderedIds) in stackRepository
+  (the only writer) writes a dense rank 0..n-1 in one transaction, skips items
+  already at rank (minimal sync deltas), bumps updatedAt. Reordering is NOT a
+  stack change — records no StackEvent/graph marker (like intakes/inventory).
+- Sort: sortByCustomOrder + 'custom' StackSortMode (lib/stackView). Ranked first
+  by order; unranked (undefined — new or unarchived items) to the END by name.
+  Compares ranks directly (not subtraction) to dodge Infinity−Infinity=NaN.
+- Merge: order is per-item → converges via existing newest-wins-by-uid (fine for
+  single-user; simultaneous cross-device reorders rare, deterministic).
+- UI: StackScreen renderActiveItem split into renderActiveItem (<li>) +
+  renderItemBody (inner, reused). Custom mode renders SortableStackList
+  (dnd-kit DndContext + SortableContext; PointerSensor 5px activation +
+  KeyboardSensor) of SortableStackItem rows (useSortable; dedicated ⠿ drag
+  handle carries the listeners + setActivatorNodeRef; touch-action:none on the
+  handle so the page still scrolls and Edit/Archive stay tappable). A hint line
+  prompts discovery. Drag only in Custom; other sorts read-only.
+- Security self-check: N/A new surface — reorder writes a computed integer rank
+  via the repository; no user free-text, no auth/secrets/external. Rides E2E
+  sync as a plain field. PASS.
+- Independent review (fresh-context subagent, Opus): ZERO blockers. Confirmed
+  export/merge/sync ride, no StackEvent on reorder, updatedAt bumped, touch-action
+  scoping, React 19 compat, new items fall to end. Acted on 2 IMPORTANT: (1)
+  added setActivatorNodeRef on the handle (keyboard-drag focus correctness); (2)
+  unarchiveItem now clears `order` so a restored item re-enters UNRANKED instead
+  of keeping a stale rank that could collide with a since-reordered list (+ test;
+  confirms Dexie update drops an undefined-valued unindexed key). NIT (redundant
+  role="button" from spreading dnd-kit attributes onto a native <button>) left
+  per the reviewer's own guidance — cosmetic, harmless.
+- Tests (+11; full suite 257 green, was 247): stackView (3 — rank order,
+  unranked-to-end, all-unranked stable/no NaN); stackRepository (5 — dense rank
+  + updatedAt, no StackEvent, skip-unchanged, ignore unknown id, unarchive
+  clears order); exportData (1 — order rides bundle, schemaVersion stays 12);
+  stackScreen (1 — Custom renders draggable rows in saved order + hint + persists
+  the pref). Real pointer drag isn't simulated in jsdom (verified via demo).
+- Lint/typecheck/format/build pass. Bundle precache 726→772 KiB (dnd-kit ~45KiB).
+- State: committed on branch feature/custom-sort-stack. Backlog #38 → #38a done
+  pending merge; #38b (Today reorder) added as planned.

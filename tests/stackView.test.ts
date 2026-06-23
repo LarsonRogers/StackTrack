@@ -5,6 +5,7 @@ import type { StackEvent, StackItem } from '../src/db/db'
 import {
   groupByPurpose,
   latestEventDates,
+  sortByCustomOrder,
   sortByEarliestTime,
   sortByName,
   sortByRecentlyChanged,
@@ -84,6 +85,40 @@ describe('latestEventDates / sortByRecentlyChanged', () => {
 
     const sorted = sortByRecentlyChanged([b, a], latest)
     expect(sorted.map((i) => i.name)).toEqual(['Zinc', 'Boron'])
+  })
+})
+
+describe('sortByCustomOrder', () => {
+  const ranked = (name: string, order: number | undefined): StackItem => ({
+    ...item(name, []),
+    order,
+  })
+
+  it('orders by ascending rank', () => {
+    const sorted = sortByCustomOrder([
+      ranked('Zinc', 2),
+      ranked('Boron', 0),
+      ranked('Iron', 1),
+    ])
+    expect(sorted.map((i) => i.name)).toEqual(['Boron', 'Iron', 'Zinc'])
+  })
+
+  it('sends unranked items to the end, alphabetical among themselves', () => {
+    const sorted = sortByCustomOrder([
+      ranked('Zinc', undefined),
+      ranked('Boron', 0),
+      ranked('Apple', undefined),
+    ])
+    // ranked first, then the two unranked by name
+    expect(sorted.map((i) => i.name)).toEqual(['Boron', 'Apple', 'Zinc'])
+  })
+
+  it('is stable for all-unranked items (no Infinity − Infinity NaN)', () => {
+    const sorted = sortByCustomOrder([
+      ranked('Zinc', undefined),
+      ranked('Boron', undefined),
+    ])
+    expect(sorted.map((i) => i.name)).toEqual(['Boron', 'Zinc'])
   })
 })
 
