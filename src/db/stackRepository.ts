@@ -247,11 +247,19 @@ export async function archiveItem(id: number): Promise<void> {
   })
 }
 
-// Restores an archived item; counts as 'added' again for the history.
+// Restores an archived item; counts as 'added' again for the history. Clears
+// any stale custom-sort order (#38) so the item re-enters UNRANKED — it falls
+// to the end of the Custom list like a freshly added item, instead of keeping
+// an old rank that would now collide with a since-reordered list. (Dexie's
+// update drops a key whose value is undefined; order is unindexed, so safe.)
 export async function unarchiveItem(id: number): Promise<void> {
   await db.transaction('rw', db.items, db.stackEvents, async () => {
     const item = await mustGetItem(id)
-    await db.items.update(id, { status: 'active', updatedAt: nowIso() })
+    await db.items.update(id, {
+      status: 'active',
+      order: undefined,
+      updatedAt: nowIso(),
+    })
     await recordEvent(id, item.uid, item, 'added', 're-added to stack')
   })
 }
@@ -275,6 +283,23 @@ export async function setEventNote(
       const event = await db.stackEvents.get(id)
       if (!event) continue
       await db.stackEvents.put({ ...event, note: value, updatedAt: stamp })
+    }
+  })
+}
+
+// Persists the custom manual sort order (backlog #38). `orderedIds` is the
+// active items in their new top-to-bottom order; each gets a dense rank
+// (0, 1, 2, …) so later-added items (order undefined) fall to the end. Skips
+// items already at their rank to keep sync deltas minimal. Reordering is NOT a
+// stack change — it records no StackEvent/graph marker (like intakes/inventory)
+// — but it bumps updatedAt so the order rides merge/sync (newest per item wins).
+export async function reorderItems(orderedIds: number[]): Promise<void> {
+  const stamp = nowIso()
+  await db.transaction('rw', db.items, async () => {
+    for (let rank = 0; rank < orderedIds.length; rank++) {
+      const item = await db.items.get(orderedIds[rank])
+      if (!item || item.order === rank) continue
+      await db.items.update(orderedIds[rank], { order: rank, updatedAt: stamp })
     }
   })
 }

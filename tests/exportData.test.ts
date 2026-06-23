@@ -3,7 +3,7 @@
 // handles quoting, arrays, and optional columns correctly.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../src/db/db'
-import { addItem, setEventNote } from '../src/db/stackRepository'
+import { addItem, reorderItems, setEventNote } from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setMetricEntry } from '../src/db/metricEntryRepository'
 import { setMetricNote } from '../src/db/metricNoteRepository'
@@ -57,6 +57,34 @@ describe('buildExportBundle', () => {
     expect(bundle.data.dayNotes).toHaveLength(1)
     expect(bundle.data.healthEvents).toHaveLength(1)
     expect(bundle.data.itemNotes).toHaveLength(0)
+  })
+
+  it('carries an item custom-sort order in the bundle without a schema bump', async () => {
+    const a = await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '',
+      times: ['08:00'],
+      groups: [],
+    })
+    const b = await addItem({
+      name: 'Boron',
+      kind: 'supplement',
+      dose: '',
+      times: ['08:00'],
+      groups: [],
+    })
+    await reorderItems([b, a]) // Boron→0, Zinc→1
+
+    const bundle = await buildExportBundle()
+    expect(bundle.schemaVersion).toBe(12)
+    const orders = Object.fromEntries(
+      (bundle.data.items as { name: string; order?: number }[]).map((i) => [
+        i.name,
+        i.order,
+      ]),
+    )
+    expect(orders).toEqual({ Boron: 0, Zinc: 1 })
   })
 
   it('carries a stack-change note in the bundle without a schema bump', async () => {

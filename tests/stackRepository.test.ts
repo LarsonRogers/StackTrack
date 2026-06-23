@@ -8,6 +8,7 @@ import {
   addItem,
   archiveItem,
   buildChangeSummary,
+  reorderItems,
   setEventNote,
   unarchiveItem,
   updateItem,
@@ -241,6 +242,60 @@ describe('schedule normalization', () => {
       kind: 'daysOfWeek',
       days: [1, 3, 5],
     })
+  })
+})
+
+describe('reorderItems', () => {
+  it('writes a dense rank in the given order and bumps updatedAt', async () => {
+    const zinc = await addItem({ ...ZINC, name: 'Zinc' })
+    const boron = await addItem({ ...ZINC, name: 'Boron' })
+    const iron = await addItem({ ...ZINC, name: 'Iron' })
+    const before = (await db.items.get(boron))!.updatedAt
+
+    // New top-to-bottom order: Boron, Iron, Zinc
+    await reorderItems([boron, iron, zinc])
+
+    expect((await db.items.get(boron))?.order).toBe(0)
+    expect((await db.items.get(iron))?.order).toBe(1)
+    expect((await db.items.get(zinc))?.order).toBe(2)
+    expect((await db.items.get(boron))!.updatedAt >= before).toBe(true)
+  })
+
+  it('records no stack event — reordering is not a stack change', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    const b = await addItem({ ...ZINC, name: 'B' })
+    const eventsBefore = await db.stackEvents.count()
+
+    await reorderItems([b, a])
+
+    expect(await db.stackEvents.count()).toBe(eventsBefore) // no marker
+  })
+
+  it('skips items already at their rank (no needless updatedAt churn)', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    const b = await addItem({ ...ZINC, name: 'B' })
+    await reorderItems([a, b]) // a→0, b→1
+    const aStamp = (await db.items.get(a))!.updatedAt
+
+    await reorderItems([a, b]) // identical order → no writes
+    expect((await db.items.get(a))!.updatedAt).toBe(aStamp)
+  })
+
+  it('ignores ids with no matching item', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    await expect(reorderItems([9999, a])).resolves.toBeUndefined()
+    expect((await db.items.get(a))?.order).toBe(1) // ranked by position
+  })
+
+  it('clears order on unarchive so a restored item re-enters unranked', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    const b = await addItem({ ...ZINC, name: 'B' })
+    await reorderItems([a, b]) // A→0, B→1
+    await archiveItem(b)
+    await reorderItems([a]) // A→0; B keeps its stale rank 1 while archived
+    await unarchiveItem(b)
+    // B returns unranked (not a duplicate rank 1) → sorts to the end by name
+    expect((await db.items.get(b))?.order).toBeUndefined()
   })
 })
 

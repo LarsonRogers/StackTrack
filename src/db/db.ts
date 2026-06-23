@@ -43,6 +43,12 @@ export interface StackItem {
   quantityOnHand?: number // units on hand as of quantityAsOf; absent = runway not tracked
   quantityAsOf?: string // local 'YYYY-MM-DD' the count was accurate; stamped by the repository
   unitsPerDose?: number // units consumed per scheduled time; absent = 1
+  // Custom manual sort order (backlog #38): a dense rank set by drag-reorder.
+  // Absent until the user reorders; unranked items sort to the END by name (see
+  // lib/stackView.sortByCustomOrder). Display-only and unindexed — NO schema
+  // version bump; rides export/sync as a plain field. Not a stack change: edits
+  // record no StackEvent/graph marker (like intakes/inventory).
+  order?: number
   status: ItemStatus // archived items are hidden, never deleted — history must survive
   createdAt: string // ISO datetime
   updatedAt: string // ISO datetime of last change (merge: newest wins)

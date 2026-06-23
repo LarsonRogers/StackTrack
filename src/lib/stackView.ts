@@ -2,13 +2,14 @@
 // No state, no db access.
 import type { StackEvent, StackItem } from '../db/db'
 
-export type StackSortMode = 'group' | 'name' | 'time' | 'recent'
+export type StackSortMode = 'group' | 'name' | 'time' | 'recent' | 'custom'
 
 export const SORT_MODE_LABELS: Record<StackSortMode, string> = {
   group: 'Group',
   name: 'Name',
   time: 'Time of day',
   recent: 'Recently changed',
+  custom: 'Custom',
 }
 
 export interface GroupSection {
@@ -46,6 +47,19 @@ export function groupByPurpose(items: StackItem[]): GroupSection[] {
 
 export function sortByName(items: StackItem[]): StackItem[] {
   return items.toSorted((a, b) => a.name.localeCompare(b.name))
+}
+
+// Manual custom order (#38): ranked items first by their order; unranked
+// (order undefined — e.g. a newly added item) sort to the END, alphabetical
+// among themselves. Comparing the ranks directly (not subtracting) avoids the
+// Infinity − Infinity = NaN trap when both are unranked.
+export function sortByCustomOrder(items: StackItem[]): StackItem[] {
+  return items.toSorted((a, b) => {
+    const ao = a.order ?? Infinity
+    const bo = b.order ?? Infinity
+    if (ao !== bo) return ao < bo ? -1 : 1
+    return a.name.localeCompare(b.name)
+  })
 }
 
 // Earliest scheduled time first (times are stored sorted, so times[0] is

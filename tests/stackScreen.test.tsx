@@ -6,7 +6,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
-import { addItem } from '../src/db/stackRepository'
+import { addItem, reorderItems } from '../src/db/stackRepository'
 
 beforeEach(async () => {
   await db.items.clear()
@@ -180,6 +180,43 @@ describe('Stack screen', () => {
     expect(screen.queryByRole('heading', { name: 'Performance' })).toBeNull()
     expect(screen.getByText(/5 g · 08:00 · Performance/)).toBeInTheDocument()
     expect(localStorage.getItem('stacktrack.stackSortMode')).toBe('time')
+  })
+
+  it('renders draggable rows in the saved custom order under Custom sort', async () => {
+    const base = {
+      kind: 'supplement' as const,
+      dose: '',
+      times: ['08:00'],
+      groups: [],
+    }
+    const zinc = await addItem({ ...base, name: 'Zinc' })
+    const boron = await addItem({ ...base, name: 'Boron' })
+    const iron = await addItem({ ...base, name: 'Iron' })
+    // Persisted custom order: Iron, Zinc, Boron (not alphabetical)
+    await reorderItems([iron, zinc, boron])
+
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(await screen.findByRole('button', { name: 'Settings' }))
+    await user.click(screen.getByRole('button', { name: 'Stack' }))
+    await screen.findByText('Zinc')
+
+    await user.selectOptions(screen.getByLabelText('Sort by'), 'custom')
+
+    // One drag handle per item, rendered in the persisted custom order...
+    const handles = await screen.findAllByRole('button', {
+      name: /Drag to reorder/,
+    })
+    expect(handles.map((h) => h.getAttribute('aria-label'))).toEqual([
+      'Drag to reorder Iron',
+      'Drag to reorder Zinc',
+      'Drag to reorder Boron',
+    ])
+    // ...plus the discoverability hint and the persisted preference.
+    expect(
+      screen.getByText(/Drag the .* handle to set your own order/),
+    ).toBeInTheDocument()
+    expect(localStorage.getItem('stacktrack.stackSortMode')).toBe('custom')
   })
 
   it('merges a sync file from another device', async () => {

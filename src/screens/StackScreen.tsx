@@ -8,6 +8,7 @@ import { db, type StackItem } from '../db/db'
 import {
   addItem,
   archiveItem,
+  reorderItems,
   unarchiveItem,
   updateItem,
   type StackItemInput,
@@ -17,11 +18,13 @@ import {
   groupByPurpose,
   latestEventDates,
   SORT_MODE_LABELS,
+  sortByCustomOrder,
   sortByEarliestTime,
   sortByName,
   sortByRecentlyChanged,
   type StackSortMode,
 } from '../lib/stackView'
+import SortableStackList from '../components/SortableStackList'
 import { describeSchedule } from '../lib/schedule'
 import { describeRunway, daysOfSupplyLeft } from '../lib/runway'
 import { toIsoDate } from '../lib/dates'
@@ -165,6 +168,7 @@ export default function StackScreen() {
     if (activeItems === undefined) return []
     if (sortMode === 'name') return sortByName(activeItems)
     if (sortMode === 'time') return sortByEarliestTime(activeItems)
+    if (sortMode === 'custom') return sortByCustomOrder(activeItems)
     return sortByRecentlyChanged(
       activeItems,
       latestEventDates(stackEvents ?? []),
@@ -180,6 +184,20 @@ export default function StackScreen() {
     item: StackItem,
     groupHint: 'list' | 'count' | 'none',
   ) {
+    return (
+      <li key={item.id} className="stack-item">
+        {renderItemBody(item, groupHint)}
+      </li>
+    )
+  }
+
+  // The inner content of an active-item row (info + actions), without the <li>.
+  // Shared by the normal rows and the Custom-sort draggable rows, which supply
+  // their own dnd-kit-wired <li> (SortableStackItem).
+  function renderItemBody(
+    item: StackItem,
+    groupHint: 'list' | 'count' | 'none',
+  ) {
     const groupText =
       groupHint === 'list'
         ? item.groups.join(', ') || null
@@ -192,7 +210,7 @@ export default function StackScreen() {
     const runwayDays = daysOfSupplyLeft(item, today)
     const runwayLow = runwayDays !== null && runwayDays <= 7
     return (
-      <li key={item.id} className="stack-item">
+      <>
         <div className="stack-item-info">
           <span className="stack-item-name">
             {item.name}
@@ -235,7 +253,7 @@ export default function StackScreen() {
             Archive
           </button>
         </div>
-      </li>
+      </>
     )
   }
 
@@ -304,6 +322,19 @@ export default function StackScreen() {
             </ul>
           </section>
         ))
+      ) : sortMode === 'custom' ? (
+        <>
+          {activeItems.length > 1 && (
+            <p className="stack-sort-hint">
+              Drag the ⠿ handle to set your own order.
+            </p>
+          )}
+          <SortableStackList
+            items={sortedFlatItems()}
+            onReorder={(orderedIds) => void reorderItems(orderedIds)}
+            renderBody={(item) => renderItemBody(item, 'list')}
+          />
+        </>
       ) : (
         <ul className="stack-list stack-list-flat">
           {sortedFlatItems().map((item) => renderActiveItem(item, 'list'))}
