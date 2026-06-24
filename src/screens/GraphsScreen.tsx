@@ -27,6 +27,13 @@ import {
   rangeStartDate,
   type GraphRange,
 } from '../lib/graphView'
+import {
+  CHANGE_WINDOW_OPTIONS,
+  DEFAULT_CHANGE_WINDOW,
+  describeChange,
+  summarizeChange,
+  type ChangeWindow,
+} from '../lib/correlation'
 import { CATEGORY_LABELS } from '../lib/events'
 import { toIsoDate } from '../lib/dates'
 import SettingsMenu from '../components/SettingsMenu'
@@ -46,6 +53,11 @@ export default function GraphsScreen() {
   const metrics = useLiveQuery(() => db.metrics.toArray(), [])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [range, setRange] = useState<GraphRange>('30d')
+  // Before/after window for the descriptive change summaries (#29) — separate
+  // from the chart's time range; same window applies to every change row.
+  const [changeWindow, setChangeWindow] = useState<ChangeWindow>(
+    DEFAULT_CHANGE_WINDOW,
+  )
 
   const metricId = selectedId ?? metrics?.[0]?.id
   // All entries for one metric via the [metricId+date] compound index:
@@ -100,6 +112,15 @@ export default function GraphsScreen() {
   const hasData = chartData.length > 0
   const markers = collapseEvents(events, startDate)
   const eventMarkers = buildEventMarkers(healthEvents, startDate)
+
+  // Logged points for the selected metric across its whole history (not range-
+  // clamped) — the change-summary windows reach outside the visible range.
+  // Composite metrics aren't summarized (describeChange returns null), so the
+  // values[0]-mirroring `value` is never read for them.
+  const metricValues = entries.map((entry) => ({
+    date: entry.date,
+    value: entry.value,
+  }))
 
   // X domain spans the whole range (or all data + markers for 'all'), so
   // markers render even on dates with no logged value.
@@ -263,30 +284,54 @@ export default function GraphsScreen() {
       {markers.length > 0 && (
         <section className="graph-changes" aria-label="Stack changes">
           <h2 className="today-section-title">Stack changes in this period</h2>
+          <div className="graph-window">
+            <label htmlFor="graph-window">Compare {metric.name} averages</label>
+            <select
+              id="graph-window"
+              value={changeWindow}
+              onChange={(e) =>
+                setChangeWindow(Number(e.target.value) as ChangeWindow)
+              }
+            >
+              {CHANGE_WINDOW_OPTIONS.map((days) => (
+                <option key={days} value={days}>
+                  {days} days
+                </option>
+              ))}
+            </select>
+            <span>before &amp; after each change</span>
+          </div>
           <ul className="graph-change-list">
-            {markers.map((marker) => (
-              <li
-                key={`${marker.date}-${marker.label}`}
-                className="graph-change-item"
-              >
-                <div className="graph-change">
-                  <span
-                    className="graph-change-dot"
-                    style={{ backgroundColor: marker.color }}
-                    aria-hidden="true"
+            {markers.map((marker) => {
+              const summary = describeChange(
+                summarizeChange(metricValues, marker.date, changeWindow),
+                { name: metric.name, kind: metric.kind, unit: metric.unit },
+              )
+              return (
+                <li
+                  key={`${marker.date}-${marker.label}`}
+                  className="graph-change-item"
+                >
+                  <div className="graph-change">
+                    <span
+                      className="graph-change-dot"
+                      style={{ backgroundColor: marker.color }}
+                      aria-hidden="true"
+                    />
+                    <span className="graph-change-date">
+                      {formatTs(marker.ts)}
+                    </span>
+                    <span>{marker.label}</span>
+                  </div>
+                  {summary && <p className="graph-change-summary">{summary}</p>}
+                  <StackChangeNote
+                    eventIds={marker.eventIds}
+                    note={marker.note}
+                    label={marker.label}
                   />
-                  <span className="graph-change-date">
-                    {formatTs(marker.ts)}
-                  </span>
-                  <span>{marker.label}</span>
-                </div>
-                <StackChangeNote
-                  eventIds={marker.eventIds}
-                  note={marker.note}
-                  label={marker.label}
-                />
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         </section>
       )}

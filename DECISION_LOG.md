@@ -1616,3 +1616,56 @@
   the new screen; no new deps).
 - Light-tier (haiku) sub-agents: none used (exploration + review ran on Opus).
 - State: committed on branch feature/adherence-screen; merging to main next.
+
+## [2026-06-24] #29 Descriptive correlation insight — Claude Code
+- Confirmed task brief (scope contract): on the Graphs screen, each
+  "Stack changes in this period" row shows a one-line, STRICTLY DESCRIPTIVE
+  before/after summary of the currently-selected metric around that change
+  date (e.g. "Energy: averaged 4.2 the 30 days before → 6.1 after"). A
+  customizable day-based window (presets 7/14/30/90, default 30) selects the
+  before/after span; the same window applies to every row.
+- Decisions (open Qs resolved with user):
+  - Window is DAY-based, not calendar-month — WHY: consistent with the existing
+    30d/90d/all day-based ranges, keeps both sides symmetric (calendar months
+    vary 28–31d), and "week"/"month" both fall out (7d/30d). Customizable via a
+    selector by the graph controls.
+  - Metric coverage: rating/number → average; boolean → % Yes; composite →
+    SKIP the summary in v1 (multi-line/ambiguous) — user accepted recommendation.
+  - Empty side is LABELED "not enough data" rather than hidden (both-sides-empty
+    → no line at all).
+  - Strictly descriptive: averages only, no inference/significance/causal or
+    advisory wording — upholds the permanent no-advice invariant.
+- Plan: new pure tested lib (src/lib/correlation.ts) computing before/after
+  mean+count for a change date over a window; describe-helper for the row text;
+  GraphsScreen renders one muted caption per stack-change row for the selected
+  metric (skipped for composite); window selector wired into graph-controls.
+  Read-only over metricEntries+stackEvents — NO schema/export/sync/dep changes.
+- Built: src/lib/correlation.ts — summarizeChange(values, changeDate, windowDays)
+  returns before/after {count, avg|null} (before = windowDays days ending the day
+  BEFORE the change; after = change date + windowDays-1 days; each exactly
+  windowDays days, inclusive bounds, non-overlapping, change date counts as
+  after-day-0). describeChange(summary, {name, kind, unit}) builds the flat
+  caption; returns null for composite or both-sides-empty; empty side → "not
+  enough data". CHANGE_WINDOW_OPTIONS=[7,14,30,90], default 30. Avg formatted to
+  ≤1 decimal with trailing .0 stripped + unit; boolean → "% Yes".
+- Screen: GraphsScreen renders one muted .graph-change-summary line per stack-
+  change row for the SELECTED metric, plus a window <select> in the "Stack changes
+  in this period" section. metricValues = full (un-range-clamped) entry history so
+  windows reach outside the visible range. Composite shows no line (value mirrors
+  values[0]; never read as the whole metric).
+- No-advice invariant upheld — averages only, no causal/advisory wording; a
+  regression test asserts the caption never matches because|caused|should|
+  recommend|improve|better|worse|etc.
+- Independent review (fresh-context, Opus) of the uncommitted diff: APPROVE, ZERO
+  blockers / zero important. 2 NITs — fixed the comment-accuracy one ("item" →
+  "metric"); left the count-1 plural noun ("1 after values/days") as acceptable
+  collective phrasing per reviewer.
+- Tests (+16; full suite 303 green, was 287): correlation.ts (14 — windowing &
+  boundaries, change-date-as-after, empty side null, presets; caption for
+  rating/number+unit/boolean %Yes, empty before/after, both-empty null, composite
+  null, no-advice guard); graphsScreen.tsx (2 — caption renders with both sides;
+  window selector narrows 30d→7d to drop a 10-day-old value). Lint/typecheck/
+  format/build pass. Bundle precache 780 KiB (+2; no new deps).
+- Light-tier (haiku) sub-agents: none used (exploration + review ran on Opus).
+- State: committed on branch feature/correlation-insight; merging to main +
+  pushing (CI lint/tests/security + Cloudflare Pages auto-deploy run on push).
