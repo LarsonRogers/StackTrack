@@ -655,12 +655,23 @@ schema or config change.
      protocols/pattern-registry.md. When over cap: compress, keep current
      patterns, move history to the development log. -->
 
-### [Pattern Name]
+### Drag-to-reorder list (dnd-kit)
 ```
-Purpose:      [What problem this pattern solves]
-Location:     [Where to find the canonical example]
-Usage:        [How to apply it]
-Anti-pattern: [What NOT to do instead]
+Purpose:      Touch + keyboard manual reordering of a card list, persisted as a
+              dense integer rank that rides export/sync (no schema bump).
+Location:     src/components/SortableStackList.tsx + SortableStackItem.tsx
+              (shared). Consumers: StackScreen Custom sort (#38a, single `order`);
+              TodayScreen Custom mode (#38b, per-section `todayOrder[time]` map).
+Usage:        Render <SortableStackList items onReorder renderBody> with optional
+              listClassName/itemClassName for the surface's CSS (defaults = Stack
+              classes). onReorder(orderedIds) → a repository fn writing dense
+              ranks (skip-unchanged, bump updatedAt, NO StackEvent — reordering
+              is not a stack change). Unranked = absent rank → sorts to END
+              (compare ranks directly, `?? Infinity`, name tiebreak; never
+              subtract — Infinity−Infinity = NaN).
+Anti-pattern: Don't renumber all ranks on every change (bloats sync deltas);
+              don't record a StackEvent; don't put drag listeners on the whole
+              card — use the dedicated ⠿ handle so buttons stay tappable.
 ```
 
 ## Project-Specific Architecture
