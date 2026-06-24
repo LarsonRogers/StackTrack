@@ -1520,3 +1520,51 @@
   Cloudflare Pages auto-deploy ran. No source/test changes — 257-test suite
   unchanged. No open PRs remain.
 - Light-tier (haiku) sub-agents: none used.
+
+## [2026-06-23] Backlog #38b: Custom drag-to-reorder (Today checklist) — Claude Code
+- Brief (confirmed): add a "Custom (drag)" mode to the Today screen's Sort-by
+  menu so cards can be hand-arranged by dragging WITHIN each time-of-day
+  section, reusing #38a's dnd-kit components. Persist, ride export/sync, no
+  schema bump; new/unranked items fall to the section end.
+- KEY DESIGN DECISION (the backlog's open question — items appear in multiple
+  time sections): user chose **per-SECTION independent order** over a single
+  shared order. Presented 3 options (reuse Stack's single `order` / one Today-
+  wide order / per-section); user picked per-section via AskUserQuestion.
+  Rationale: Today is inherently sectioned; the doing-order legitimately differs
+  morning vs evening, and per-section avoids surprising coupling to the Stack
+  screen's Custom order.
+- Data model: new unindexed `StackItem.todayOrder?: Record<string, number>` —
+  maps section time 'HH:mm' → dense rank. NO Dexie schema-version bump (mirrors
+  #38a's `order`); rides whole-row export/import/merge/sync (newest-per-item-uid
+  wins on the whole map). schemaVersion stays 12.
+- Impl: lib/todayView adds 'custom' TodaySortMode + Infinity-safe per-section
+  comparator (todayOrder[time], name tiebreak). stackRepository.reorderTodaySection
+  (time, orderedIds) writes dense ranks under that time key, SPREADING the existing
+  map so other sections' ranks survive; skips unchanged; bumps updatedAt; records
+  NO StackEvent. unarchiveItem also clears todayOrder (same stale-rank reasoning
+  as #38a's order). TodayScreen extracts renderEntryBody(entry); custom mode
+  renders each section via SortableStackList; drag hint added.
+- Component reuse: generalized #38a's SortableStackList/SortableStackItem with
+  optional listClassName/itemClassName/className props, DEFAULTS reproducing the
+  Stack literals byte-for-byte → StackScreen.tsx untouched, no #38a regression.
+  Today passes today-list / today-item today-item-draggable. New CSS:
+  .today-item-draggable (flex row) + .today-item-body.
+- Per-section dnd-kit: each section is its own DndContext/SortableContext, so an
+  item id in two sections lives in isolated contexts (no id/key collision).
+- Independent review (fresh-context subagent, Opus): **ZERO BLOCKERS**, no
+  IMPORTANT. 3 NITs, all acceptable: reorderTodaySection/reorderItems near-dup
+  (helper extraction = over-engineering for 2 sites); void fire-and-forget write
+  matches the established Stack pattern; comment accuracy. Confirmed invariants:
+  no StackEvent on reorder, updatedAt refreshed, todayOrder rides export/merge,
+  schemaVersion 12, no Stack regression.
+- Tests (+11; full suite 268 green, was 257): todayView custom (3 — per-section
+  rank, multi-time independence, all-unranked stable/no-NaN); stackRepository
+  reorderTodaySection (6 — dense rank + updatedAt, per-section independence,
+  no StackEvent, skip-unchanged, ignore unknown id, unarchive clears todayOrder);
+  exportData (1 — todayOrder map rides bundle, schemaVersion 12); todayScreen
+  (1 — Custom renders draggable rows in saved order + handle). Real pointer drag
+  isn't simulated in jsdom — verified via live demo (user confirmed).
+- Lint/typecheck/format/build pass. Bundle precache 772 KiB — UNCHANGED from
+  #38a (dnd-kit reused, no new weight). FULL demo shown on :5173; user approved.
+- Light-tier (haiku) sub-agents: none used (review ran on Opus).
+- State: committed on branch feature/custom-sort-today; merging to main next.

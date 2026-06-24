@@ -9,6 +9,7 @@ import {
   archiveItem,
   buildChangeSummary,
   reorderItems,
+  reorderTodaySection,
   setEventNote,
   unarchiveItem,
   updateItem,
@@ -296,6 +297,75 @@ describe('reorderItems', () => {
     await unarchiveItem(b)
     // B returns unranked (not a duplicate rank 1) → sorts to the end by name
     expect((await db.items.get(b))?.order).toBeUndefined()
+  })
+})
+
+describe('reorderTodaySection (#38b)', () => {
+  it('writes a dense rank under the time key and bumps updatedAt', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    const b = await addItem({ ...ZINC, name: 'B' })
+    const before = (await db.items.get(b))!.updatedAt
+
+    await reorderTodaySection('08:00', [b, a]) // B→0, A→1
+
+    expect((await db.items.get(b))?.todayOrder).toEqual({ '08:00': 0 })
+    expect((await db.items.get(a))?.todayOrder).toEqual({ '08:00': 1 })
+    expect((await db.items.get(b))!.updatedAt >= before).toBe(true)
+  })
+
+  it('orders each time section independently (preserves other keys)', async () => {
+    const a = await addItem({ ...ZINC, name: 'A', times: ['08:00', '20:00'] })
+    const b = await addItem({ ...ZINC, name: 'B', times: ['08:00', '20:00'] })
+
+    await reorderTodaySection('08:00', [a, b]) // morning: A→0, B→1
+    await reorderTodaySection('20:00', [b, a]) // evening: B→0, A→1
+
+    expect((await db.items.get(a))?.todayOrder).toEqual({
+      '08:00': 0,
+      '20:00': 1,
+    })
+    expect((await db.items.get(b))?.todayOrder).toEqual({
+      '08:00': 1,
+      '20:00': 0,
+    })
+  })
+
+  it('records no stack event — reordering is not a stack change', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    const b = await addItem({ ...ZINC, name: 'B' })
+    const eventsBefore = await db.stackEvents.count()
+
+    await reorderTodaySection('08:00', [b, a])
+
+    expect(await db.stackEvents.count()).toBe(eventsBefore)
+  })
+
+  it('skips items already at their rank (no needless updatedAt churn)', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    const b = await addItem({ ...ZINC, name: 'B' })
+    await reorderTodaySection('08:00', [a, b]) // a→0, b→1
+    const aStamp = (await db.items.get(a))!.updatedAt
+
+    await reorderTodaySection('08:00', [a, b]) // identical → no writes
+    expect((await db.items.get(a))!.updatedAt).toBe(aStamp)
+  })
+
+  it('ignores ids with no matching item', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    await expect(
+      reorderTodaySection('08:00', [9999, a]),
+    ).resolves.toBeUndefined()
+    expect((await db.items.get(a))?.todayOrder).toEqual({ '08:00': 1 })
+  })
+
+  it('clears todayOrder on unarchive so a restored item re-enters unranked', async () => {
+    const a = await addItem({ ...ZINC, name: 'A' })
+    await reorderTodaySection('08:00', [a])
+    expect((await db.items.get(a))?.todayOrder).toEqual({ '08:00': 0 })
+
+    await archiveItem(a)
+    await unarchiveItem(a)
+    expect((await db.items.get(a))?.todayOrder).toBeUndefined()
   })
 })
 

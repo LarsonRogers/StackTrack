@@ -1,7 +1,8 @@
-// src/components/SortableStackList.tsx — the Stack list under the Custom sort
-// (backlog #38): a vertical drag-to-reorder list built on dnd-kit. Owns the
-// DnD context + sensors only; rows render the shared item body via renderBody,
-// and persistence is delegated to onReorder (the caller writes through the
+// src/components/SortableStackList.tsx — a vertical drag-to-reorder list built
+// on dnd-kit. Shared by the Stack screen's Custom sort (backlog #38a) and one
+// Today time section's Custom order (#38b, which passes today-* classes). Owns
+// the DnD context + sensors only; rows render their body via renderBody, and
+// persistence is delegated to onReorder (the caller writes through the
 // repository). Pointer sensor with a small activation distance so a tap on the
 // handle that doesn't move isn't treated as a drag; keyboard sensor for a11y.
 import {
@@ -24,15 +25,19 @@ import type { StackItem } from '../db/db'
 import SortableStackItem from './SortableStackItem'
 
 interface SortableStackListProps {
-  items: StackItem[] // active items in their current custom order
+  items: StackItem[] // items in their current custom order
   onReorder: (orderedIds: number[]) => void
   renderBody: (item: StackItem) => ReactNode
+  listClassName?: string // <ul> classes; defaults to the Stack list (#38a)
+  itemClassName?: string // each <li>'s classes; passed through to the row
 }
 
 export default function SortableStackList({
   items,
   onReorder,
   renderBody,
+  listClassName = 'stack-list stack-list-flat',
+  itemClassName,
 }: SortableStackListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -58,9 +63,14 @@ export default function SortableStackList({
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-        <ul className="stack-list stack-list-flat">
+        <ul className={listClassName}>
           {items.map((item) => (
-            <SortableStackItem key={item.id} id={item.id} label={item.name}>
+            <SortableStackItem
+              key={item.id}
+              id={item.id}
+              label={item.name}
+              className={itemClassName}
+            >
               {renderBody(item)}
             </SortableStackItem>
           ))}

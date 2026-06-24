@@ -2,45 +2,52 @@
 <!-- Overwritten by the agent after every committed task. -->
 
 **As of:** 2026-06-23 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
-**Last completed:** Merged the **5 open Dependabot PRs**. #1 dexie 4.4.3→4.4.4
-(the only runtime dep) + #2 wrangler 4.100.0→4.102.0 were green and merged
-directly. #3 workers-types, #4 eslint-plugin-react-refresh, #5 typescript-eslint
-each had a **false** "Security scan" failure — the TruffleHog `BASE == HEAD`
-action quirk (no secret; scan refused to run on that commit range), confirmed in
-the logs. A `@dependabot rebase` gave them a fresh commit range → scan passed →
-merged one at a time. Net dev-tooling versions: workers-types →4.20260624.1,
-eslint-plugin-react-refresh →0.5.3, typescript-eslint →8.62.0 (rebase pulled the
-latest, not the PR's .61.1).
+**Last completed:** Backlog **#38b — Custom drag-to-reorder (Today checklist)**. The
+Today screen's "Sort by" menu gains a **Custom (drag)** option: drag a card's ⠿
+handle to hand-order cards **within each time-of-day section**. The open design
+question (items appear in multiple sections) was resolved by the user as
+**per-SECTION independent order** — reordering the morning block doesn't touch
+the evening block, and Today's order is independent of the Stack screen's Custom
+order. Stored as a new unindexed `StackItem.todayOrder` (a `time→rank` map) —
+**no schema-version bump**; rides export/import/merge/sync as a plain field
+(newest-per-item-uid wins on the whole map). Drag reuses #38a's dnd-kit
+components (generalized with optional className props; **StackScreen untouched**).
+New/unarchived items enter unranked → fall to the end of their section.
+**268 tests green** (+11); lint/typecheck/format/build pass; bundle precache
+**772 KiB unchanged** from #38a. Independent review **zero blockers**. FULL demo
+shown on :5173 — **user approved**.
 
-**`npm audit` now → 0 vulnerabilities.** The 5 pre-existing dev-tooling findings
-(esbuild/undici/ws via miniflare+wrangler) are CLEARED by wrangler 4.102.0 — the
-full-tree audit no longer relies on the `--omit=dev` CI scoping (that scoping
-stays in place as a safety net; revisit only if you want to tighten it).
+**Committed on `feature/custom-sort-today`; MERGING to `main` + PUSH** — CI
+(lint/tests/security) + Cloudflare Pages auto-deploy run on the push. Confirm CI
+green + live app updated; if CI fails, investigate before further work.
 
-**No source/test changes** — 257-test suite unchanged. Final main CI green,
-Cloudflare Pages auto-deployed. **No open PRs remain.** Local `main` is synced.
+**No new dependencies** this task (dnd-kit already added in #38a).
 
-**Up next (BACKLOG.md):** #38b Today custom reorder (reuses dnd-kit + the `order`
-field; open Q: one global order vs per-time-section), #28 adherence, #29
-correlation, #30 consent framework (gates off-device #31/#32/#33 + therapy #39),
-#34 attachments, #36 multi-ingredient, #40 auto refill reminder. #35 = parked.
+**Up next (BACKLOG.md):** #28 adherence, #29 correlation, #30 consent framework
+(gates off-device #31/#32/#33 + therapy #39), #34 attachments, #36
+multi-ingredient, #40 auto refill reminder, #37 Today collapsible meds section +
+within-section sort. #35 = parked.
 
 **Open watch items:**
+- **#38b model:** `todayOrder` is per-item, per-section. Cross-device edge case
+  (Device A reorders 08:00, Device B reorders 20:00 on the SAME item) → last
+  writer's whole map wins, silently dropping the other section's change for that
+  item. Acceptable for single-user, consistent with how #38a's `order` merges.
+  Don't "fix" by splitting the map per section into separate records — over-eng.
+- **dnd-kit reorder duplication:** `reorderTodaySection` and `reorderItems`
+  (stackRepository) are near-identical loops (differ only in the field written).
+  Left as-is (a shared helper for 2 call sites = over-engineering); revisit only
+  if a 3rd reorder surface appears.
 - **TruffleHog false-fail pattern:** any Dependabot PR can show a red "Security
-  scan" from the `BASE == HEAD` quirk — it is NOT a finding. Fix is a
-  `@dependabot rebase` (fresh commit range), then the scan runs normally. Worth a
-  future workflow tweak (e.g. skip TruffleHog when base==head, or scan the diff
-  differently) if it keeps recurring.
-- **#38a model:** per-item `order` rank can go sparse/duplicate (archive, merge);
-  the comparator (compare ranks directly + name tiebreak; unranked→Infinity→end)
-  absorbs this into a stable total order. Don't "fix" sparsity by renumbering on
-  every change — by design; renumbering would bloat sync deltas.
+  scan" from the `BASE == HEAD` quirk — NOT a finding. Fix = `@dependabot rebase`.
 - New DB *table* → extend export/import/merge/sync (4 libs) + fixtures + bump
   export-test schemaVersion. New *fields* on an existing table need none of that.
 - Tier-use reporting is ON: note Light-tier (haiku) sub-task use in the work
-  summary; silent when none ran. (This task used no sub-agents.)
+  summary; silent when none ran. (#38b used only an Opus review sub-agent.)
 - Windows autocrlf: `prettier --write` rewrites EOL on untouched files; format
-  only the files you touched to keep commits scoped (blobs are LF, CI passes).
+  only the files you touched (use `--end-of-line auto` to find REAL issues amid
+  the CRLF noise). Blobs are LF, CI passes.
+- A dev server may be running on :5173 — stop it when done (stopped this task).
 - Pre-existing: items 12 + 13e sync demo gates open.
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 
