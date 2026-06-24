@@ -124,6 +124,65 @@ describe('Graphs screen', () => {
     spy.mockRestore()
   })
 
+  it('shows a descriptive before/after average under a stack change', async () => {
+    const today = new Date()
+    const fiveDaysAgo = toIsoDate(
+      new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000),
+    )
+    const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
+    await setMetricEntry(metricId, fiveDaysAgo, 3) // before the change
+    await setMetricEntry(metricId, toIsoDate(today), 7) // on/after the change
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+      groups: [],
+    })
+
+    await openGraphsTab()
+
+    expect(
+      await screen.findByText(
+        'Energy: averaged 3 the 30 days before → 7 after (1 before, 1 after values)',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('narrows the before/after window when a smaller window is selected', async () => {
+    const today = new Date()
+    const tenDaysAgo = toIsoDate(
+      new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000),
+    )
+    const metricId = await addMetric({ name: 'Energy', kind: 'rating' })
+    await setMetricEntry(metricId, tenDaysAgo, 3) // inside 30d, outside 7d
+    await setMetricEntry(metricId, toIsoDate(today), 7)
+    await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '25 mg',
+      times: ['08:00'],
+      groups: [],
+    })
+
+    const user = await openGraphsTab()
+    // Default 30-day window includes the value from 10 days ago.
+    expect(
+      await screen.findByText(/averaged 3 the 30 days before → 7 after/),
+    ).toBeInTheDocument()
+
+    // Switching to 7 days drops it → before side now empty.
+    await user.selectOptions(
+      screen.getByLabelText('Compare Energy averages'),
+      '7',
+    )
+    expect(
+      await screen.findByText(
+        'Energy: not enough data before → 7 after (1 after values)',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('shows the no-values note for a metric without entries', async () => {
     await addMetric({ name: 'Energy', kind: 'rating' })
     await openGraphsTab()
