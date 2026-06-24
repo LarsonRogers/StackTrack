@@ -723,6 +723,19 @@ body {
   padding: 0.75rem 1rem;
 }
 
+/* Custom-sort (#38b): the card becomes a flex row [handle | body] so the drag
+   handle sits beside the content; the body keeps its own vertical stack. */
+.today-item-draggable {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.today-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
 .today-item-row {
   display: flex;
   justify-content: space-between;

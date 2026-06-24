@@ -258,6 +258,7 @@ export async function unarchiveItem(id: number): Promise<void> {
     await db.items.update(id, {
       status: 'active',
       order: undefined,
+      todayOrder: undefined,
       updatedAt: nowIso(),
     })
     await recordEvent(id, item.uid, item, 'added', 're-added to stack')
@@ -300,6 +301,31 @@ export async function reorderItems(orderedIds: number[]): Promise<void> {
       const item = await db.items.get(orderedIds[rank])
       if (!item || item.order === rank) continue
       await db.items.update(orderedIds[rank], { order: rank, updatedAt: stamp })
+    }
+  })
+}
+
+// Persists the manual order for ONE Today time section (backlog #38b). `time`
+// is the section's 'HH:mm'; `orderedIds` is that section's active items in
+// their new top-to-bottom order, each given a dense rank under todayOrder[time].
+// Independent per section: writing 08:00 leaves an item's 20:00 rank untouched
+// (the existing map is spread, only this key is set). Skips items already at
+// their rank to keep sync deltas minimal. Like reorderItems, this is NOT a
+// stack change — no StackEvent — but bumps updatedAt so the order rides
+// merge/sync (newest per item wins).
+export async function reorderTodaySection(
+  time: string,
+  orderedIds: number[],
+): Promise<void> {
+  const stamp = nowIso()
+  await db.transaction('rw', db.items, async () => {
+    for (let rank = 0; rank < orderedIds.length; rank++) {
+      const item = await db.items.get(orderedIds[rank])
+      if (!item || item.todayOrder?.[time] === rank) continue
+      await db.items.update(orderedIds[rank], {
+        todayOrder: { ...item.todayOrder, [time]: rank },
+        updatedAt: stamp,
+      })
     }
   })
 }

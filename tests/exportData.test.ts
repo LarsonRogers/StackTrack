@@ -3,7 +3,12 @@
 // handles quoting, arrays, and optional columns correctly.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../src/db/db'
-import { addItem, reorderItems, setEventNote } from '../src/db/stackRepository'
+import {
+  addItem,
+  reorderItems,
+  reorderTodaySection,
+  setEventNote,
+} from '../src/db/stackRepository'
 import { addMetric } from '../src/db/metricRepository'
 import { setMetricEntry } from '../src/db/metricEntryRepository'
 import { setMetricNote } from '../src/db/metricNoteRepository'
@@ -85,6 +90,40 @@ describe('buildExportBundle', () => {
       ]),
     )
     expect(orders).toEqual({ Boron: 0, Zinc: 1 })
+  })
+
+  it('carries the Today per-section order in the bundle without a schema bump', async () => {
+    const a = await addItem({
+      name: 'Zinc',
+      kind: 'supplement',
+      dose: '',
+      times: ['08:00', '20:00'],
+      groups: [],
+    })
+    const b = await addItem({
+      name: 'Boron',
+      kind: 'supplement',
+      dose: '',
+      times: ['08:00', '20:00'],
+      groups: [],
+    })
+    await reorderTodaySection('08:00', [b, a]) // morning: Boron→0, Zinc→1
+    await reorderTodaySection('20:00', [a, b]) // evening: Zinc→0, Boron→1
+
+    const bundle = await buildExportBundle()
+    expect(bundle.schemaVersion).toBe(12)
+    const orders = Object.fromEntries(
+      (
+        bundle.data.items as {
+          name: string
+          todayOrder?: Record<string, number>
+        }[]
+      ).map((i) => [i.name, i.todayOrder]),
+    )
+    expect(orders).toEqual({
+      Boron: { '08:00': 0, '20:00': 1 },
+      Zinc: { '08:00': 1, '20:00': 0 },
+    })
   })
 
   it('carries a stack-change note in the bundle without a schema bump', async () => {

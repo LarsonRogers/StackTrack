@@ -7,7 +7,11 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from '../src/App'
 import { db } from '../src/db/db'
-import { addItem, archiveItem } from '../src/db/stackRepository'
+import {
+  addItem,
+  archiveItem,
+  reorderTodaySection,
+} from '../src/db/stackRepository'
 import { markTaken } from '../src/db/intakeRepository'
 import { addDays, toIsoDate } from '../src/lib/dates'
 
@@ -167,6 +171,41 @@ describe('Checklist sorting & collapse (#37)', () => {
 
     await user.selectOptions(screen.getByLabelText('Sort by'), 'nameDesc')
     await waitFor(() => expect(firstName()).toMatch(/^Banana/))
+  })
+
+  it('Custom (drag) renders draggable rows in the saved per-section order', async () => {
+    localStorage.clear()
+    const apple = await addItem({
+      name: 'Apple',
+      kind: 'supplement',
+      dose: '1',
+      times: ['08:00'],
+      groups: [],
+    })
+    const banana = await addItem({
+      name: 'Banana',
+      kind: 'supplement',
+      dose: '1',
+      times: ['08:00'],
+      groups: [],
+    })
+    // Saved custom order puts Banana before Apple (against the A→Z default).
+    await reorderTodaySection('08:00', [banana, apple])
+
+    const user = userEvent.setup()
+    const { container } = render(<App />)
+    await screen.findByText('Apple')
+    const firstName = () =>
+      container.querySelector('.today-item-name')?.textContent ?? ''
+    expect(firstName()).toMatch(/^Apple/) // default A→Z before switching
+
+    await user.selectOptions(screen.getByLabelText('Sort by'), 'custom')
+
+    // Saved order now governs, and each card has a drag handle.
+    await waitFor(() => expect(firstName()).toMatch(/^Banana/))
+    expect(
+      screen.getByRole('button', { name: 'Drag to reorder Banana' }),
+    ).toBeInTheDocument()
   })
 })
 

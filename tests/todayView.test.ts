@@ -94,3 +94,51 @@ describe('within-section sorting (#37)', () => {
     ])
   })
 })
+
+describe('custom drag order (#38b)', () => {
+  it('ranks a section by todayOrder[time]; unranked items fall to the end by name', () => {
+    const apple = item('Apple', ['08:00'])
+    const banana = item('Banana', ['08:00'])
+    const cherry = item('Cherry', ['08:00']) // left unranked
+    banana.todayOrder = { '08:00': 0 }
+    apple.todayOrder = { '08:00': 1 }
+
+    const [section] = buildTimeSections(
+      [apple, banana, cherry],
+      '2026-06-18',
+      'custom',
+    )
+    expect(section.entries.map((e) => e.item.name)).toEqual([
+      'Banana', // rank 0
+      'Apple', // rank 1
+      'Cherry', // unranked → end
+    ])
+  })
+
+  it('orders each time section independently for a multi-time item', () => {
+    const zinc = item('Zinc', ['08:00', '20:00'])
+    const mag = item('Magnesium', ['08:00', '20:00'])
+    // Morning: Zinc first; Evening: Magnesium first.
+    zinc.todayOrder = { '08:00': 0, '20:00': 1 }
+    mag.todayOrder = { '08:00': 1, '20:00': 0 }
+
+    const sections = buildTimeSections([zinc, mag], '2026-06-18', 'custom')
+    const morning = sections.find((s) => s.time === '08:00')!
+    const evening = sections.find((s) => s.time === '20:00')!
+    expect(morning.entries.map((e) => e.item.name)).toEqual([
+      'Zinc',
+      'Magnesium',
+    ])
+    expect(evening.entries.map((e) => e.item.name)).toEqual([
+      'Magnesium',
+      'Zinc',
+    ])
+  })
+
+  it('all-unranked falls back to a stable name order (no Infinity−Infinity NaN)', () => {
+    const banana = item('Banana', ['08:00'])
+    const apple = item('Apple', ['08:00'])
+    const [section] = buildTimeSections([banana, apple], '2026-06-18', 'custom')
+    expect(section.entries.map((e) => e.item.name)).toEqual(['Apple', 'Banana'])
+  })
+})

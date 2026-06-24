@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, type ItemNote } from '../db/db'
 import { markTaken, unmarkTaken } from '../db/intakeRepository'
+import { reorderTodaySection } from '../db/stackRepository'
 import { setItemNote } from '../db/itemNoteRepository'
 import {
   formatTime,
@@ -25,6 +26,7 @@ import {
 } from '../lib/todayView'
 import { describeRunway, daysOfSupplyLeft } from '../lib/runway'
 import MetricLogger from '../components/MetricLogger'
+import SortableStackList from '../components/SortableStackList'
 import SettingsMenu from '../components/SettingsMenu'
 import RemindersSection from '../components/RemindersSection'
 import EventsSection from '../components/EventsSection'
@@ -137,6 +139,119 @@ export default function TodayScreen() {
     })
   }
 
+  // The inner content of one checklist card — shared by the plain list and the
+  // Custom-sort draggable rows (#38b). The draggable wrapper (<li> + handle)
+  // adds a flex row, so the body lives in its own column container.
+  function renderEntryBody(entry: ChecklistEntry) {
+    const taken = takenKeys.has(`${entry.item.id}@${entry.time}`)
+    const note = notesByItem.get(entry.item.id)
+    const isEditingNote =
+      noteEditor?.itemId === entry.item.id && noteEditor.time === entry.time
+    // Refill runway (#27), relative to the day being viewed.
+    const runwayLabel = describeRunway(entry.item, selectedDate)
+    const runwayDays = daysOfSupplyLeft(entry.item, selectedDate)
+    const runwayLow = runwayDays !== null && runwayDays <= 7
+    return (
+      <div className="today-item-body">
+        <div className="today-item-row">
+          <label className="today-item-check">
+            <input
+              type="checkbox"
+              checked={taken}
+              onChange={() => toggleTaken(entry, taken)}
+            />
+            <span className="today-item-text">
+              <span className="today-item-name-row">
+                <span
+                  className={
+                    taken
+                      ? 'today-item-name today-item-taken'
+                      : 'today-item-name'
+                  }
+                >
+                  {entry.item.name}
+                </span>
+                <span className={`kind-badge kind-badge-${entry.item.kind}`}>
+                  {entry.item.kind === 'med' ? 'Med' : 'Supp'}
+                </span>
+              </span>
+              <span className="today-item-detail">
+                {[
+                  [entry.item.dose, entry.item.unit].filter(Boolean).join(' '),
+                  entry.item.groups.join(', '),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+              {entry.item.note && (
+                <span className="today-item-pinned-note">
+                  {entry.item.note}
+                </span>
+              )}
+              {runwayLabel && (
+                <span
+                  className={`today-item-runway${runwayLow ? ' today-item-runway-low' : ''}`}
+                >
+                  {runwayLabel}
+                </span>
+              )}
+              {note && !isEditingNote && (
+                <span className="today-item-note">{note.text}</span>
+              )}
+            </span>
+          </label>
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={() => openNoteEditor(entry, note)}
+          >
+            {note ? 'Edit note' : 'Note'}
+          </button>
+        </div>
+
+        {isEditingNote && (
+          <div className="today-note-editor">
+            <label
+              className="visually-hidden"
+              htmlFor={`note-${entry.item.id}`}
+            >
+              Note for {entry.item.name}
+            </label>
+            <textarea
+              id={`note-${entry.item.id}`}
+              rows={2}
+              value={noteEditor.draft}
+              placeholder="e.g. ran out of pills"
+              onChange={(e) =>
+                setNoteEditor({
+                  itemId: entry.item.id,
+                  time: entry.time,
+                  draft: e.target.value,
+                })
+              }
+            />
+            <div className="today-note-actions">
+              <button
+                type="button"
+                className="button-primary button-compact"
+                onClick={saveNote}
+              >
+                Save note
+              </button>
+              <button
+                type="button"
+                className="button-subtle"
+                onClick={() => setNoteEditor(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <main className="today">
       <header className="today-header">
@@ -209,137 +324,40 @@ export default function TodayScreen() {
                 </select>
               </div>
             )}
+            {sortMode === 'custom' && totalSlots > 1 && (
+              <p className="stack-sort-hint">
+                Drag the ⠿ handle to set your own order within each time.
+              </p>
+            )}
             {sections.map((section) => (
               <section key={section.time} className="today-section">
                 <h2 className="today-section-title">
                   {formatTime(section.time)}
                 </h2>
-                <ul className="today-list">
-                  {section.entries.map((entry) => {
-                    const taken = takenKeys.has(
-                      `${entry.item.id}@${entry.time}`,
-                    )
-                    const note = notesByItem.get(entry.item.id)
-                    const isEditingNote =
-                      noteEditor?.itemId === entry.item.id &&
-                      noteEditor.time === entry.time
-                    // Refill runway (#27), relative to the day being viewed.
-                    const runwayLabel = describeRunway(entry.item, selectedDate)
-                    const runwayDays = daysOfSupplyLeft(
-                      entry.item,
-                      selectedDate,
-                    )
-                    const runwayLow = runwayDays !== null && runwayDays <= 7
-                    return (
+                {sortMode === 'custom' ? (
+                  <SortableStackList
+                    items={section.entries.map((entry) => entry.item)}
+                    listClassName="today-list"
+                    itemClassName="today-item today-item-draggable"
+                    onReorder={(orderedIds) =>
+                      void reorderTodaySection(section.time, orderedIds)
+                    }
+                    renderBody={(item) =>
+                      renderEntryBody({ item, time: section.time })
+                    }
+                  />
+                ) : (
+                  <ul className="today-list">
+                    {section.entries.map((entry) => (
                       <li
                         key={`${entry.item.id}@${entry.time}`}
                         className="today-item"
                       >
-                        <div className="today-item-row">
-                          <label className="today-item-check">
-                            <input
-                              type="checkbox"
-                              checked={taken}
-                              onChange={() => toggleTaken(entry, taken)}
-                            />
-                            <span className="today-item-text">
-                              <span className="today-item-name-row">
-                                <span
-                                  className={
-                                    taken
-                                      ? 'today-item-name today-item-taken'
-                                      : 'today-item-name'
-                                  }
-                                >
-                                  {entry.item.name}
-                                </span>
-                                <span
-                                  className={`kind-badge kind-badge-${entry.item.kind}`}
-                                >
-                                  {entry.item.kind === 'med' ? 'Med' : 'Supp'}
-                                </span>
-                              </span>
-                              <span className="today-item-detail">
-                                {[
-                                  [entry.item.dose, entry.item.unit]
-                                    .filter(Boolean)
-                                    .join(' '),
-                                  entry.item.groups.join(', '),
-                                ]
-                                  .filter(Boolean)
-                                  .join(' · ')}
-                              </span>
-                              {entry.item.note && (
-                                <span className="today-item-pinned-note">
-                                  {entry.item.note}
-                                </span>
-                              )}
-                              {runwayLabel && (
-                                <span
-                                  className={`today-item-runway${runwayLow ? ' today-item-runway-low' : ''}`}
-                                >
-                                  {runwayLabel}
-                                </span>
-                              )}
-                              {note && !isEditingNote && (
-                                <span className="today-item-note">
-                                  {note.text}
-                                </span>
-                              )}
-                            </span>
-                          </label>
-                          <button
-                            type="button"
-                            className="button-subtle"
-                            onClick={() => openNoteEditor(entry, note)}
-                          >
-                            {note ? 'Edit note' : 'Note'}
-                          </button>
-                        </div>
-
-                        {isEditingNote && (
-                          <div className="today-note-editor">
-                            <label
-                              className="visually-hidden"
-                              htmlFor={`note-${entry.item.id}`}
-                            >
-                              Note for {entry.item.name}
-                            </label>
-                            <textarea
-                              id={`note-${entry.item.id}`}
-                              rows={2}
-                              value={noteEditor.draft}
-                              placeholder="e.g. ran out of pills"
-                              onChange={(e) =>
-                                setNoteEditor({
-                                  itemId: entry.item.id,
-                                  time: entry.time,
-                                  draft: e.target.value,
-                                })
-                              }
-                            />
-                            <div className="today-note-actions">
-                              <button
-                                type="button"
-                                className="button-primary button-compact"
-                                onClick={saveNote}
-                              >
-                                Save note
-                              </button>
-                              <button
-                                type="button"
-                                className="button-subtle"
-                                onClick={() => setNoteEditor(null)}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                        {renderEntryBody(entry)}
                       </li>
-                    )
-                  })}
-                </ul>
+                    ))}
+                  </ul>
+                )}
               </section>
             ))}
           </CollapsibleSection>

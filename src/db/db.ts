@@ -49,6 +49,14 @@ export interface StackItem {
   // version bump; rides export/sync as a plain field. Not a stack change: edits
   // record no StackEvent/graph marker (like intakes/inventory).
   order?: number
+  // Per-time-section manual order for the Today checklist (backlog #38b): maps a
+  // scheduled time 'HH:mm' → dense rank within that time section. Each section is
+  // ordered independently (an item at 08:00 and 20:00 has a rank under each key);
+  // a missing key = unranked → sorts to the END of that section by name (see
+  // lib/todayView). Distinct from `order` (the Stack screen's single list order).
+  // Unindexed object field — NO schema version bump; rides export/sync as a plain
+  // field. Not a stack change: edits record no StackEvent/graph marker.
+  todayOrder?: Record<string, number>
   status: ItemStatus // archived items are hidden, never deleted — history must survive
   createdAt: string // ISO datetime
   updatedAt: string // ISO datetime of last change (merge: newest wins)
