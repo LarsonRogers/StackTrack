@@ -1,8 +1,15 @@
 // tests/schedule.test.ts — pure recurrence logic: isDueOn for each schedule
-// kind (with start-date and cycle boundaries) and the human-readable labels.
+// kind (with start-date and cycle boundaries), the human-readable labels, and
+// the time-of-day bucketing used to decide marker-worthy time changes.
 import { describe, expect, it } from 'vitest'
 import type { Schedule, StackItem } from '../src/db/db'
-import { describeSchedule, isDueOn, isScheduleDueOn } from '../src/lib/schedule'
+import {
+  describeSchedule,
+  isDueOn,
+  isScheduleDueOn,
+  timeOfDayBucket,
+  timeOfDayBuckets,
+} from '../src/lib/schedule'
 
 function itemWith(schedule?: Schedule): StackItem {
   return {
@@ -112,5 +119,41 @@ describe('describeSchedule', () => {
         startDate: '2026-06-01',
       }),
     ).toBe('3 weeks on, 1 week off')
+  })
+})
+
+describe('timeOfDayBucket', () => {
+  it('maps times to morning / afternoon / night', () => {
+    expect(timeOfDayBucket('08:00')).toBe('morning')
+    expect(timeOfDayBucket('13:00')).toBe('afternoon')
+    expect(timeOfDayBucket('20:00')).toBe('night')
+    expect(timeOfDayBucket('02:30')).toBe('night') // after midnight
+  })
+
+  it('treats each boundary as the start of its bucket', () => {
+    expect(timeOfDayBucket('05:00')).toBe('morning') // 5 AM
+    expect(timeOfDayBucket('11:59')).toBe('morning')
+    expect(timeOfDayBucket('12:00')).toBe('afternoon') // 12 PM
+    expect(timeOfDayBucket('17:59')).toBe('afternoon')
+    expect(timeOfDayBucket('18:00')).toBe('night') // 6 PM
+    expect(timeOfDayBucket('04:59')).toBe('night') // up to 5 AM
+  })
+})
+
+describe('timeOfDayBuckets', () => {
+  it('returns the distinct buckets in morning→afternoon→night order', () => {
+    // input order scrambled; same-bucket times collapse to one entry
+    expect(timeOfDayBuckets(['20:00', '08:00', '09:00'])).toEqual([
+      'morning',
+      'night',
+    ])
+  })
+
+  it('is empty for no times', () => {
+    expect(timeOfDayBuckets([])).toEqual([])
+  })
+
+  it('compares equal regardless of within-bucket shifts', () => {
+    expect(timeOfDayBuckets(['08:00'])).toEqual(timeOfDayBuckets(['09:30']))
   })
 })

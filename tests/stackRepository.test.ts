@@ -78,6 +78,49 @@ describe('updateItem', () => {
 
     expect(await db.stackEvents.count()).toBe(1) // only the original 'added'
   })
+
+  it('SAVES an organizational-only edit (group/name/note) without a marker', async () => {
+    const id = await addItem(ZINC)
+    await updateItem(id, {
+      ...ZINC,
+      name: 'Zinc Picolinate',
+      groups: ['Immune'],
+      note: 'take with food',
+    })
+
+    const item = await db.items.get(id)
+    // The edit persisted...
+    expect(item).toMatchObject({
+      name: 'Zinc Picolinate',
+      groups: ['Immune'],
+      note: 'take with food',
+    })
+    // ...but recorded no stack-change marker.
+    expect(await db.stackEvents.count()).toBe(1) // only the original 'added'
+  })
+
+  it('SAVES a within-bucket time change without a marker', async () => {
+    const id = await addItem(ZINC)
+    await updateItem(id, { ...ZINC, times: ['09:00'] }) // 08:00 → 09:00, both Morning
+
+    const item = await db.items.get(id)
+    expect(item?.times).toEqual(['09:00'])
+    expect(await db.stackEvents.count()).toBe(1) // no 'changed' event
+  })
+
+  it('records a marker for a time change that crosses a bucket', async () => {
+    const id = await addItem(ZINC)
+    await updateItem(id, { ...ZINC, times: ['13:00'] }) // Morning → Afternoon
+
+    const item = await db.items.get(id)
+    expect(item?.times).toEqual(['13:00'])
+    const changed = await db.stackEvents
+      .where('type')
+      .equals('changed')
+      .toArray()
+    expect(changed).toHaveLength(1)
+    expect(changed[0].summary).toBe('time of day: Morning → Afternoon')
+  })
 })
 
 describe('archiveItem / unarchiveItem', () => {
@@ -184,25 +227,21 @@ describe('refill runway inventory (#27)', () => {
 })
 
 describe('buildChangeSummary', () => {
-  it('lists every changed field', () => {
+  it('lists the marker-worthy changed fields (dose + time-of-day bucket)', () => {
+    // 08:00 (morning) → 08:00 + 20:00 (morning + night): the bucket set grows.
     const summary = buildChangeSummary(ZINC, {
       ...ZINC,
       dose: '50 mg',
       times: ['08:00', '20:00'],
-      groups: [],
     })
     expect(summary).toBe(
-      'dose: 25 mg → 50 mg; times: 08:00 → 08:00, 20:00; groups: Testosterone Support → none',
+      'dose: 25 mg → 50 mg; time of day: Morning → Morning, Night',
     )
   })
 
-  it('reports unit changes and flags note edits without dumping the text', () => {
-    const summary = buildChangeSummary(ZINC, {
-      ...ZINC,
-      unit: 'mcg',
-      note: 'take with food',
-    })
-    expect(summary).toBe('unit: none → mcg; note updated')
+  it('reports a dose-unit change', () => {
+    const summary = buildChangeSummary(ZINC, { ...ZINC, unit: 'mcg' })
+    expect(summary).toBe('unit: none → mcg')
   })
 
   it('describes a frequency change in plain English', () => {
@@ -211,6 +250,29 @@ describe('buildChangeSummary', () => {
       schedule: { kind: 'everyNDays', n: 2, startDate: '2026-06-18' },
     })
     expect(summary).toBe('schedule: every day → Every other day')
+  })
+
+  it('records a marker when the time crosses a bucket boundary', () => {
+    // 08:00 (Morning) → 13:00 (Afternoon).
+    const summary = buildChangeSummary(ZINC, { ...ZINC, times: ['13:00'] })
+    expect(summary).toBe('time of day: Morning → Afternoon')
+  })
+
+  it('is NOT a change when the time stays within the same bucket', () => {
+    // 08:00 → 09:00 are both Morning.
+    expect(buildChangeSummary(ZINC, { ...ZINC, times: ['09:00'] })).toBeNull()
+  })
+
+  it('is NOT a change for group, name, type, or note edits', () => {
+    expect(
+      buildChangeSummary(ZINC, {
+        ...ZINC,
+        groups: ['Immune', 'Sleep'],
+        name: 'Zinc Picolinate',
+        kind: 'med',
+        note: 'take with food',
+      }),
+    ).toBeNull()
   })
 
   it('returns null when nothing changed', () => {
