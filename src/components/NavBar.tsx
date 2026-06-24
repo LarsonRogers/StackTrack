@@ -7,12 +7,14 @@ export type View =
   | 'stack'
   | 'metrics'
   | 'graphs'
+  | 'adherence'
   | 'sync'
   | 'reminders'
 
 const TABS: { view: View; label: string }[] = [
   { view: 'today', label: 'Today' },
   { view: 'graphs', label: 'Graphs' },
+  { view: 'adherence', label: 'Adherence' },
 ]
 
 interface NavBarProps {

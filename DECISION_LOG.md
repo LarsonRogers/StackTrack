@@ -1568,3 +1568,51 @@
   #38a (dnd-kit reused, no new weight). FULL demo shown on :5173; user approved.
 - Light-tier (haiku) sub-agents: none used (review ran on Opus).
 - State: committed on branch feature/custom-sort-today; merging to main next.
+
+## [2026-06-24] Backlog #28: Adherence intelligence — Claude Code
+- Brief (confirmed): a read-only, on-device, STRICTLY DESCRIPTIVE screen for how
+  consistently the stack was taken. Decisions made via AskUserQuestion:
+  placement = NEW bottom-bar tab "Adherence" (it's a view, per the #26 model);
+  v1 scope = Focused (overall % + per-item % + per-item streak + missed-dose
+  pattern), intakes only (reminder-responsiveness from #25 Task C deferred).
+- Core: lib/adherence.ts (pure). buildAdherenceReport(activeItems, intakes,
+  rangeStart, today) iterates each date from `from` (max of rangeStart and the
+  earliest item start; earliest item start for 'all'/null) to today; a due
+  dose-slot = (active item, due per isDueOn, on/after its createdAt local date)
+  × each scheduled time; taken iff a matching IntakeRecord exists. Returns
+  overall due/taken/pct (null when nothing due), per-item breakdown (due>0,
+  sorted by name) with currentStreak (walk back over DUE days; past incomplete
+  day breaks, an incomplete TODAY is skipped as in-progress), and missedDays
+  (per-date miss counts, most-missed then most-recent first).
+- Screen: AdherenceScreen.tsx — useLiveQuery over items+intakes (filter active
+  in memory, like Today); reuses graphView GraphRange/RANGE_LABELS/rangeStartDate
+  for the 30d/90d/all control; sticky `.adherence-head` (header+range+overall,
+  reusing the frozen-header pattern) with the per-item list scrolling beneath.
+  Nav: View union + TABS (NavBar) + SCREENS (App) → 3rd bottom-bar tab.
+- Accepted limitations, surfaced in-app: current-schedule-only (cadence isn't
+  versioned), active items only, counted from each item's add date. No-advice
+  invariant upheld — all copy descriptive, explicit "not medical advice" footnote.
+- Independent review (fresh-context, Opus) of the core build: ZERO BLOCKERS.
+  One IMPORTANT was a test-confidence gap (TZ-safety asserted via non-production
+  createdAt format) — runtime confirmed correct; addressed with a round-trip
+  reasoning comment in itemStartDate (a production-format edge-hour test would be
+  TZ-flaky without pinning the runner TZ — deemed over-engineering) + 2
+  deterministic tests (daysOfWeek streak with a non-due today; everyNDays where
+  schedule.startDate ≠ createdAt).
+- Post-demo user feedback (this turn), applied without a 2nd formal review per
+  explicit "no need to test, commit and push" (low-risk, descriptive UI changes,
+  covered by tests): (a) covered-period caption ("Jun 1 – Jun 24") so the range
+  control's effect is visible — when ranges coincide it's because data is younger
+  than the window (NOT a bug; the window clamps to earliest data); (b) sticky
+  header+range+total; (c) "Missed most on" now lists specific days as full
+  weekday + date (e.g. "Saturday, Jun 20"), most-missed first — replaced the
+  earlier weekday-rate aggregate (worstWeekdays removed).
+- Tests (+19; full suite 287 green, was 268): adherence.ts (16 — due/taken across
+  schedule kinds, created-mid-range clamp, schedule-anchor vs created-clamp
+  independence, pct null, 'all' start, streak grace/break/multi-time/daysOfWeek,
+  missedDays ordering & empty); adherenceScreen.tsx (3 — empty state, overall %
+  + item row + streak, missed-dose %). Real screen interaction via demo (user
+  approved). Lint/typecheck/format/build pass. Bundle precache 778 KiB (+5 from
+  the new screen; no new deps).
+- Light-tier (haiku) sub-agents: none used (exploration + review ran on Opus).
+- State: committed on branch feature/adherence-screen; merging to main next.

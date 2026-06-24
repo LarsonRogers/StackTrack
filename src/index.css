@@ -1161,6 +1161,139 @@ body {
   font-weight: 600;
 }
 
+/* Adherence screen (#28) */
+
+/* Sticky region: header + range buttons + overall % stay put while the
+   per-item list scrolls beneath. One sticky block (rather than stacking
+   several) avoids having to know the header's height. The inner .screen-header
+   is neutralized to relative so it keeps being the cog's containing block but
+   no longer sticks or draws its own divider — this block owns both. */
+.adherence-head {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.875rem;
+}
+
+.adherence-head .screen-header {
+  position: relative;
+  top: auto;
+  z-index: auto;
+  border-bottom: none;
+}
+
+.adherence-head .graph-ranges {
+  margin-top: 0.25rem;
+}
+
+.adherence-overall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.adherence-range-caption {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.adherence-overall-pct {
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-primary);
+}
+
+.adherence-overall-detail {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.adherence-missed {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.adherence-subhead {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.adherence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.adherence-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+.adherence-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.adherence-item-name {
+  font-weight: 600;
+  min-width: 0;
+}
+
+.adherence-item-pct {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.adherence-bar {
+  margin: 0.5rem 0 0.375rem;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.adherence-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.adherence-item-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.adherence-streak {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.adherence-footnote {
+  margin: 1.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 .graph-chart {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
