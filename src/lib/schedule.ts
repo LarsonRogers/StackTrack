@@ -66,3 +66,34 @@ export function describeSchedule(
 function weeks(n: number): string {
   return n === 1 ? '1 week' : `${n} weeks`
 }
+
+// Coarse time-of-day buckets. A schedule-time edit only counts as a stack
+// change when it crosses one of these boundaries (08:00 → 09:00 stays in
+// Morning and is not a change; 08:00 → 13:00 crosses into Afternoon and is).
+export type TimeOfDay = 'morning' | 'afternoon' | 'night'
+
+export const TIME_OF_DAY_LABELS: Record<TimeOfDay, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  night: 'Night',
+}
+
+// Which bucket an 'HH:mm' falls into: Morning 05:00–11:59, Afternoon
+// 12:00–17:59, Night 18:00–04:59 (wraps midnight). Lower edge is inclusive
+// (05:00 = morning, 12:00 = afternoon, 18:00 = night).
+export function timeOfDayBucket(time: string): TimeOfDay {
+  const hour = Number(time.split(':')[0])
+  if (hour >= 5 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 18) return 'afternoon'
+  return 'night'
+}
+
+const BUCKET_ORDER: TimeOfDay[] = ['morning', 'afternoon', 'night']
+
+// The distinct buckets an item's scheduled times occupy, always in
+// morning→afternoon→night order so equal sets compare and display identically
+// regardless of input order. Empty times → empty array.
+export function timeOfDayBuckets(times: string[]): TimeOfDay[] {
+  const present = new Set(times.map(timeOfDayBucket))
+  return BUCKET_ORDER.filter((bucket) => present.has(bucket))
+}

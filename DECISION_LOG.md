@@ -1669,3 +1669,46 @@
 - Light-tier (haiku) sub-agents: none used (exploration + review ran on Opus).
 - State: committed on branch feature/correlation-insight; merging to main +
   pushing (CI lint/tests/security + Cloudflare Pages auto-deploy run on push).
+
+## [2026-06-24] Redefine what counts as a stack change — Claude Code
+- Confirmed task brief (user-initiated, not a backlog item): narrow which item
+  edits record a StackEvent (graph marker). Group membership, persistent note,
+  rename, and med↔supplement type changes are no longer stack changes; schedule
+  TIME edits count only when they cross a time-of-day BUCKET. Dose, dose-unit,
+  and schedule-cadence changes remain markers. Metrics/reminders/per-day-notes/
+  intakes/inventory/reorder were already non-markers (unchanged).
+- Decisions:
+  - Marker-worthy set = dose, dose-unit, schedule, time-of-day-bucket crossing.
+    Dropped: name, type, groups, persistent note — WHY: organizational/cosmetic
+    edits aren't real stack changes and only clutter the metric graph. User
+    confirmed the recommended set (kept dose-unit since mg↔mcg is a real change;
+    dropped rename/type as cosmetic).
+  - Time-of-day buckets: Morning 05:00–11:59, Afternoon 12:00–17:59, Night
+    18:00–04:59 (lower edge inclusive; wraps midnight). Multi-time items compare
+    the SET of occupied buckets, so within-bucket shifts/reorders aren't changes.
+- Built: lib/schedule.ts — timeOfDayBucket(time), timeOfDayBuckets(times) (distinct
+  buckets in morning→afternoon→night order), TIME_OF_DAY_LABELS. stackRepository:
+  buildChangeSummary trimmed to dose/unit/schedule + bucket-set diff ("time of
+  day: Morning → Afternoon"). KEY FIX: updateItem previously early-returned
+  (no persist) when nothing marker-worthy changed; since group/note/name/type/
+  within-bucket-time are no longer marker-worthy, added inputDiffers() to detect
+  ANY persisted-field change separately from the marker-worthy summary — so those
+  edits still SAVE but record no StackEvent (mirrors how inventory already works).
+  No silent data loss.
+- Existing StackEvent history is UNTOUCHED (immutable snapshots); groups still
+  snapshotted onto events for marker grouping. A retroactive cleanup of old
+  now-non-qualifying "changed" events is a SEPARATE follow-up task (see watch).
+- Independent review (fresh-context, Opus): APPROVE, zero blockers/important.
+  Verified the data-loss path: inputDiffers covers every field db.items.put
+  persists; bucket boundaries + set-compare order-stable; immutability holds.
+  2 NITs — added the "before omits inventory deliberately" comment; left the
+  unreachable NaN-time guard (form-controlled HH:mm) as over-engineering.
+- Tests (+11; full suite 314 green, was 303): stackRepository.test.ts (marker
+  for dose+bucket / unit / schedule / bucket-crossing; NO marker for within-bucket
+  time / group / name / type / note; org-only + within-bucket edits still SAVE);
+  schedule.test.ts (timeOfDayBucket boundaries incl. after-midnight; bucket-set
+  order + dedupe + empty + within-bucket equality). Lint/typecheck/format/build
+  pass. Bundle precache 780 KiB (no new deps).
+- Light-tier (haiku) sub-agents: none used (exploration + review ran on Opus).
+- State: committed on branch feature/redefine-stack-change; merging to main +
+  pushing (CI + Cloudflare Pages auto-deploy run on push).

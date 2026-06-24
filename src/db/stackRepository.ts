@@ -4,7 +4,12 @@
 // it) can never silently drift from the data. Reads may query db directly.
 import { db, type ItemKind, type Schedule, type StackItem } from './db'
 import { toIsoDate } from '../lib/dates'
-import { describeSchedule } from '../lib/schedule'
+import {
+  describeSchedule,
+  timeOfDayBuckets,
+  TIME_OF_DAY_LABELS,
+  type TimeOfDay,
+} from '../lib/schedule'
 import { newUid, nowIso } from '../lib/identity'
 
 // What the user supplies when creating or editing an item.
@@ -120,45 +125,66 @@ function normalizeInput(input: StackItemInput): StackItemInput {
   }
 }
 
-// Builds the human-readable "what changed" text for a 'changed' event,
-// e.g. "dose: 25 mg → 50 mg; times: 08:00 → 08:00, 20:00".
-// Returns null when nothing effectively changed — callers skip the event.
+// Builds the human-readable "what changed" text for a 'changed' event, e.g.
+// "dose: 25 mg → 50 mg; time of day: Morning → Afternoon". Returns null when
+// nothing MARKER-WORTHY changed — callers then save the edit but record no
+// StackEvent / graph marker.
+//
+// A stack change (graph marker) is only the pharmacologically/temporally
+// meaningful edits: dose, dose-unit, schedule cadence, and a time-of-day
+// BUCKET crossing (not minute-level time tweaks). Organizational edits — name,
+// type, group membership, the persistent note — are saved silently (handled in
+// updateItem's no-op check), so they never clutter the metric graph with
+// markers that don't reflect a real change to the stack.
 export function buildChangeSummary(
   before: StackItemInput,
   after: StackItemInput,
 ): string | null {
   const parts: string[] = []
-  if (before.name !== after.name)
-    parts.push(`name: ${before.name} → ${after.name}`)
-  if (before.kind !== after.kind)
-    parts.push(`type: ${before.kind} → ${after.kind}`)
   if (before.dose !== after.dose)
     parts.push(`dose: ${before.dose} → ${after.dose}`)
   if ((before.unit ?? '') !== (after.unit ?? ''))
     parts.push(`unit: ${before.unit ?? 'none'} → ${after.unit ?? 'none'}`)
-  if (before.times.join(',') !== after.times.join(','))
-    parts.push(`times: ${before.times.join(', ')} → ${after.times.join(', ')}`)
-  // Compare as sets (sorted) so reordering groups is not a "change".
-  const beforeGroups = (before.groups ?? []).toSorted().join('')
-  const afterGroups = (after.groups ?? []).toSorted().join('')
-  if (beforeGroups !== afterGroups)
-    parts.push(
-      `groups: ${fmtGroups(before.groups)} → ${fmtGroups(after.groups)}`,
-    )
   if (scheduleKey(before.schedule) !== scheduleKey(after.schedule))
     parts.push(
       `schedule: ${describeSchedule(before.schedule) ?? 'every day'} → ${
         describeSchedule(after.schedule) ?? 'every day'
       }`,
     )
-  // Persistent note: flag the change without dumping (possibly long) text
-  // into the history summary and graph-marker labels.
-  if ((before.note ?? '') !== (after.note ?? '')) parts.push('note updated')
+  // Times only matter when they cross a time-of-day bucket (Morning/Afternoon/
+  // Night) — comparing the bucket SET ignores within-bucket shifts and reorder.
+  const beforeBuckets = timeOfDayBuckets(before.times)
+  const afterBuckets = timeOfDayBuckets(after.times)
+  if (beforeBuckets.join(',') !== afterBuckets.join(','))
+    parts.push(
+      `time of day: ${fmtBuckets(beforeBuckets)} → ${fmtBuckets(afterBuckets)}`,
+    )
   return parts.length > 0 ? parts.join('; ') : null
 }
 
-function fmtGroups(groups: string[] | undefined): string {
-  return groups && groups.length > 0 ? groups.join(', ') : 'none'
+function fmtBuckets(buckets: TimeOfDay[]): string {
+  return buckets.length > 0
+    ? buckets.map((bucket) => TIME_OF_DAY_LABELS[bucket]).join(', ')
+    : 'none'
+}
+
+// Whether any persisted item field differs — INCLUDING the non-marker ones
+// (name, type, groups, note). Used so an organizational-only edit still saves
+// even though it records no StackEvent. Group order is ignored (set compare;
+// JSON.stringify of the sorted list avoids separator-collision ambiguity).
+function inputDiffers(before: StackItemInput, after: StackItemInput): boolean {
+  const groupKey = (groups: string[] | undefined) =>
+    JSON.stringify((groups ?? []).toSorted())
+  return (
+    before.name !== after.name ||
+    before.kind !== after.kind ||
+    before.dose !== after.dose ||
+    (before.unit ?? '') !== (after.unit ?? '') ||
+    (before.note ?? '') !== (after.note ?? '') ||
+    before.times.join(',') !== after.times.join(',') ||
+    groupKey(before.groups) !== groupKey(after.groups) ||
+    scheduleKey(before.schedule) !== scheduleKey(after.schedule)
+  )
 }
 
 // Adds an item and records its 'added' event. Returns the new item id.
@@ -185,10 +211,12 @@ export async function addItem(input: StackItemInput): Promise<number> {
   })
 }
 
-// Applies edits and records one 'changed' event describing them. A no-op edit
-// (same values) records nothing. Inventory fields (quantityOnHand/unitsPerDose,
-// #27) are NOT stack changes — like intakes they persist but record no event /
-// graph marker; only marker-worthy fields drive buildChangeSummary.
+// Applies edits and records one 'changed' event ONLY when something marker-
+// worthy changed (dose, dose-unit, schedule, time-of-day bucket — see
+// buildChangeSummary). Organizational edits (name, type, group membership, the
+// persistent note) and inventory fields (#27) persist but record no event /
+// graph marker — like intakes and reorder, they aren't stack changes. A true
+// no-op (no persisted field changed at all) writes nothing.
 export async function updateItem(
   id: number,
   input: StackItemInput,
@@ -196,6 +224,8 @@ export async function updateItem(
   const after = normalizeInput(input)
   await db.transaction('rw', db.items, db.stackEvents, async () => {
     const existing = await mustGetItem(id)
+    // Editable fields only — inventory (quantity*/unitsPerDose) is compared
+    // separately via inventoryChanged below and isn't read by inputDiffers.
     const before: StackItemInput = {
       name: existing.name,
       kind: existing.kind,
@@ -220,8 +250,9 @@ export async function updateItem(
       after.unitsPerDose !== existing.unitsPerDose ||
       quantityAsOf !== existing.quantityAsOf
 
-    // Nothing marker-worthy AND no inventory change ⇒ a true no-op.
-    if (summary === null && !inventoryChanged) return
+    // Save when ANY persisted field changed (incl. non-marker ones) or
+    // inventory moved; if literally nothing changed it's a true no-op.
+    if (!inputDiffers(before, after) && !inventoryChanged) return
 
     // put (full replace) instead of update: Dexie's UpdateSpec typing does
     // not accept plain array properties like `times`
@@ -231,7 +262,8 @@ export async function updateItem(
       quantityAsOf,
       updatedAt: nowIso(),
     })
-    // Inventory-only edits save without a history event/marker (see above).
+    // Only a marker-worthy change records a StackEvent; organizational- and
+    // inventory-only edits save silently (see updateItem doc above).
     if (summary !== null) {
       await recordEvent(id, existing.uid, after, 'changed', summary)
     }
