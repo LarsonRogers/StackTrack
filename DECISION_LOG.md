@@ -1492,3 +1492,31 @@
 - Lint/typecheck/format/build pass. Bundle precache 726→772 KiB (dnd-kit ~45KiB).
 - State: committed on branch feature/custom-sort-stack. Backlog #38 → #38a done
   pending merge; #38b (Today reorder) added as planned.
+
+## [2026-06-23] Merge the 5 open Dependabot PRs — Claude Code
+- Trigger: user asked to clear the 5 open Dependabot PRs (all opened 2026-06-18).
+  Dependency updates = default policy; user explicitly authorized merging
+  (incl. the resulting production deploys) via the AskUserQuestion confirm.
+- Initial CI triage: #1 dexie + #2 wrangler fully green. #3 workers-types,
+  #4 eslint-plugin-react-refresh, #5 typescript-eslint each had a FAILED
+  "Security scan" — root-caused from the run logs to the TruffleHog action's
+  `BASE == HEAD commits are the same → exit 1` quirk (no secret detected; the
+  scan refused to run on that commit range). Their lint/typecheck/test/build
+  all passed. Confirmed false-fail, not a finding.
+- Action: merged #1, #2 (squash). Triggered `@dependabot rebase` on #3/#4/#5 —
+  fresh commit range cleared the TruffleHog quirk (security scan → pass) and
+  pulled the latest available versions. Merged #3, then #4, then #5 one at a
+  time (CLEAN each after main moved; no lockfile conflicts).
+- Net version changes on main (squash-merged, lockfile committed by Dependabot):
+  dexie 4.4.3→4.4.4 (only runtime dep); wrangler 4.100.0→4.102.0;
+  @cloudflare/workers-types 4.20260612.1→4.20260624.1;
+  eslint-plugin-react-refresh 0.5.2→0.5.3; typescript-eslint 8.61.0→8.62.0
+  (rebase pulled .62 not the PR's .61.1). Last four are dev-only tooling.
+- Dependency audit (DoD): `npm audit` → 0 vulnerabilities. The 5 pre-existing
+  dev-tooling findings (esbuild / undici / ws via the miniflare+wrangler chain,
+  per the 2026-06-18 audit-scoping entry) are now CLEARED by wrangler 4.102.0 —
+  full-tree audit is clean, no longer relying on the `--omit=dev` scoping.
+- Verification: final main CI (typescript-eslint #5 deploy) completed/success;
+  Cloudflare Pages auto-deploy ran. No source/test changes — 257-test suite
+  unchanged. No open PRs remain.
+- Light-tier (haiku) sub-agents: none used.
