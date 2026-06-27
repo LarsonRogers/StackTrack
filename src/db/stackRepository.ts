@@ -11,6 +11,8 @@ import {
   type TimeOfDay,
 } from '../lib/schedule'
 import { newUid, nowIso } from '../lib/identity'
+import { findObsoleteStackEvents } from '../lib/legacyMarkers'
+import { recordTombstone } from './tombstoneRepository'
 
 // What the user supplies when creating or editing an item.
 export interface StackItemInput {
@@ -317,6 +319,25 @@ export async function setEventNote(
       if (!event) continue
       await db.stackEvents.put({ ...event, note: value, updatedAt: stamp })
     }
+  })
+}
+
+// One-time cleanup: removes historical 'changed' events that wouldn't be
+// recorded under the current rules (group/name/type/note edits and within-
+// bucket time tweaks — see lib/legacyMarkers). Each deletion records a
+// tombstone in the SAME transaction so the removal propagates across devices
+// and the event never resurrects from a sync pull (stackEvents are otherwise
+// append-only and not normally deleted). Returns how many were removed; safe
+// to re-run (idempotent — a second pass finds none). Annotated and
+// added/removed events are always preserved (enforced in findObsoleteStackEvents).
+export async function deleteObsoleteStackEvents(): Promise<number> {
+  return db.transaction('rw', db.stackEvents, db.tombstones, async () => {
+    const obsolete = findObsoleteStackEvents(await db.stackEvents.toArray())
+    for (const event of obsolete) {
+      await db.stackEvents.delete(event.id)
+      await recordTombstone(event.uid)
+    }
+    return obsolete.length
   })
 }
 

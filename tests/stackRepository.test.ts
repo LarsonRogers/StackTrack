@@ -8,6 +8,7 @@ import {
   addItem,
   archiveItem,
   buildChangeSummary,
+  deleteObsoleteStackEvents,
   reorderItems,
   reorderTodaySection,
   setEventNote,
@@ -28,6 +29,7 @@ const ZINC: StackItemInput = {
 beforeEach(async () => {
   await db.items.clear()
   await db.stackEvents.clear()
+  await db.tombstones.clear()
 })
 
 describe('addItem', () => {
@@ -468,5 +470,57 @@ describe('setEventNote', () => {
   it('ignores ids with no matching event', async () => {
     await expect(setEventNote([9999], 'orphan')).resolves.toBeUndefined()
     expect(await db.stackEvents.count()).toBe(0)
+  })
+})
+
+describe('deleteObsoleteStackEvents', () => {
+  let n = 0
+  // Seeds a legacy event directly (the obsolete shapes were written by older
+  // code; updateItem no longer produces group/note/within-bucket markers).
+  async function legacy(
+    summary: string,
+    type: 'added' | 'changed' | 'removed' = 'changed',
+    note?: string,
+  ): Promise<void> {
+    n += 1
+    await db.stackEvents.add({
+      uid: `legacy-${n}`,
+      itemId: 1,
+      itemUid: 'item-1',
+      date: '2026-06-01',
+      type,
+      itemName: 'Zinc',
+      groups: [],
+      summary,
+      note,
+      updatedAt: '2026-06-01T12:00:00.000Z',
+    })
+  }
+
+  it('removes obsolete markers, tombstones them, and keeps the rest', async () => {
+    await legacy('added to stack', 'added') // keep
+    await legacy('dose: 25 mg → 50 mg') // keep
+    await legacy('groups: Testosterone Support → none') // obsolete
+    await legacy('note updated') // obsolete
+    await legacy('times: 08:00 → 09:00') // obsolete (within Morning)
+    await legacy('times: 08:00 → 13:00') // keep (Morning → Afternoon)
+    await legacy('groups: A → B', 'changed', 'reorganized') // keep (annotated)
+
+    const removed = await deleteObsoleteStackEvents()
+
+    expect(removed).toBe(3)
+    expect(await db.stackEvents.count()).toBe(4)
+    // a tombstone per removed event, so the deletion rides sync
+    expect(await db.tombstones.count()).toBe(3)
+    const summaries = (await db.stackEvents.toArray()).map((e) => e.summary)
+    expect(summaries).not.toContain('note updated')
+    expect(summaries).toContain('dose: 25 mg → 50 mg')
+    expect(summaries).toContain('times: 08:00 → 13:00')
+  })
+
+  it('is idempotent — a second pass removes nothing', async () => {
+    await legacy('groups: X → none')
+    expect(await deleteObsoleteStackEvents()).toBe(1)
+    expect(await deleteObsoleteStackEvents()).toBe(0)
   })
 })
