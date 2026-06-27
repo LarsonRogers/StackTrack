@@ -1712,3 +1712,52 @@
 - Light-tier (haiku) sub-agents: none used (exploration + review ran on Opus).
 - State: committed on branch feature/redefine-stack-change; merging to main +
   pushing (CI + Cloudflare Pages auto-deploy run on push).
+
+## [2026-06-26] Clean up obsolete stack-change markers — Claude Code
+- Confirmed task brief (user-initiated follow-up to the 2026-06-24 rule change):
+  a one-time, user-triggered action that DELETES historical 'changed' StackEvents
+  that wouldn't be recorded under the current rules (group/name/type/note edits
+  and within-bucket time tweaks). Safe (tombstoned → rides sync, no resurrection)
+  and reversible (full JSON backup downloads first).
+- Decisions (confirmed with user):
+  - Manual button (Stack screen "Clean up" section) + count preview + confirm
+    + auto-backup-first — NOT a silent on-load migration — WHY: destructive +
+    irreversible; backup-first matches the existing import-flow safety pattern.
+  - All-history sweep; bias-to-keep on ANY ambiguity (false keep is harmless; a
+    false delete loses real history). Annotated events (a #41 "why" note) and
+    added/removed/re-added events are always preserved.
+- Sync investigation (Explore agent, read-only) findings that shaped it:
+  stackEvents ARE synced but were never tombstoned; a naive local delete would
+  RESURRECT from another device/server. The tombstone path (recordTombstone) is
+  applied against every DATA_TABLE by mergeData (newer deletedAt wins), so
+  delete + recordTombstone in ONE transaction propagates the removal safely.
+  exportData.buildExportBundle already includes stackEvents+tombstones → reused
+  for the backup.
+- Built: src/lib/legacyMarkers.ts — pure isObsoleteChangeEvent/findObsoleteStackEvents.
+  Classifies by PARSING the legacy summary string (old events store no before/
+  after values): dose:/unit:/schedule:/'time of day:' → keep; legacy 'times: A → B'
+  → obsolete only if the time-of-day bucket SET is unchanged (cross-bucket kept);
+  groups:/group:(earliest singular)/name:/type:/'note updated' → obsolete;
+  anything unrecognized → keep. stackRepository.deleteObsoleteStackEvents() —
+  delete + recordTombstone per event in one rw tx; returns count; idempotent.
+  StackScreen "Clean up old markers" button: count → confirm (states irreversible
+  + affects synced devices) → exportAsJson() backup → delete → status.
+- Independent review (fresh-context, Opus): APPROVE, zero blockers. Hunted for a
+  false delete under adversarial input (group/dose values containing ; → dose:)
+  — none possible (MARKER_PREFIXES checked first; '; ' only fragments AFTER a
+  prefix; legacy times can't contain the delimiters). Acted on 2 findings: added
+  singular 'group:' to OBSOLETE_PREFIXES (oldest-data coverage; the reviewer
+  confirmed the earliest format via git history) + a defensive `summary ?? ''`
+  guard. NIT on count-vs-commit divergence is benign (success uses the
+  authoritative returned count).
+- Tests (+15; full suite 329 green, was 314): legacyMarkers.test.ts (13 — each
+  obsolete/kept prefix incl. singular group:, within- vs cross-bucket times,
+  marker-rides-along keeps, unrecognized/empty/unparseable keep, annotated keep,
+  added/removed keep, finder ordering); stackRepository.test.ts (+2 — deletes
+  obsolete + writes a tombstone each + keeps the rest; idempotent). beforeEach now
+  clears db.tombstones. Lint/typecheck/format/build pass. Bundle precache 783 KiB
+  (+2; no new deps).
+- Light-tier (haiku) sub-agents: none used (sync investigation = Explore; review
+  + implementation = Opus).
+- State: committed on branch feature/cleanup-obsolete-markers; merging to main +
+  pushing (CI + Cloudflare Pages auto-deploy run on push).

@@ -8,11 +8,13 @@ import { db, type StackItem } from '../db/db'
 import {
   addItem,
   archiveItem,
+  deleteObsoleteStackEvents,
   reorderItems,
   unarchiveItem,
   updateItem,
   type StackItemInput,
 } from '../db/stackRepository'
+import { findObsoleteStackEvents } from '../lib/legacyMarkers'
 import {
   distinctGroups,
   groupByPurpose,
@@ -143,6 +145,42 @@ export default function StackScreen() {
           error instanceof Error
             ? error.message
             : 'Sync failed — your data was not changed.',
+      })
+    }
+  }
+
+  // One-time cleanup of obsolete graph markers (group/name/type/note edits and
+  // within-bucket time tweaks recorded by older versions). Backs up first, like
+  // the import flow, since the deletion is tombstoned and rides sync.
+  async function handleCleanupMarkers() {
+    const obsolete = findObsoleteStackEvents(stackEvents ?? [])
+    if (obsolete.length === 0) {
+      setImportStatus({ kind: 'success', text: 'No old markers to clean up.' })
+      return
+    }
+    const n = obsolete.length
+    const confirmed = window.confirm(
+      `Remove ${n} old stack-change marker${n === 1 ? '' : 's'}?\n\n` +
+        `These came from group, name, type, note, or minor time edits that no ` +
+        `longer count as stack changes (dose, schedule, and time-of-day ` +
+        `changes are kept). This can't be undone, and it applies to your other ` +
+        `synced devices too. A backup of your current data will download first.`,
+    )
+    if (!confirmed) return
+    try {
+      await exportAsJson() // safety snapshot — the user's undo path
+      const removed = await deleteObsoleteStackEvents()
+      setImportStatus({
+        kind: 'success',
+        text: `Removed ${removed} old marker${removed === 1 ? '' : 's'}.`,
+      })
+    } catch (error) {
+      setImportStatus({
+        kind: 'error',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Cleanup failed — your data was not changed.',
       })
     }
   }
@@ -448,6 +486,25 @@ export default function StackScreen() {
             {importStatus.text}
           </p>
         )}
+      </section>
+
+      <section className="stack-export" aria-label="Clean up">
+        <h2 className="today-section-title">Clean up</h2>
+        <p className="screen-note">
+          Older versions marked the graph for group, name, type, note, and minor
+          time edits. Remove those now-meaningless markers — dose, schedule, and
+          time-of-day changes are kept, as are any you added a note to. A backup
+          downloads first.
+        </p>
+        <div className="stack-export-actions">
+          <button
+            type="button"
+            className="button-subtle"
+            onClick={handleCleanupMarkers}
+          >
+            Clean up old markers
+          </button>
+        </div>
       </section>
     </main>
   )
