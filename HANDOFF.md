@@ -1,69 +1,74 @@
 # Handoff — StackTrack
 <!-- Overwritten by the agent after every committed task. -->
 
-**As of:** 2026-06-24 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
-**Last completed:** **Redefine what counts as a stack change** (user-initiated).
-Which item edits record a StackEvent (graph marker) is now narrowed to the
-meaningful ones: **dose, dose-unit, schedule cadence, and a time-of-day BUCKET
-crossing**. Group membership, the persistent note, rename, and med↔supplement
-type changes are still SAVED but record **no marker**. Time buckets: **Morning
-05:00–11:59 · Afternoon 12:00–17:59 · Night 18:00–04:59** (lower edge inclusive,
-wraps midnight); multi-time items compare the SET of occupied buckets, so a
-within-bucket shift (08:00→09:00) is not a change but 08:00→13:00 is.
+**As of:** 2026-06-26 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
+**Last completed:** **One-time cleanup of obsolete stack-change markers**
+(user-initiated follow-up to the 2026-06-24 "narrow what counts as a stack
+change" rule). A **"Clean up old markers"** button on the **Stack** screen (new
+"Clean up" section under Backup) removes historical `changed` StackEvents that
+no longer count as stack changes (group/name/type/note edits, within-bucket time
+tweaks). **Kept:** dose, schedule, time-of-day-bucket, start/stop markers, and
+any event the user annotated with a "why" note. A **full JSON backup downloads
+first**; each deletion records a **tombstone** in the same transaction so it
+propagates across synced devices and won't resurrect.
 
-**Key implementation note:** `updateItem` used to early-return (skip the save)
-when nothing marker-worthy changed. Since organizational edits are no longer
-marker-worthy, a new `inputDiffers()` helper detects ANY persisted-field change
-separately from the marker-worthy `buildChangeSummary()`, so org-only and
-within-bucket edits still persist — **no silent data loss** (verified in review).
-New pure helpers `timeOfDayBucket`/`timeOfDayBuckets` + `TIME_OF_DAY_LABELS` live
-in `lib/schedule.ts`. Existing StackEvent history is UNTOUCHED (immutable
-snapshots); groups still snapshotted onto events for marker grouping.
+**Key design:** classification lives in pure, tested `src/lib/legacyMarkers.ts`
+(`isObsoleteChangeEvent`/`findObsoleteStackEvents`) — it PARSES the legacy
+summary string (old events store no before/after values) with a strong **bias
+toward keeping** (unrecognized/ambiguous → keep; review confirmed no adversarial
+input can cause a false delete). `stackRepository.deleteObsoleteStackEvents()`
+deletes + `recordTombstone` per event in one rw transaction, returns the count,
+idempotent. Sync investigation confirmed stackEvents are synced and were never
+tombstoned, so the tombstone path is what makes the deletion stick.
 
-**314 tests green** (+11); lint/typecheck/format/build pass; bundle 780 KiB (no
-new deps). Independent fresh-context review **APPROVE, zero blockers** (stress-
-tested the data-loss path). Demo confirmed by user.
+**329 tests green** (+15); lint/typecheck/format/build pass; bundle 783 KiB (no
+new deps). Independent fresh-context review **APPROVE, zero blockers** (acted on
+2 findings: singular-`group:` coverage + a `summary ?? ''` guard). Demo shown
+(dev server); user moved to close-out ("prep handoff").
 
-**Committed on `feature/redefine-stack-change`; MERGING to `main` + PUSH** — CI
-(lint/tests/security) + Cloudflare Pages auto-deploy run on the push. Confirm CI
-green + live app updated; if CI fails, investigate before further work.
+**Committed on `feature/cleanup-obsolete-markers`; MERGED to `main` + PUSHED**
+(commit 06b9df2) — CI (lint/tests/security) + Cloudflare Pages auto-deploy run on
+the push. **Confirm CI green + live app updated**; if CI fails, investigate
+before further work.
 
 **No new dependencies** this task.
 
-**>>> NEXT TASK (user-requested, not yet started — needs its own confirmed brief):**
-Retroactively CLEAN UP existing "changed" StackEvents that wouldn't be recorded
-under the new rules (group/note/name/type-only edits, and within-bucket time
-changes). This is DESTRUCTIVE + has real subtleties — must brief before coding:
-- Only `changed` events are affected; `added`/`removed`/`re-added` always stay.
-- Historical events store only a `summary` string + name/group snapshot (no
-  before/after field values) → must PARSE the old summary to classify. Old format
-  joined parts with "; ": `dose: X → Y` / `unit:` / `schedule:` / `times: a, b →
-  c, d` / `groups: … → none` / `note updated` / `name: X → Y` / `type: a → b`.
-  Recompute bucket-crossing from the raw `times:` part. Parsing is FRAGILE (group
-  names may contain ", ") → bias to KEEP when unsure (a stray marker beats
-  deleting a real dose/schedule marker).
-- SYNC/TOMBSTONES: deleting synced records must go through the tombstone path
-  (#13c) or they resurrect from another device / the server. INVESTIGATE the
-  sync+tombstone model (workers/ + syncEngine.ts + crypto libs) BEFORE designing.
-- SAFETY NET: require/auto a JSON export backup (#7) before running; one-time
-  migration vs. on-load. Destructive-op guardrail + safe-deletion protocol apply.
+**>>> OPEN / NEXT (pick up here):**
+- **Latent bug to fix (offered, not yet done): Today screen freezes "today" at
+  mount.** `TodayScreen.tsx:49-50` — `today` is computed once and `selectedDate`
+  is `useState(today)`; nothing rolls it over at midnight or refreshes live, so a
+  PWA left open across midnight shows yesterday (and the Reminders advisory for
+  the new day won't appear) until a manual reload. Confirmed in the wild this
+  session ("didn't show without refresh"). Small standalone fix (e.g. a
+  visibilitychange/interval that advances the date when the user hasn't navigated
+  away). User aware; fix when they want it.
+- **Backlog #29 was the last numbered item done (2026-06-24).** Top planned
+  backlog items: **#30** consent framework (gates off-device #31/#32/#33 + therapy
+  #39), **#37** Today collapsible meds section, **#36** multi-ingredient, **#40**
+  auto refill reminder, **#34** attachments. #35 parked.
 
 **Open watch items:**
-- **#29 scope:** correlation summary is for the ONE selected metric only, on
-  stack-change rows (not health events); composite metrics show no summary.
-- **#29 windows can overlap adjacent changes** — descriptive by design, not deduped.
-- **#28 deferred:** reminder-responsiveness analytics — natural #28b if wanted.
+- Reminders are NOT time-of-day gated — `Reminder.time` only orders the advisory
+  (it's ready for push #20). A reminder shows on its occurrence DATE regardless of
+  time. (Context: a "reminder didn't load" report this session turned out to be a
+  reminder set to start the next day — not a bug.)
+- **#29 scope:** correlation summary is for the ONE selected metric, on stack-
+  change rows only; composite metrics show no summary; windows can overlap
+  adjacent changes (descriptive by design).
+- **Stack-change rule (2026-06-24):** markers only for dose/dose-unit/schedule/
+  time-of-day-bucket changes; org edits persist silently via `inputDiffers`.
+- **#28 deferred:** reminder-responsiveness analytics (natural #28b).
 - **#28 schedule history:** adherence uses each item's CURRENT schedule for
-  historical due-days (cadence isn't versioned). Documented in-app footnote.
-- **#28 perf:** AdherenceScreen reads ALL intakes; fine for single-user local.
+  historical due-days (cadence isn't versioned). In-app footnote documents it.
 - **dnd-kit reorder duplication** (#38b): `reorderTodaySection`/`reorderItems`
-  near-identical; left as-is (helper for 2 sites = over-engineering).
+  near-identical; left as-is.
 - **TruffleHog false-fail:** Dependabot PRs can show a red "Security scan" from the
   `BASE == HEAD` quirk — NOT a finding. Fix = `@dependabot rebase`.
 - New DB *table* → extend export/import/merge/sync (4 libs) + fixtures + bump
   export-test schemaVersion. New *fields* on an existing table need none of that.
+  Deleting a synced record needs a tombstone (recordTombstone) to not resurrect.
 - Tier-use reporting is ON: note Light-tier (haiku) sub-task use in the work
-  summary; silent when none ran. (This task used Opus for exploration + review.)
+  summary; silent when none ran. (Recent tasks used Opus + Explore, no haiku.)
 - Windows autocrlf: format only the files you touched (`prettier --check
   --end-of-line auto <files>` to find REAL issues amid the CRLF noise).
 - A dev server may be running on :5173 — stop it when done (stopped this task).
