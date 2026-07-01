@@ -2,7 +2,7 @@
 // color-coded vertical markers at stack-change dates (the app's core payoff:
 // connect stack changes to metric trends). Read-only over metricEntries and
 // stackEvents; all shaping logic lives in lib/graphView.
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   CartesianGrid,
@@ -38,8 +38,20 @@ import { CATEGORY_LABELS } from '../lib/events'
 import { toIsoDate } from '../lib/dates'
 import SettingsMenu from '../components/SettingsMenu'
 import StackChangeNote from '../components/StackChangeNote'
+import GraphMarkerPopup, {
+  type MarkerPopupData,
+} from '../components/GraphMarkerPopup'
+import type { StackEventType } from '../db/db'
 
 const RANGES: GraphRange[] = ['30d', '90d', 'all']
+
+// Small caption shown above a stack-change marker's title in its popup — the
+// colored dot already encodes the type, this spells it out.
+const STACK_TYPE_CAPTION: Record<StackEventType, string> = {
+  added: 'Added to stack',
+  changed: 'Stack change',
+  removed: 'Removed from stack',
+}
 
 // Axis/tooltip date formatting, e.g. "Jun 11".
 function formatTs(ts: number): string {
@@ -47,6 +59,56 @@ function formatTs(ts: number): string {
     month: 'short',
     day: 'numeric',
   })
+}
+
+// Recharts passes the reference line's plotting rectangle as `viewBox` to a
+// custom label renderer; x is the line's pixel position, y the top of the plot.
+interface RefLabelProps {
+  viewBox?: { x?: number; y?: number }
+}
+
+// A tappable handle drawn at the top of a marker line so the divider can be
+// selected to reveal its details. The outer transparent circle is an enlarged
+// hit target for touch; `dy` nudges health-event handles below stack ones so
+// same-day markers don't stack exactly on top of each other.
+function markerHandle(
+  props: RefLabelProps,
+  opts: {
+    color: string
+    ariaLabel: string
+    dy: number
+    onSelect: (x: number) => void
+  },
+) {
+  const x = props.viewBox?.x
+  const y = props.viewBox?.y
+  if (x === undefined || y === undefined) return <g />
+  const cy = y + opts.dy
+  return (
+    <g
+      className="graph-marker-handle"
+      role="button"
+      tabIndex={0}
+      aria-label={opts.ariaLabel}
+      onClick={() => opts.onSelect(x)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          opts.onSelect(x)
+        }
+      }}
+    >
+      <circle cx={x} cy={cy} r={12} fill="transparent" />
+      <circle
+        cx={x}
+        cy={cy}
+        r={5}
+        fill={opts.color}
+        stroke="#fff"
+        strokeWidth={1.5}
+      />
+    </g>
+  )
 }
 
 export default function GraphsScreen() {
@@ -58,6 +120,22 @@ export default function GraphsScreen() {
   const [changeWindow, setChangeWindow] = useState<ChangeWindow>(
     DEFAULT_CHANGE_WINDOW,
   )
+  // The marker whose details popup is open (tapped on the chart), plus the
+  // clamped pixel x to anchor it. Null = nothing selected.
+  const chartRef = useRef<HTMLDivElement>(null)
+  const [selected, setSelected] = useState<{
+    data: MarkerPopupData
+    x: number
+  } | null>(null)
+
+  // Open a marker's popup, clamping its center so the card stays on-screen.
+  function selectMarker(rawX: number, data: MarkerPopupData) {
+    const width = chartRef.current?.clientWidth ?? 0
+    const half = 96 // half of .graph-marker-popup's 12rem max-width (at 16px root)
+    const x =
+      width > half * 2 ? Math.max(half, Math.min(rawX, width - half)) : rawX
+    setSelected({ data, x })
+  }
 
   const metricId = selectedId ?? metrics?.[0]?.id
   // All entries for one metric via the [metricId+date] compound index:
@@ -155,7 +233,10 @@ export default function GraphsScreen() {
         <select
           id="graph-metric"
           value={metric.id}
-          onChange={(e) => setSelectedId(Number(e.target.value))}
+          onChange={(e) => {
+            setSelectedId(Number(e.target.value))
+            setSelected(null)
+          }}
         >
           {metrics.map((m) => (
             <option key={m.id} value={m.id}>
@@ -176,7 +257,10 @@ export default function GraphsScreen() {
                   : 'graph-range-button'
               }
               aria-pressed={r === range}
-              onClick={() => setRange(r)}
+              onClick={() => {
+                setRange(r)
+                setSelected(null)
+              }}
             >
               {RANGE_LABELS[r]}
             </button>
@@ -190,7 +274,7 @@ export default function GraphsScreen() {
           Today screen.
         </p>
       ) : (
-        <div className="graph-chart">
+        <div className="graph-chart" ref={chartRef}>
           <ResponsiveContainer width="100%" height={280}>
             <LineChart
               data={chartData as object[]}
@@ -233,6 +317,21 @@ export default function GraphsScreen() {
                   stroke={marker.color}
                   strokeWidth={2}
                   strokeDasharray="5 3"
+                  label={(props: RefLabelProps) =>
+                    markerHandle(props, {
+                      color: marker.color,
+                      ariaLabel: `Show details: ${marker.label}, ${formatTs(marker.ts)}`,
+                      dy: 0,
+                      onSelect: (x) =>
+                        selectMarker(x, {
+                          color: marker.color,
+                          dateLabel: formatTs(marker.ts),
+                          typeLabel: STACK_TYPE_CAPTION[marker.type],
+                          title: marker.label,
+                          note: marker.note,
+                        }),
+                    })
+                  }
                 />
               ))}
               {eventMarkers.map((marker, index) => (
@@ -242,6 +341,20 @@ export default function GraphsScreen() {
                   stroke={marker.color}
                   strokeWidth={2}
                   strokeDasharray="2 2"
+                  label={(props: RefLabelProps) =>
+                    markerHandle(props, {
+                      color: marker.color,
+                      ariaLabel: `Show details: ${CATEGORY_LABELS[marker.category]}, ${marker.label}, ${formatTs(marker.ts)}`,
+                      dy: 16,
+                      onSelect: (x) =>
+                        selectMarker(x, {
+                          color: marker.color,
+                          dateLabel: formatTs(marker.ts),
+                          typeLabel: CATEGORY_LABELS[marker.category],
+                          title: marker.label,
+                        }),
+                    })
+                  }
                 />
               ))}
               {isComposite ? (
@@ -278,6 +391,13 @@ export default function GraphsScreen() {
               )}
             </LineChart>
           </ResponsiveContainer>
+          {selected && (
+            <GraphMarkerPopup
+              data={selected.data}
+              x={selected.x}
+              onClose={() => setSelected(null)}
+            />
+          )}
         </div>
       )}
 

@@ -1295,10 +1295,85 @@ body {
 }
 
 .graph-chart {
+  position: relative;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 0.75rem 0.5rem 0.5rem 0;
+}
+
+/* Tappable handle at the top of each stack-change / health-event marker line. */
+.graph-marker-handle {
+  cursor: pointer;
+}
+
+.graph-marker-handle:focus {
+  outline: none;
+}
+
+.graph-marker-handle:focus-visible circle:last-child {
+  stroke: var(--color-text);
+  stroke-width: 2.5;
+}
+
+/* Transparent full-screen catcher: a tap anywhere outside the card closes it. */
+.graph-marker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+/* The marker detail card, anchored horizontally to the tapped handle. */
+.graph-marker-popup {
+  position: absolute;
+  top: 0.5rem;
+  transform: translateX(-50%);
+  z-index: 1001;
+  max-width: 12rem;
+  padding: 0.5rem 1.75rem 0.625rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+}
+
+.graph-marker-close {
+  position: absolute;
+  top: 0.125rem;
+  right: 0.125rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.graph-marker-caption {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.graph-marker-date {
+  margin-left: auto;
+}
+
+.graph-marker-title {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.graph-marker-note {
+  margin: 0.375rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  white-space: pre-wrap;
 }
 
 .graph-changes {
