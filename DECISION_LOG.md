@@ -1761,3 +1761,46 @@
   + implementation = Opus).
 - State: committed on branch feature/cleanup-obsolete-markers; merging to main +
   pushing (CI + Cloudflare Pages auto-deploy run on push).
+
+## [2026-07-01] Tappable graph markers → detail popup — Claude Code
+- Brief (confirmed): On the Graphs screen, make the vertical stack-change /
+  health-event marker "dividers" directly interactive — tap/click a handle to
+  open a small read-only popup with that change/event's details, instead of
+  only scanning the list below the chart. Design choices (user-confirmed):
+  tap/click handle (not hover — mobile PWA); BOTH stack-change and health-event
+  markers; popup shows details + the "why" note (NOT the before/after summary).
+- Did: New src/components/GraphMarkerPopup.tsx — read-only detail card (colored
+  dot + caption + date + title + optional note), role="dialog", closes via ×,
+  Esc, or a fixed transparent backdrop tap; focus moves to the close button on
+  open. GraphsScreen.tsx: each ReferenceLine now renders a tappable SVG handle
+  at the top via the recharts `label` render-prop (markerHandle: enlarged
+  transparent hit circle for touch + a 5px colored dot; health handles nudged
+  dy=16 below stack handles so same-day markers don't overlap). Handle click →
+  selectMarker(x, data) stores the marker's normalized MarkerPopupData + a
+  clamped pixel x; popup anchors horizontally to it inside the now-relative
+  .graph-chart. Selection clears on metric/range change. index.css: .graph-chart
+  position:relative + handle/backdrop/popup/close/caption styles.
+- Decisions:
+  - Handle rendered INSIDE recharts (label render-prop) for correct x-anchoring,
+    accepting that jsdom (no layout) can't exercise the click — WHY: correct
+    positioning matters more than testing the handle in jsdom; the popup's
+    content + all three dismissal paths ARE unit-tested, handle wiring is
+    demo-verified (consistent with the existing graphsScreen.test.tsx boundary).
+  - Popup is read-only — note editing stays in the list below — WHY: brief scope;
+    avoids a second write path to the same note.
+  - Horizontal anchor uses viewBox.x (SVG space) ≈ container x because
+    .graph-chart has padding-left:0; x clamped to keep the 12rem card on-screen.
+- Independent review (fresh-context, Opus): APPROVE, zero blockers. Acted on 2
+  MINOR: (1) split the mount effect so a background useLiveQuery re-render can't
+  yank focus back to the close button after the user tabs away (mount-only focus
+  + separate latest-onClose Esc effect); (2) comments noting focus isn't restored
+  to the SVG handle on close (recharts re-renders it) and tying half=96 to the
+  card's 12rem max-width. NITs (no focus trap on a small info dialog; rem/px
+  coupling) left as accepted tradeoffs.
+- Tests (+5; full suite 334 green, was 329): graphMarkerPopup.test.tsx — content
+  (caption/date/title/note + dialog aria-label), note omitted when absent, and
+  close via button / Esc / backdrop. Lint/typecheck/format/build pass. Bundle
+  precache 786 KiB (+3; no new deps).
+- Light-tier (haiku) sub-agents: none used (review + implementation = Opus).
+- State: committed on branch feature/graph-marker-popup; merging to main +
+  pushing (CI + Cloudflare Pages auto-deploy run on push).

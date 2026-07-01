@@ -1,57 +1,61 @@
 # Handoff — StackTrack
 <!-- Overwritten by the agent after every committed task. -->
 
-**As of:** 2026-06-26 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
-**Last completed:** **One-time cleanup of obsolete stack-change markers**
-(user-initiated follow-up to the 2026-06-24 "narrow what counts as a stack
-change" rule). A **"Clean up old markers"** button on the **Stack** screen (new
-"Clean up" section under Backup) removes historical `changed` StackEvents that
-no longer count as stack changes (group/name/type/note edits, within-bucket time
-tweaks). **Kept:** dose, schedule, time-of-day-bucket, start/stop markers, and
-any event the user annotated with a "why" note. A **full JSON backup downloads
-first**; each deletion records a **tombstone** in the same transaction so it
-propagates across synced devices and won't resurrect.
+**As of:** 2026-07-01 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
+**Last completed:** **Tappable graph markers → detail popup.** On the **Graphs**
+screen, the vertical stack-change / health-event marker "dividers" are now
+interactive: a small colored **handle** sits at the top of each marker line, and
+tapping it opens a **read-only popup** with that change/event's details — colored
+dot + caption ("Added to stack" / "Stack change" / "Removed from stack", or the
+event category e.g. "Appointment") + date + title (e.g. "Started Vitamin D") +
+the "why" note if one exists. Health-event handles sit slightly lower (dy=16)
+than stack handles so same-day markers don't overlap. Dismiss via ×, tapping
+off the card (a fixed transparent backdrop), or **Esc**.
 
-**Key design:** classification lives in pure, tested `src/lib/legacyMarkers.ts`
-(`isObsoleteChangeEvent`/`findObsoleteStackEvents`) — it PARSES the legacy
-summary string (old events store no before/after values) with a strong **bias
-toward keeping** (unrecognized/ambiguous → keep; review confirmed no adversarial
-input can cause a false delete). `stackRepository.deleteObsoleteStackEvents()`
-deletes + `recordTombstone` per event in one rw transaction, returns the count,
-idempotent. Sync investigation confirmed stackEvents are synced and were never
-tombstoned, so the tombstone path is what makes the deletion stick.
+**Key design:** `src/components/GraphMarkerPopup.tsx` is the popup (role="dialog",
+mount-only focus to the close button, latest-onClose Esc effect). Handles render
+INSIDE recharts via each `<ReferenceLine>`'s `label` render-prop
+(`markerHandle` in `GraphsScreen.tsx` — enlarged transparent hit circle for touch
++ a 5px colored dot). Click → `selectMarker(x, data)` stores a normalized
+`MarkerPopupData` + a clamped pixel x; the popup anchors horizontally to it inside
+the now-`position:relative` `.graph-chart`. Selection clears on metric/range
+change. **Read-only** — note editing stays in the list below the chart. Anchoring
+relies on `.graph-chart` having `padding-left:0` (viewBox.x ≈ container x).
 
-**329 tests green** (+15); lint/typecheck/format/build pass; bundle 783 KiB (no
-new deps). Independent fresh-context review **APPROVE, zero blockers** (acted on
-2 findings: singular-`group:` coverage + a `summary ?? ''` guard). Demo shown
-(dev server); user moved to close-out ("prep handoff").
+**334 tests green** (+5); lint/typecheck/format/build pass; bundle precache 786
+KiB (+3, no new deps). Independent fresh-context review **APPROVE, zero blockers**
+(acted on 2 MINOR: focus-steal-on-re-render fix + clarifying comments). Demo shown
+(dev server :5173); user approved ("looks good") and asked to commit + push.
 
-**Committed on `feature/cleanup-obsolete-markers`; MERGED to `main` + PUSHED**
-(commit 06b9df2) — CI (lint/tests/security) + Cloudflare Pages auto-deploy run on
-the push. **Confirm CI green + live app updated**; if CI fails, investigate
-before further work.
+**Committed on `feature/graph-marker-popup`; MERGED to `main` + PUSHED** — CI
+(lint/tests/security) + Cloudflare Pages auto-deploy run on the push. **Confirm CI
+green + live app updated**; if CI fails, investigate before further work.
 
 **No new dependencies** this task.
 
 **>>> OPEN / NEXT (pick up here):**
-- **Latent bug to fix (offered, not yet done): Today screen freezes "today" at
-  mount.** `TodayScreen.tsx:49-50` — `today` is computed once and `selectedDate`
-  is `useState(today)`; nothing rolls it over at midnight or refreshes live, so a
-  PWA left open across midnight shows yesterday (and the Reminders advisory for
-  the new day won't appear) until a manual reload. Confirmed in the wild this
-  session ("didn't show without refresh"). Small standalone fix (e.g. a
-  visibilitychange/interval that advances the date when the user hasn't navigated
-  away). User aware; fix when they want it.
+- **Latent bug still open (offered, not yet done): Today screen freezes "today"
+  at mount.** `TodayScreen.tsx:49-50` — `today` is computed once and
+  `selectedDate` is `useState(today)`; nothing rolls it over at midnight, so a
+  PWA left open across midnight shows yesterday until manual reload. Small
+  standalone fix (visibilitychange/interval that advances the date when the user
+  hasn't navigated away). User aware; fix when they want it.
 - **Backlog #29 was the last numbered item done (2026-06-24).** Top planned
   backlog items: **#30** consent framework (gates off-device #31/#32/#33 + therapy
   #39), **#37** Today collapsible meds section, **#36** multi-ingredient, **#40**
   auto refill reminder, **#34** attachments. #35 parked.
 
 **Open watch items:**
+- **Graph markers testing boundary:** the tappable SVG handles render inside
+  recharts, whose pixel layout jsdom can't produce — so handle-CLICK is
+  demo-verified, while the popup content + all three dismissal paths ARE
+  unit-tested (graphMarkerPopup.test.tsx). Same boundary the top-of-file comment
+  in graphsScreen.test.tsx already documents. If you add layout-dependent chart
+  behavior, don't expect jsdom to cover it.
+- **Popup anchoring** assumes `.graph-chart` keeps `padding-left:0`; if left
+  padding is ever added, the `left: x` anchor will drift (viewBox.x is SVG-space).
 - Reminders are NOT time-of-day gated — `Reminder.time` only orders the advisory
-  (it's ready for push #20). A reminder shows on its occurrence DATE regardless of
-  time. (Context: a "reminder didn't load" report this session turned out to be a
-  reminder set to start the next day — not a bug.)
+  (ready for push #20). A reminder shows on its occurrence DATE regardless of time.
 - **#29 scope:** correlation summary is for the ONE selected metric, on stack-
   change rows only; composite metrics show no summary; windows can overlap
   adjacent changes (descriptive by design).
@@ -71,7 +75,7 @@ before further work.
   summary; silent when none ran. (Recent tasks used Opus + Explore, no haiku.)
 - Windows autocrlf: format only the files you touched (`prettier --check
   --end-of-line auto <files>` to find REAL issues amid the CRLF noise).
-- A dev server may be running on :5173 — stop it when done (stopped this task).
+- A dev server may be running on :5173 — stop it when done.
 - Pre-existing: items 12 + 13e sync demo gates open.
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 
