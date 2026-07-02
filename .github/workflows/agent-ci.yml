@@ -24,13 +24,16 @@ permissions:
   contents: read
   deployments: write
 
+# All third-party actions are pinned to full commit SHAs (tags are mutable and
+# can be repointed — supply-chain risk). The trailing comment holds the human-
+# readable version; Dependabot (github-actions ecosystem) keeps both updated.
 jobs:
   validate:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -41,7 +44,7 @@ jobs:
       - run: npm test
       - run: npm run build
       # hand the exact validated build to the deploy job — deploy never rebuilds
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist
           path: dist
@@ -51,16 +54,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # fetch-depth: 0 — trufflehog needs full history to diff the pushed range
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
       # Secret scanning — detects accidentally committed credentials.
-      # Pinned to a release tag (not @main) so the security job itself is not
-      # an unpinned supply-chain dependency. base/head are deliberately
-      # omitted: the action auto-detects the commit range per event.
+      # base/head are deliberately omitted: the action auto-detects the
+      # commit range per event.
       - name: Scan for secrets
-        uses: trufflesecurity/trufflehog@v3.95.5
+        uses: trufflesecurity/trufflehog@d411fff7b8879a62509f3fa98c07f247ac089a51 # v3.95.5
         with:
           extra_args: --results=verified,unknown
 
@@ -81,7 +83,7 @@ jobs:
       # production deps (react, dexie, recharts) audit clean. Dependabot
       # (.github/dependabot.yml, weekly) tracks the dev-tooling updates
       # non-blocking. See DECISION_LOG 2026-06-18.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -95,11 +97,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: dist
           path: dist
-      - uses: cloudflare/wrangler-action@v3
+      - uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

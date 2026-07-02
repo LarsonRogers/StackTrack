@@ -1804,3 +1804,37 @@
 - Light-tier (haiku) sub-agents: none used (review + implementation = Opus).
 - State: committed on branch feature/graph-marker-popup; merging to main +
   pushing (CI + Cloudflare Pages auto-deploy run on push).
+
+## [2026-07-02] Fix CI: pin actions to SHAs + Dependabot cooldown — Claude Code
+- Brief (confirmed): The 2026-07-01 push to main failed CI — not our code (lint/
+  tests/build were green) but the semgrep security scan, whose registry added
+  two new blocking rules since the last green run (2026-06-27). Fix both
+  findings to unblock CI and the Cloudflare Pages deploy of the marker-popup
+  feature. User confirmed "fix both, push" (CI/CD change = confirm-first policy).
+- Did: .github/workflows/agent-ci.yml — pinned all 8 third-party action refs to
+  full 40-char commit SHAs (rule github-actions-mutable-action-tag: tags are
+  mutable and can be repointed → supply-chain risk), keeping a `# vX` comment on
+  each; SHAs resolved live from GitHub tag refs (gh api, annotated tags
+  dereferenced): checkout@34e11487/v4, setup-node@49933ea5/v4,
+  upload-artifact@ea165f8d/v4, download-artifact@d3f86a10/v4,
+  trufflehog@d411fff7/v3.95.5, wrangler-action@9acf94ac/v3.
+  .github/dependabot.yml — added `cooldown: default-days: 7` (rule
+  dependabot-missing-cooldown: don't propose brand-new releases immediately)
+  and a NEW github-actions ecosystem entry (weekly, same cooldown) so the SHA
+  pins themselves keep receiving update PRs instead of going silently stale.
+- Decisions:
+  - Fix the findings rather than suppress — WHY: both are legitimate hardening
+    that fits Production stakes; suppression would weaken the gate the pack
+    mandates.
+  - Add the github-actions Dependabot ecosystem alongside the pin — WHY: SHA
+    pinning without an updater freezes actions forever; Dependabot understands
+    SHA+comment pins and maintains both.
+  - Cooldown 7 days for both ecosystems — WHY: standard yank-window protection;
+    security fixes still arrive within a week.
+- Tests: no app code touched; full suite still 334 green, lint + typecheck pass.
+  Real verification is the CI run on this push (semgrep re-runs there; semgrep
+  has no native Windows runtime locally).
+- Light-tier (haiku) sub-agents: none used.
+- State: committed on fix/pin-ci-actions; merging to main + pushing; will watch
+  the CI run to confirm green + Cloudflare Pages deploy (this push also ships
+  the previously-blocked marker-popup deploy).

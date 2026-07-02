@@ -1,13 +1,25 @@
 # .github/dependabot.yml — dependency update cadence.
 #
-# IMPORTANT: package-ecosystem below is a placeholder. Dependabot silently
-# does nothing if it doesn't match your stack — the agent sets the real
-# value during enforcement-tooling setup (protocols/enforcement-tooling.md,
-# CI wiring step). Common values: npm, pip, cargo, gomod, bundler, maven.
+# cooldown: wait a few days before proposing a newly published version —
+# protection against compromised releases that get yanked shortly after
+# publish (supply-chain hygiene; also satisfies semgrep's
+# dependabot-missing-cooldown rule).
 version: 2
 updates:
-  - package-ecosystem: "npm" # AGENT: replace with the project's ecosystem
+  - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+
+  # Keeps the SHA-pinned actions in .github/workflows/ updated — without
+  # this, commit-pinned actions never receive update PRs.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
