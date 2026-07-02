@@ -1,35 +1,21 @@
 # Handoff — StackTrack
 <!-- Overwritten by the agent after every committed task. -->
 
-**As of:** 2026-07-01 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
-**Last completed:** **Tappable graph markers → detail popup.** On the **Graphs**
-screen, the vertical stack-change / health-event marker "dividers" are now
-interactive: a small colored **handle** sits at the top of each marker line, and
-tapping it opens a **read-only popup** with that change/event's details — colored
-dot + caption ("Added to stack" / "Stack change" / "Removed from stack", or the
-event category e.g. "Appointment") + date + title (e.g. "Started Vitamin D") +
-the "why" note if one exists. Health-event handles sit slightly lower (dy=16)
-than stack handles so same-day markers don't overlap. Dismiss via ×, tapping
-off the card (a fixed transparent backdrop), or **Esc**.
+**As of:** 2026-07-02 · **Pack version:** v12.19 · **Audience mode:** Technical non-dev
+**Last completed:** **CI fix — pin actions to commit SHAs + Dependabot cooldown.**
+The 2026-07-01 push (marker popup) failed CI: semgrep's registry added two new
+blocking rules since the last green run — `github-actions-mutable-action-tag`
+(8 findings: every action referenced by mutable tag) and
+`dependabot-missing-cooldown`. Our code was green; only the security gate's own
+config was flagged. Fix: all 8 action refs in `.github/workflows/agent-ci.yml`
+pinned to full commit SHAs (with `# vX` comments; resolved live via gh api);
+`.github/dependabot.yml` got `cooldown: default-days: 7` plus a NEW
+`github-actions` ecosystem entry so the SHA pins keep receiving update PRs.
 
-**Key design:** `src/components/GraphMarkerPopup.tsx` is the popup (role="dialog",
-mount-only focus to the close button, latest-onClose Esc effect). Handles render
-INSIDE recharts via each `<ReferenceLine>`'s `label` render-prop
-(`markerHandle` in `GraphsScreen.tsx` — enlarged transparent hit circle for touch
-+ a 5px colored dot). Click → `selectMarker(x, data)` stores a normalized
-`MarkerPopupData` + a clamped pixel x; the popup anchors horizontally to it inside
-the now-`position:relative` `.graph-chart`. Selection clears on metric/range
-change. **Read-only** — note editing stays in the list below the chart. Anchoring
-relies on `.graph-chart` having `padding-left:0` (viewBox.x ≈ container x).
-
-**334 tests green** (+5); lint/typecheck/format/build pass; bundle precache 786
-KiB (+3, no new deps). Independent fresh-context review **APPROVE, zero blockers**
-(acted on 2 MINOR: focus-steal-on-re-render fix + clarifying comments). Demo shown
-(dev server :5173); user approved ("looks good") and asked to commit + push.
-
-**Committed on `feature/graph-marker-popup`; MERGED to `main` + PUSHED** — CI
-(lint/tests/security) + Cloudflare Pages auto-deploy run on the push. **Confirm CI
-green + live app updated**; if CI fails, investigate before further work.
+**CI run 28602970143 on the merge: ALL GREEN (validate / security / deploy) —
+the Cloudflare Pages deploy ran, so the tappable-marker-popup feature from
+2026-07-01 is NOW LIVE** (was blocked by the failed run). Live app responds 200.
+334 tests / lint / typecheck untouched and passing.
 
 **No new dependencies** this task.
 
@@ -46,12 +32,18 @@ green + live app updated**; if CI fails, investigate before further work.
   auto refill reminder, **#34** attachments. #35 parked.
 
 **Open watch items:**
-- **Graph markers testing boundary:** the tappable SVG handles render inside
-  recharts, whose pixel layout jsdom can't produce — so handle-CLICK is
-  demo-verified, while the popup content + all three dismissal paths ARE
-  unit-tested (graphMarkerPopup.test.tsx). Same boundary the top-of-file comment
-  in graphsScreen.test.tsx already documents. If you add layout-dependent chart
-  behavior, don't expect jsdom to cover it.
+- **Dependabot now also watches github-actions** (weekly, 7-day cooldown) — it
+  will open PRs bumping the SHA pins; the `# vX` comment updates with them.
+  First dynamic run already succeeded post-push.
+- **Semgrep rules float** (`--config auto` pulls the live registry): a rule
+  added upstream can redden CI without any repo change — exactly what happened
+  here. If CI fails on a push that changed nothing relevant, check for new
+  rules first.
+- **Graph markers testing boundary:** tappable SVG handles render inside
+  recharts, whose pixel layout jsdom can't produce — handle-CLICK is
+  demo-verified; popup content + all three dismissal paths ARE unit-tested
+  (graphMarkerPopup.test.tsx). Don't expect jsdom to cover layout-dependent
+  chart behavior.
 - **Popup anchoring** assumes `.graph-chart` keeps `padding-left:0`; if left
   padding is ever added, the `left: x` anchor will drift (viewBox.x is SVG-space).
 - Reminders are NOT time-of-day gated — `Reminder.time` only orders the advisory
@@ -75,7 +67,6 @@ green + live app updated**; if CI fails, investigate before further work.
   summary; silent when none ran. (Recent tasks used Opus + Explore, no haiku.)
 - Windows autocrlf: format only the files you touched (`prettier --check
   --end-of-line auto <files>` to find REAL issues amid the CRLF noise).
-- A dev server may be running on :5173 — stop it when done.
 - Pre-existing: items 12 + 13e sync demo gates open.
 - Live app: https://stacktrack-ea9.pages.dev · Sync server: /health → ok.
 
